@@ -1,0 +1,3 @@
+- [OpenAPI Zod compatibility](openapi-zod-compatibility.md) — use compatible number and email schema forms until the validation package is upgraded.
+- [Primary wedding record](primary-wedding-record.md) — select the stable primary wedding by ID; legacy seed races may leave duplicate demo rows.
+- [GitHub mirror path corruption](github-mirror-path-corruption.md) — verify remote paths and content endpoints before trusting an API-created repository snapshot.

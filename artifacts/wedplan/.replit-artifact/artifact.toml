@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "WedPlan Wedding Platform"
+description = "A wedding guest and event management platform for creating beautiful guest experiences, collecting RSVPs, coordinating Aso Ebi orders, tracking payments, and communicating with invited guests."
+version = "1.0.0"
+id = "artifacts/wedplan"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24422
+
+[services.development]
+run = "pnpm --filter @workspace/wedplan run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/wedplan", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/wedplan/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24422"
+BASE_PATH = "/"

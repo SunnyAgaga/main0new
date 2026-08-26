@@ -1,0 +1,479 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: wedding
+    description: Wedding overview and settings
+  - name: guests
+    description: Guest registration and RSVP management
+  - name: notifications
+    description: Guest communication
+  - name: aso-ebi
+    description: Aso Ebi catalog and orders
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /wedding:
+    get:
+      operationId: getWedding
+      tags: [wedding]
+      summary: Get wedding details
+      responses:
+        "200":
+          description: Wedding details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wedding"
+    patch:
+      operationId: updateWedding
+      tags: [wedding]
+      summary: Update wedding settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeddingUpdate"
+      responses:
+        "200":
+          description: Updated wedding details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wedding"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [wedding]
+      summary: Get dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+  /guests:
+    get:
+      operationId: listGuests
+      tags: [guests]
+      summary: List registered guests
+      responses:
+        "200":
+          description: Guests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Guest"
+    post:
+      operationId: createGuest
+      tags: [guests]
+      summary: Register a guest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestInput"
+      responses:
+        "201":
+          description: Registered guest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+  /guests/{id}/rsvp:
+    patch:
+      operationId: updateGuestRsvp
+      tags: [guests]
+      summary: Update a guest RSVP
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RsvpInput"
+      responses:
+        "200":
+          description: Updated guest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+  /guests/check-in:
+    post:
+      operationId: checkInGuest
+      tags: [guests]
+      summary: Confirm a registered guest at the white wedding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckInInput"
+      responses:
+        "200":
+          description: Guest checked in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+        "403":
+          description: Check-in is not active until the white wedding date
+        "404":
+          description: Registered guest not found
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notification campaigns
+      responses:
+        "200":
+          description: Notification campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+    post:
+      operationId: createNotification
+      tags: [notifications]
+      summary: Create a notification campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationInput"
+      responses:
+        "201":
+          description: Notification campaign
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+  /aso-ebi:
+    get:
+      operationId: listAsoEbi
+      tags: [aso-ebi]
+      summary: List Aso Ebi items
+      responses:
+        "200":
+          description: Aso Ebi catalog
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AsoEbiItem"
+  /aso-ebi/orders:
+    get:
+      operationId: listAsoEbiOrders
+      tags: [aso-ebi]
+      summary: List Aso Ebi orders
+      responses:
+        "200":
+          description: Aso Ebi orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AsoEbiOrder"
+    post:
+      operationId: createAsoEbiOrder
+      tags: [aso-ebi]
+      summary: Create an Aso Ebi order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AsoEbiOrderInput"
+      responses:
+        "201":
+          description: Aso Ebi order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsoEbiOrder"
+  /payments/paystack/initialize:
+    post:
+      operationId: initializePaystackPayment
+      tags: [payments]
+      summary: Initialize a Paystack checkout for an Aso Ebi order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaystackPaymentInput"
+      responses:
+        "200":
+          description: Paystack authorization details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaystackPayment"
+  /payments/paystack/verify/{reference}:
+    get:
+      operationId: verifyPaystackPayment
+      tags: [payments]
+      summary: Verify a Paystack payment and update its order
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Verified payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaystackPaymentVerification"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    Wedding:
+      type: object
+      required: [id, couple, date, traditionalDate, whiteWeddingDate, venue, city, daysRemaining, eyebrow, venueDescription, dressCode, asoEbiTitle, asoEbiSubtitle, backgroundImage, menuDashboard, menuGuests, menuNotifications, menuAsoEbi, menuSettings, paymentDeadline, paymentBank, paymentAccountName, paymentAccountNumber, paymentTransferRemark, paymentInstructions, paymentMethods]
+      properties:
+        id: { type: number }
+        couple: { type: string }
+        date: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+        traditionalDate: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+        whiteWeddingDate: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+        venue: { type: string }
+        city: { type: string }
+        daysRemaining: { type: number }
+        eyebrow: { type: string }
+        venueDescription: { type: string }
+        dressCode: { type: string }
+        asoEbiTitle: { type: string }
+        asoEbiSubtitle: { type: string }
+        backgroundImage: { type: string }
+        menuDashboard: { type: string }
+        menuGuests: { type: string }
+        menuNotifications: { type: string }
+        menuAsoEbi: { type: string }
+        menuSettings: { type: string }
+        paymentDeadline: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+        paymentBank: { type: string }
+        paymentAccountName: { type: string }
+        paymentAccountNumber: { type: string }
+        paymentTransferRemark: { type: string }
+        paymentInstructions: { type: string }
+        paymentMethods:
+          type: array
+          items: { type: string, enum: [paystack_card, paystack_transfer, custom_transfer] }
+    WeddingUpdate:
+      type: object
+      required: [couple, date, traditionalDate, whiteWeddingDate, venue, city, eyebrow, venueDescription, dressCode, asoEbiTitle, asoEbiSubtitle, backgroundImage, menuDashboard, menuGuests, menuNotifications, menuAsoEbi, menuSettings, paymentDeadline, paymentBank, paymentAccountName, paymentAccountNumber, paymentTransferRemark, paymentInstructions, paymentMethods]
+      properties:
+        couple: { type: string }
+        date: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+        traditionalDate: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+        whiteWeddingDate: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+        venue: { type: string }
+        city: { type: string }
+        eyebrow: { type: string }
+        venueDescription: { type: string }
+        dressCode: { type: string }
+        asoEbiTitle: { type: string }
+        asoEbiSubtitle: { type: string }
+        backgroundImage: { type: string }
+        menuDashboard: { type: string }
+        menuGuests: { type: string }
+        menuNotifications: { type: string }
+        menuAsoEbi: { type: string }
+        menuSettings: { type: string }
+        paymentDeadline: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+        paymentBank: { type: string }
+        paymentAccountName: { type: string }
+        paymentAccountNumber: { type: string }
+        paymentTransferRemark: { type: string }
+        paymentInstructions: { type: string }
+        paymentMethods:
+          type: array
+          items: { type: string, enum: [paystack_card, paystack_transfer, custom_transfer] }
+    Dashboard:
+      type: object
+      required: [registered, attending, pending, declined, rsvpRate, totalCollected, recentActivity]
+      properties:
+        registered: { type: number }
+        attending: { type: number }
+        pending: { type: number }
+        declined: { type: number }
+        rsvpRate: { type: number }
+        totalCollected: { type: number }
+        recentActivity:
+          type: array
+          items: { $ref: "#/components/schemas/Activity" }
+    Activity:
+      type: object
+      required: [id, text, time, kind]
+      properties:
+        id: { type: number }
+        text: { type: string }
+        time: { type: string }
+        kind: { type: string }
+    Guest:
+      type: object
+      required: [id, name, phone, partySize, rsvp, registeredAt, tags, checkedInAt, advice, notes]
+      properties:
+        id: { type: number }
+        name: { type: string }
+        email: { type: string, nullable: true, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
+        phone: { type: string }
+        partySize: { type: number, minimum: 1 }
+        rsvp: { type: string, enum: [attending, pending, declined] }
+        registeredAt: { type: string }
+        checkedInAt: { type: string, nullable: true }
+        advice: { type: string }
+        notes: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+    GuestInput:
+      type: object
+      required: [name, phone]
+      properties:
+        name: { type: string }
+        email: { type: string, nullable: true, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
+        phone: { type: string }
+        partySize: { type: number, minimum: 1 }
+        rsvp: { type: string, enum: [attending, declined, pending] }
+        advice: { type: string }
+        notes: { type: string }
+    RsvpInput:
+      type: object
+      required: [rsvp]
+      properties:
+        rsvp: { type: string, enum: [attending, pending, declined] }
+    CheckInInput:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
+    Notification:
+      type: object
+      required: [id, title, channel, audience, status, sentAt, opens]
+      properties:
+        id: { type: number }
+        title: { type: string }
+        channel: { type: string, enum: [email, sms, whatsapp] }
+        audience: { type: string }
+        status: { type: string, enum: [sent, scheduled, draft] }
+        sentAt: { type: string }
+        opens: { type: number }
+    NotificationInput:
+      type: object
+      required: [title, channel, audience]
+      properties:
+        title: { type: string }
+        channel: { type: string, enum: [email, sms, whatsapp] }
+        audience: { type: string }
+    AsoEbiItem:
+      type: object
+      required: [id, name, color, price, available, image]
+      properties:
+        id: { type: number }
+        name: { type: string }
+        color: { type: string }
+        price: { type: number }
+        available: { type: number }
+        image: { type: string }
+    AsoEbiOrder:
+      type: object
+      required: [id, guestName, phone, itemName, quantity, amount, status, orderedAt, email, orderMode, paymentMethod, paymentStatus, paymentReference, capSize, deliveryAddress, notes, proofFileName]
+      properties:
+        id: { type: number }
+        guestName: { type: string }
+        phone: { type: string }
+        email: { type: string, nullable: true }
+        itemName: { type: string }
+        quantity: { type: number }
+        amount: { type: number }
+        status: { type: string, enum: [paid, pending, collected] }
+        orderedAt: { type: string }
+        orderMode: { type: string, enum: [ready_to_pay, reservation] }
+        paymentMethod: { type: string, enum: [paystack_card, paystack_transfer, custom_transfer] }
+        paymentStatus: { type: string, enum: [unpaid, pending, paid, failed] }
+        paymentReference: { type: string, nullable: true }
+        capSize: { type: string }
+        deliveryAddress: { type: string }
+        notes: { type: string }
+        proofFileName: { type: string, nullable: true }
+    AsoEbiOrderInput:
+      type: object
+      required: [guestName, phone, itemName, quantity, amount, orderMode, paymentMethod, deliveryAddress]
+      properties:
+        guestName: { type: string }
+        phone: { type: string }
+        email: { type: string, nullable: true }
+        itemName: { type: string }
+        quantity: { type: number, minimum: 1 }
+        amount: { type: number, minimum: 0 }
+        orderMode: { type: string, enum: [ready_to_pay, reservation] }
+        paymentMethod: { type: string, enum: [paystack_card, paystack_transfer, custom_transfer] }
+        capSize: { type: string }
+        deliveryAddress: { type: string }
+        notes: { type: string }
+        proofFileName: { type: string, nullable: true }
+    PaystackPaymentInput:
+      type: object
+      required: [orderId, email]
+      properties:
+        orderId: { type: number }
+        email: { type: string, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
+    PaystackPayment:
+      type: object
+      required: [reference, authorizationUrl, accessCode]
+      properties:
+        reference: { type: string }
+        authorizationUrl: { type: string }
+        accessCode: { type: string }
+    PaystackPaymentVerification:
+      type: object
+      required: [reference, status, paid, orderId]
+      properties:
+        reference: { type: string }
+        status: { type: string }
+        paid: { type: boolean }
+        orderId: { type: number, nullable: true }
+
