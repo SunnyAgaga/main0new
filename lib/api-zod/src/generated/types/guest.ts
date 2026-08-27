@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { GuestFriendOf } from './guestFriendOf';
 import type { GuestRsvp } from './guestRsvp';
 
 export interface Guest {
@@ -16,6 +17,7 @@ export interface Guest {
   /** @minimum 1 */
   partySize: number;
   rsvp: GuestRsvp;
+  friendOf: GuestFriendOf;
   registeredAt: string;
   checkedInAt: string | null;
   advice: string;

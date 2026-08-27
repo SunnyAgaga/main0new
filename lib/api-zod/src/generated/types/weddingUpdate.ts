@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { WeddingUpdateNotificationChannelsItem } from './weddingUpdateNotificationChannelsItem';
 import type { WeddingUpdatePaymentMethodsItem } from './weddingUpdatePaymentMethodsItem';
 
 export interface WeddingUpdate {
@@ -36,4 +37,6 @@ export interface WeddingUpdate {
   paymentTransferRemark: string;
   paymentInstructions: string;
   paymentMethods: WeddingUpdatePaymentMethodsItem[];
+  /** @minItems 1 */
+  notificationChannels: WeddingUpdateNotificationChannelsItem[];
 }

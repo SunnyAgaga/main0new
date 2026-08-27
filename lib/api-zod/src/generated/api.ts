@@ -26,6 +26,7 @@ export const getWeddingResponseWhiteWeddingDateRegExp = new RegExp('^[0-9]{4}-[0
 export const getWeddingResponsePaymentDeadlineRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
 
 
+
 export const GetWeddingResponse = zod.object({
   "id": zod.number(),
   "couple": zod.string(),
@@ -52,7 +53,9 @@ export const GetWeddingResponse = zod.object({
   "paymentAccountNumber": zod.string(),
   "paymentTransferRemark": zod.string(),
   "paymentInstructions": zod.string(),
-  "paymentMethods": zod.array(zod.enum(['paystack_card', 'paystack_transfer', 'custom_transfer']))
+  "paymentMethods": zod.array(zod.enum(['paystack_card', 'paystack_transfer', 'custom_transfer'])),
+  "notificationChannels": zod.array(zod.enum(['email', 'sms', 'whatsapp'])).min(1),
+  "paystackConfigured": zod.boolean()
 })
 
 
@@ -63,6 +66,7 @@ export const updateWeddingBodyDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{
 export const updateWeddingBodyTraditionalDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
 export const updateWeddingBodyWhiteWeddingDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
 export const updateWeddingBodyPaymentDeadlineRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
 
 
 export const UpdateWeddingBody = zod.object({
@@ -89,13 +93,15 @@ export const UpdateWeddingBody = zod.object({
   "paymentAccountNumber": zod.string(),
   "paymentTransferRemark": zod.string(),
   "paymentInstructions": zod.string(),
-  "paymentMethods": zod.array(zod.enum(['paystack_card', 'paystack_transfer', 'custom_transfer']))
+  "paymentMethods": zod.array(zod.enum(['paystack_card', 'paystack_transfer', 'custom_transfer'])),
+  "notificationChannels": zod.array(zod.enum(['email', 'sms', 'whatsapp'])).min(1)
 })
 
 export const updateWeddingResponseDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
 export const updateWeddingResponseTraditionalDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
 export const updateWeddingResponseWhiteWeddingDateRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
 export const updateWeddingResponsePaymentDeadlineRegExp = new RegExp('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+
 
 
 export const UpdateWeddingResponse = zod.object({
@@ -124,7 +130,9 @@ export const UpdateWeddingResponse = zod.object({
   "paymentAccountNumber": zod.string(),
   "paymentTransferRemark": zod.string(),
   "paymentInstructions": zod.string(),
-  "paymentMethods": zod.array(zod.enum(['paystack_card', 'paystack_transfer', 'custom_transfer']))
+  "paymentMethods": zod.array(zod.enum(['paystack_card', 'paystack_transfer', 'custom_transfer'])),
+  "notificationChannels": zod.array(zod.enum(['email', 'sms', 'whatsapp'])).min(1),
+  "paystackConfigured": zod.boolean()
 })
 
 
@@ -161,6 +169,7 @@ export const ListGuestsResponseItem = zod.object({
   "phone": zod.string(),
   "partySize": zod.number().min(1),
   "rsvp": zod.enum(['attending', 'pending', 'declined']),
+  "friendOf": zod.enum(['bride', 'groom', 'both']).nullable(),
   "registeredAt": zod.string(),
   "checkedInAt": zod.string().nullable(),
   "advice": zod.string(),
@@ -183,6 +192,7 @@ export const CreateGuestBody = zod.object({
   "phone": zod.string(),
   "partySize": zod.number().min(1).optional(),
   "rsvp": zod.enum(['attending', 'declined', 'pending']).optional(),
+  "friendOf": zod.enum(['bride', 'groom', 'both']),
   "advice": zod.string().optional(),
   "notes": zod.string().optional()
 })
@@ -198,6 +208,7 @@ export const CreateGuestResponse = zod.object({
   "phone": zod.string(),
   "partySize": zod.number().min(1),
   "rsvp": zod.enum(['attending', 'pending', 'declined']),
+  "friendOf": zod.enum(['bride', 'groom', 'both']).nullable(),
   "registeredAt": zod.string(),
   "checkedInAt": zod.string().nullable(),
   "advice": zod.string(),
@@ -228,6 +239,7 @@ export const UpdateGuestRsvpResponse = zod.object({
   "phone": zod.string(),
   "partySize": zod.number().min(1),
   "rsvp": zod.enum(['attending', 'pending', 'declined']),
+  "friendOf": zod.enum(['bride', 'groom', 'both']).nullable(),
   "registeredAt": zod.string(),
   "checkedInAt": zod.string().nullable(),
   "advice": zod.string(),
@@ -257,6 +269,7 @@ export const CheckInGuestResponse = zod.object({
   "phone": zod.string(),
   "partySize": zod.number().min(1),
   "rsvp": zod.enum(['attending', 'pending', 'declined']),
+  "friendOf": zod.enum(['bride', 'groom', 'both']).nullable(),
   "registeredAt": zod.string(),
   "checkedInAt": zod.string().nullable(),
   "advice": zod.string(),

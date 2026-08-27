@@ -46,6 +46,7 @@ export const weddingsTable = pgTable("weddings", {
   paymentTransferRemark: text("payment_transfer_remark").notNull().default("Wedding asoebi"),
   paymentInstructions: text("payment_instructions").notNull().default("All reservations must be paid by the payment deadline."),
   paymentMethods: text("payment_methods").array().notNull().default(["paystack_card", "paystack_transfer", "custom_transfer"]),
+  notificationChannels: text("notification_channels").array().notNull().default(["email", "sms", "whatsapp"]),
 });
 
 export const guestsTable = pgTable("guests", {
@@ -55,6 +56,7 @@ export const guestsTable = pgTable("guests", {
   phone: text("phone").notNull(),
   partySize: integer("party_size").notNull().default(1),
   rsvp: text("rsvp").notNull().default("pending"),
+  friendOf: text("friend_of"),
   tags: text("tags").array().notNull().default([]),
   registeredAt: timestamp("registered_at", { withTimezone: true })
     .notNull()

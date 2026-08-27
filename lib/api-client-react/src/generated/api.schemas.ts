@@ -18,6 +18,15 @@ export const WeddingPaymentMethodsItem = {
   custom_transfer: 'custom_transfer',
 } as const;
 
+export type WeddingNotificationChannelsItem = typeof WeddingNotificationChannelsItem[keyof typeof WeddingNotificationChannelsItem];
+
+
+export const WeddingNotificationChannelsItem = {
+  email: 'email',
+  sms: 'sms',
+  whatsapp: 'whatsapp',
+} as const;
+
 export interface Wedding {
   id: number;
   couple: string;
@@ -49,6 +58,9 @@ export interface Wedding {
   paymentTransferRemark: string;
   paymentInstructions: string;
   paymentMethods: WeddingPaymentMethodsItem[];
+  /** @minItems 1 */
+  notificationChannels: WeddingNotificationChannelsItem[];
+  paystackConfigured: boolean;
 }
 
 export type WeddingUpdatePaymentMethodsItem = typeof WeddingUpdatePaymentMethodsItem[keyof typeof WeddingUpdatePaymentMethodsItem];
@@ -58,6 +70,15 @@ export const WeddingUpdatePaymentMethodsItem = {
   paystack_card: 'paystack_card',
   paystack_transfer: 'paystack_transfer',
   custom_transfer: 'custom_transfer',
+} as const;
+
+export type WeddingUpdateNotificationChannelsItem = typeof WeddingUpdateNotificationChannelsItem[keyof typeof WeddingUpdateNotificationChannelsItem];
+
+
+export const WeddingUpdateNotificationChannelsItem = {
+  email: 'email',
+  sms: 'sms',
+  whatsapp: 'whatsapp',
 } as const;
 
 export interface WeddingUpdate {
@@ -89,6 +110,8 @@ export interface WeddingUpdate {
   paymentTransferRemark: string;
   paymentInstructions: string;
   paymentMethods: WeddingUpdatePaymentMethodsItem[];
+  /** @minItems 1 */
+  notificationChannels: WeddingUpdateNotificationChannelsItem[];
 }
 
 export interface Activity {
@@ -117,6 +140,15 @@ export const GuestRsvp = {
   declined: 'declined',
 } as const;
 
+export type GuestFriendOf = typeof GuestFriendOf[keyof typeof GuestFriendOf] | null;
+
+
+export const GuestFriendOf = {
+  bride: 'bride',
+  groom: 'groom',
+  both: 'both',
+} as const;
+
 export interface Guest {
   id: number;
   name: string;
@@ -126,6 +158,7 @@ export interface Guest {
   /** @minimum 1 */
   partySize: number;
   rsvp: GuestRsvp;
+  friendOf: GuestFriendOf;
   registeredAt: string;
   checkedInAt: string | null;
   advice: string;
@@ -142,6 +175,15 @@ export const GuestInputRsvp = {
   pending: 'pending',
 } as const;
 
+export type GuestInputFriendOf = typeof GuestInputFriendOf[keyof typeof GuestInputFriendOf];
+
+
+export const GuestInputFriendOf = {
+  bride: 'bride',
+  groom: 'groom',
+  both: 'both',
+} as const;
+
 export interface GuestInput {
   name: string;
   /** @pattern ^[^@\s]+@[^@\s]+\.[^@\s]+$ */
@@ -150,6 +192,7 @@ export interface GuestInput {
   /** @minimum 1 */
   partySize?: number;
   rsvp?: GuestInputRsvp;
+  friendOf: GuestInputFriendOf;
   advice?: string;
   notes?: string;
 }

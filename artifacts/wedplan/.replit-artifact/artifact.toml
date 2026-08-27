@@ -12,16 +12,27 @@ paths = [ "/" ]
 localPort = 24422
 
 [services.development]
-run = "pnpm --filter @workspace/wedplan run dev"
+run = "pnpm --filter @workspace/backend run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/wedplan", "run", "build" ]
-serve = "static"
-publicDir = "artifacts/wedplan/dist/public"
 
-[[services.production.rewrites]]
-from = "/*"
-to = "/index.html"
+[services.production.build]
+args = [ "pnpm", "--filter", "@workspace/backend", "run", "build" ]
+
+[services.production.build.env]
+NODE_ENV = "production"
+BASE_PATH = "/"
+
+[services.production.run]
+args = [ "node", "--env-file-if-exists=.env", "--enable-source-maps", "artifacts/wedplan/backend/dist/index.mjs" ]
+
+[services.production.run.env]
+PORT = "24422"
+NODE_ENV = "production"
+BASE_PATH = "/"
+
+[services.production.health.startup]
+path = "/api/healthz"
 
 [services.env]
 PORT = "24422"

@@ -271,7 +271,7 @@ components:
         - status
     Wedding:
       type: object
-      required: [id, couple, date, traditionalDate, whiteWeddingDate, venue, city, daysRemaining, eyebrow, venueDescription, dressCode, asoEbiTitle, asoEbiSubtitle, backgroundImage, menuDashboard, menuGuests, menuNotifications, menuAsoEbi, menuSettings, paymentDeadline, paymentBank, paymentAccountName, paymentAccountNumber, paymentTransferRemark, paymentInstructions, paymentMethods]
+      required: [id, couple, date, traditionalDate, whiteWeddingDate, venue, city, daysRemaining, eyebrow, venueDescription, dressCode, asoEbiTitle, asoEbiSubtitle, backgroundImage, menuDashboard, menuGuests, menuNotifications, menuAsoEbi, menuSettings, paymentDeadline, paymentBank, paymentAccountName, paymentAccountNumber, paymentTransferRemark, paymentInstructions, paymentMethods, notificationChannels, paystackConfigured]
       properties:
         id: { type: number }
         couple: { type: string }
@@ -301,9 +301,14 @@ components:
         paymentMethods:
           type: array
           items: { type: string, enum: [paystack_card, paystack_transfer, custom_transfer] }
+        notificationChannels:
+          type: array
+          minItems: 1
+          items: { type: string, enum: [email, sms, whatsapp] }
+        paystackConfigured: { type: boolean }
     WeddingUpdate:
       type: object
-      required: [couple, date, traditionalDate, whiteWeddingDate, venue, city, eyebrow, venueDescription, dressCode, asoEbiTitle, asoEbiSubtitle, backgroundImage, menuDashboard, menuGuests, menuNotifications, menuAsoEbi, menuSettings, paymentDeadline, paymentBank, paymentAccountName, paymentAccountNumber, paymentTransferRemark, paymentInstructions, paymentMethods]
+      required: [couple, date, traditionalDate, whiteWeddingDate, venue, city, eyebrow, venueDescription, dressCode, asoEbiTitle, asoEbiSubtitle, backgroundImage, menuDashboard, menuGuests, menuNotifications, menuAsoEbi, menuSettings, paymentDeadline, paymentBank, paymentAccountName, paymentAccountNumber, paymentTransferRemark, paymentInstructions, paymentMethods, notificationChannels]
       properties:
         couple: { type: string }
         date: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
@@ -331,6 +336,10 @@ components:
         paymentMethods:
           type: array
           items: { type: string, enum: [paystack_card, paystack_transfer, custom_transfer] }
+        notificationChannels:
+          type: array
+          minItems: 1
+          items: { type: string, enum: [email, sms, whatsapp] }
     Dashboard:
       type: object
       required: [registered, attending, pending, declined, rsvpRate, totalCollected, recentActivity]
@@ -354,7 +363,7 @@ components:
         kind: { type: string }
     Guest:
       type: object
-      required: [id, name, phone, partySize, rsvp, registeredAt, tags, checkedInAt, advice, notes]
+      required: [id, name, phone, partySize, rsvp, friendOf, registeredAt, tags, checkedInAt, advice, notes]
       properties:
         id: { type: number }
         name: { type: string }
@@ -362,6 +371,7 @@ components:
         phone: { type: string }
         partySize: { type: number, minimum: 1 }
         rsvp: { type: string, enum: [attending, pending, declined] }
+        friendOf: { type: string, enum: [bride, groom, both], nullable: true }
         registeredAt: { type: string }
         checkedInAt: { type: string, nullable: true }
         advice: { type: string }
@@ -371,13 +381,14 @@ components:
           items: { type: string }
     GuestInput:
       type: object
-      required: [name, phone]
+      required: [name, phone, friendOf]
       properties:
         name: { type: string }
         email: { type: string, nullable: true, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
         phone: { type: string }
         partySize: { type: number, minimum: 1 }
         rsvp: { type: string, enum: [attending, declined, pending] }
+        friendOf: { type: string, enum: [bride, groom, both] }
         advice: { type: string }
         notes: { type: string }
     RsvpInput:

@@ -1,4 +1,4 @@
-import { useListNotifications } from "@workspace/api-client-react"
+import { useGetWedding, useListNotifications } from "@workspace/api-client-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,9 +9,10 @@ import { useState } from "react"
 
 export default function Notifications() {
   const { data: notifications, isLoading } = useListNotifications()
+  const { data: wedding, isLoading: isWeddingLoading } = useGetWedding()
   const [open, setOpen] = useState(false)
 
-  if (isLoading) {
+  if (isLoading || isWeddingLoading) {
     return <div className="animate-pulse bg-muted rounded-xl h-[400px] w-full"></div>
   }
 
@@ -46,7 +47,10 @@ export default function Notifications() {
                 Send updates or reminders to your guest list.
               </DialogDescription>
             </DialogHeader>
-            <NotificationForm onSuccess={() => setOpen(false)} />
+            <NotificationForm
+              enabledChannels={wedding?.notificationChannels ?? ["email", "sms", "whatsapp"]}
+              onSuccess={() => setOpen(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>

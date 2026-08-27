@@ -23,6 +23,12 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent } from "@/components/ui/card"
 
+const friendOfLabel: Record<string, string> = {
+  bride: "Friend of the Bride",
+  groom: "Friend of the Groom",
+  both: "Friend of Both",
+}
+
 export default function Guests() {
   const { data: guests, isLoading } = useListGuests()
   const [search, setSearch] = useState("")
@@ -97,6 +103,7 @@ export default function Guests() {
                   <TableHead>Guest</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Party Size</TableHead>
+                   <TableHead>Connection</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
@@ -104,7 +111,7 @@ export default function Guests() {
               <TableBody>
                 {filteredGuests.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No guests found matching your criteria.
                     </TableCell>
                   </TableRow>
@@ -122,6 +129,7 @@ export default function Guests() {
                         <div className="text-sm text-muted-foreground">{guest.phone}</div>
                       </TableCell>
                       <TableCell>{guest.partySize}</TableCell>
+                       <TableCell className="text-sm">{guest.friendOf ? friendOfLabel[guest.friendOf] : "Not specified"}</TableCell>
                       <TableCell>
                         <Badge variant={
                           guest.rsvp === 'attending' ? 'success' : 

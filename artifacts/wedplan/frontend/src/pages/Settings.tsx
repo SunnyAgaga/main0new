@@ -8,7 +8,7 @@ import {
   useUpdateWedding,
 } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
-import { CreditCard, Download, FileSpreadsheet, Image, QrCode, Save, Settings2, Type } from "lucide-react"
+import { BellRing, CreditCard, Download, FileSpreadsheet, Image, QrCode, Save, Settings2, ShieldCheck, Type } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -40,6 +40,7 @@ type SettingsForm = {
   paymentTransferRemark: string
   paymentInstructions: string
   paymentMethods: Array<"paystack_card" | "paystack_transfer" | "custom_transfer">
+  notificationChannels: Array<"email" | "sms" | "whatsapp">
 }
 
 const createForm = (wedding: SettingsForm): SettingsForm => ({ ...wedding })
@@ -58,7 +59,7 @@ export default function Settings() {
     mutation: {
       onSuccess: async () => {
         await queryClient.invalidateQueries({ queryKey: getGetWeddingQueryKey() })
-        toast({ title: "Settings saved", description: "Your public wedding page and workspace menu have been updated." })
+        toast({ title: "Settings saved", description: "Your wedding, payment, and notification settings have been updated." })
       },
       onError: () => {
         toast({ title: "Settings could not be saved", description: "Please try again.", variant: "destructive" })
@@ -93,11 +94,12 @@ export default function Settings() {
         paymentTransferRemark: wedding.paymentTransferRemark,
         paymentInstructions: wedding.paymentInstructions,
         paymentMethods: wedding.paymentMethods,
+        notificationChannels: wedding.notificationChannels,
       }))
     }
   }, [wedding])
 
-  if (isLoading || !form) {
+  if (isLoading || !wedding || !form) {
     return <div className="animate-pulse bg-muted rounded-xl h-[560px] w-full" />
   }
 
@@ -110,6 +112,13 @@ export default function Settings() {
       ? form.paymentMethods.filter((item) => item !== method)
       : [...form.paymentMethods, method]
     if (next.length > 0) updateField("paymentMethods", next)
+  }
+
+  const toggleNotificationChannel = (channel: SettingsForm["notificationChannels"][number]) => {
+    const next = form.notificationChannels.includes(channel)
+      ? form.notificationChannels.filter((item) => item !== channel)
+      : [...form.notificationChannels, channel]
+    if (next.length > 0) updateField("notificationChannels", next)
   }
 
   const submit = (event: React.FormEvent) => {
@@ -194,6 +203,37 @@ export default function Settings() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-emerald-100 p-2 text-emerald-700"><ShieldCheck className="h-5 w-5" /></div>
+                <div>
+                  <CardTitle>Paystack connection</CardTitle>
+                  <CardDescription>Secure online checkout status for card and bank transfer payments.</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold">Server-side connection</p>
+                  <p className="mt-1 text-sm text-muted-foreground">The Paystack secret is stored securely outside the browser and is never shown or saved with wedding settings.</p>
+                </div>
+                <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${wedding.paystackConfigured ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"}`}>
+                  {wedding.paystackConfigured ? "Connected" : "Not configured"}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {wedding.paystackConfigured
+                  ? "Paystack checkout is ready. Choose which online payment methods guests can use below."
+                  : "Add PAYSTACK_SECRET_KEY in Replit Secrets to enable online checkout. Manual bank transfer can remain available."}
+              </p>
+              <Button type="button" variant="outline" size="sm" asChild>
+                <a href="#payment-options">Review payment options and bank details</a>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card id="payment-options">
+            <CardHeader>
+              <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-primary/10 p-2 text-primary"><CreditCard className="h-5 w-5" /></div>
                 <div>
                   <CardTitle>Payment collection</CardTitle>
@@ -230,6 +270,42 @@ export default function Settings() {
                 <Field label="Transfer remark"><Input value={form.paymentTransferRemark} onChange={(event) => updateField("paymentTransferRemark", event.target.value)} /></Field>
               </div>
               <Field label="Payment instructions"><Textarea rows={3} value={form.paymentInstructions} onChange={(event) => updateField("paymentInstructions", event.target.value)} /></Field>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-secondary/25 p-2 text-primary"><BellRing className="h-5 w-5" /></div>
+                <div>
+                  <CardTitle>Notification channels</CardTitle>
+                  <CardDescription>Choose which channels organizers can use when creating campaigns.</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[
+                ["email", "Email", "Newsletters and detailed event updates."],
+                ["sms", "SMS", "Short reminders delivered by text message."],
+                ["whatsapp", "WhatsApp", "Broadcast-style updates for guests."],
+              ].map(([channel, title, description]) => {
+                const typedChannel = channel as SettingsForm["notificationChannels"][number]
+                const checked = form.notificationChannels.includes(typedChannel)
+                const isOnlyEnabled = checked && form.notificationChannels.length === 1
+                return (
+                  <label key={channel} className={`flex items-start gap-3 rounded-lg border p-3 text-sm ${isOnlyEnabled ? "cursor-not-allowed bg-muted/30" : "cursor-pointer"}`}>
+                    <input
+                      type="checkbox"
+                      className="mt-1"
+                      checked={checked}
+                      disabled={isOnlyEnabled}
+                      onChange={() => toggleNotificationChannel(typedChannel)}
+                    />
+                    <span><strong className="block text-foreground">{title}</strong><span className="text-muted-foreground">{description}</span></span>
+                  </label>
+                )
+              })}
+              <p className="text-xs text-muted-foreground">At least one notification channel must remain enabled.</p>
             </CardContent>
           </Card>
 
@@ -291,8 +367,8 @@ export default function Settings() {
             <CardContent className="grid gap-3">
               <Button type="button" variant="outline" className="justify-between" onClick={() => downloadExcel(
                 "WedPlan guest list",
-                ["Name", "Email", "Phone", "Party size", "RSVP", "Registered", "Tags"],
-                (guests ?? []).map((guest) => [guest.name, guest.email, guest.phone, guest.partySize, guest.rsvp, guest.registeredAt, guest.tags.join(", ")]),
+                ["Name", "Email", "Phone", "Party size", "Friend of", "RSVP", "Registered", "Tags"],
+                (guests ?? []).map((guest) => [guest.name, guest.email, guest.phone, guest.partySize, guest.friendOf ?? "Not specified", guest.rsvp, guest.registeredAt, guest.tags.join(", ")]),
                 "wedplan-guest-list.xls",
               )}>
                 <span>Guest list & RSVP</span><span className="text-xs text-muted-foreground">{guests?.length ?? 0} guests</span>

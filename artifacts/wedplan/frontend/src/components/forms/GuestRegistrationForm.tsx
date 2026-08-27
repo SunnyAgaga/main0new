@@ -14,6 +14,9 @@ const formSchema = z.object({
   name: z.string().min(2, "Name is required"),
   email: z.union([z.string().email("Invalid email address"), z.literal("")]),
   phone: z.string().min(10, "Phone number is required"),
+  friendOf: z.enum(["bride", "groom", "both"], {
+    errorMap: () => ({ message: "Please choose who you are celebrating with." }),
+  }),
   rsvp: z.enum(["attending", "declined"]),
   advice: z.string(),
   notes: z.string(),
@@ -30,6 +33,7 @@ export function GuestRegistrationForm({ onSuccess }: { onSuccess?: () => void })
       name: "",
       email: "",
       phone: "",
+      friendOf: undefined,
       rsvp: "attending",
       advice: "",
       notes: "",
@@ -106,6 +110,32 @@ export function GuestRegistrationForm({ onSuccess }: { onSuccess?: () => void })
                 <button type="button" onClick={() => field.onChange("declined")} className={`h-14 rounded-2xl border px-4 font-semibold transition-colors ${field.value === "declined" ? "border-[#0d5148] bg-[#0d5148] text-white" : "border-[#e5ded8] bg-[#fffdfa] text-[#2e2a2c] hover:border-[#0d5148]"}`}>Regretfully Decline</button>
               </div>
             </FormControl>
+          </FormItem>
+        )} />
+        <FormField control={form.control} name="friendOf" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-sm font-bold uppercase tracking-[0.08em] text-[#164d45]">I am a friend of *</FormLabel>
+            <FormControl>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Who are you celebrating with?">
+                {[
+                  ["bride", "The Bride"],
+                  ["groom", "The Groom"],
+                  ["both", "Both of Them"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={field.value === value}
+                    onClick={() => field.onChange(value)}
+                    className={`min-h-14 rounded-2xl border px-4 py-3 font-semibold transition-colors ${field.value === value ? "border-[#0d5148] bg-[#0d5148] text-white" : "border-[#e5ded8] bg-[#fffdfa] text-[#2e2a2c] hover:border-[#0d5148]"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </FormControl>
+            <FormMessage />
           </FormItem>
         )} />
         <FormField control={form.control} name="advice" render={({ field }) => (

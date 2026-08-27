@@ -4,12 +4,13 @@ WedPlan helps couples host a beautiful, organised wedding experience with guest 
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/backend run dev` — run the unified WedPlan web service (API and frontend on port 5000)
+- `cp .env.example .env` — create local environment overrides; injected Replit Secrets always take precedence
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL` — Postgres connection string. See `.env.example` for local setup and optional settings.
 
 ## Stack
 
@@ -18,16 +19,16 @@ WedPlan helps couples host a beautiful, organised wedding experience with guest 
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Build: Vite frontend + esbuild backend bundle
 
 ## Where things live
 
 - `lib/api-spec/openapi.yaml` — source of truth for the WedPlan API and generated client hooks.
 - `lib/db/src/schema/wedding.ts` — wedding, guest, notification, Aso Ebi, and order persistence models.
-- `artifacts/api-server/src/routes/wedding.ts` — endpoint handlers and first-run example data.
-- `artifacts/wedplan/src/` — guest-facing wedding site and organizer dashboard routes.
-- `artifacts/wedplan/src/pages/Settings.tsx` — editable public-page copy, hero background selection, and workspace menu labels.
-- `artifacts/wedplan/src/pages/CheckIn.tsx` — QR-linked guest arrival confirmation for the white-wedding date.
+- `artifacts/wedplan/backend/src/routes/wedding.ts` — endpoint handlers and first-run example data.
+- `artifacts/wedplan/frontend/src/` — guest-facing wedding site and organizer dashboard routes.
+- `artifacts/wedplan/frontend/src/pages/Settings.tsx` — editable public-page copy, hero background selection, and workspace menu labels.
+- `artifacts/wedplan/frontend/src/pages/CheckIn.tsx` — QR-linked guest arrival confirmation for the white-wedding date.
 
 ## Architecture decisions
 
@@ -36,6 +37,7 @@ WedPlan helps couples host a beautiful, organised wedding experience with guest 
 - Seed data is added on first API use so the preview starts with a realistic, usable wedding workspace.
 - Wedding settings are stored as calendar-date strings, keeping the displayed wedding day stable across timezones.
 - Guest arrival check-in is gated by the white-wedding calendar date in the Africa/Lagos timezone and requires the registered email address.
+- The backend owns the single web process, serving the Vite build and routing `/api` from the same origin. The frontend always uses relative `/api` paths.
 
 ## Product
 

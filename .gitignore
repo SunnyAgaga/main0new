@@ -47,3 +47,9 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Local environment overrides. Keep the example file committed.
+.env
+.env.local
+.env.*.local
+!.env.example

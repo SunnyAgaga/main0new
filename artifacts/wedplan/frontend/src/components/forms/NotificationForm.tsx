@@ -23,16 +23,33 @@ const formSchema = z.object({
   audience: z.enum(["all", "attending", "pending", "declined"]),
 })
 
-export function NotificationForm({ onSuccess }: { onSuccess?: () => void }) {
+type NotificationChannel = "email" | "sms" | "whatsapp"
+
+const channelLabels: Record<NotificationChannel, string> = {
+  email: "Email Newsletter",
+  sms: "SMS Text Message",
+  whatsapp: "WhatsApp Broadcast",
+}
+
+export function NotificationForm({
+  enabledChannels,
+  onSuccess,
+}: {
+  enabledChannels: NotificationChannel[]
+  onSuccess?: () => void
+}) {
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const createNotification = useCreateNotification()
+  const disabledChannelLabels = (["email", "sms", "whatsapp"] as NotificationChannel[])
+    .filter((channel) => !enabledChannels.includes(channel))
+    .map((channel) => channelLabels[channel].replace(" Newsletter", "").replace(" Text Message", "").replace(" Broadcast", ""))
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      channel: "email",
+      channel: enabledChannels[0] ?? "email",
       audience: "all",
     },
   })
@@ -81,18 +98,23 @@ export function NotificationForm({ onSuccess }: { onSuccess?: () => void }) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Delivery Channel</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select channel" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="email">Email Newsletter</SelectItem>
-                  <SelectItem value="sms">SMS Text Message</SelectItem>
-                  <SelectItem value="whatsapp">WhatsApp Broadcast</SelectItem>
+                  {enabledChannels.map((channel) => (
+                    <SelectItem key={channel} value={channel}>{channelLabels[channel]}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              <FormDescription>
+                {disabledChannelLabels.length === 0
+                  ? "All channels are enabled in Settings."
+                  : `${disabledChannelLabels.join(", ")} ${disabledChannelLabels.length === 1 ? "is" : "are"} disabled in Settings.`}
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

@@ -80,6 +80,7 @@ const toWedding = (wedding: typeof weddingsTable.$inferSelect) => {
   return {
     ...wedding,
     daysRemaining,
+    paystackConfigured: Boolean(process.env.PAYSTACK_SECRET_KEY),
   };
 };
 
@@ -499,9 +500,20 @@ router.get("/notifications", async (_req, res): Promise<void> => {
 });
 
 router.post("/notifications", async (req, res): Promise<void> => {
+  await ensureSeedData();
   const parsed = CreateNotificationBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [wedding] = await db
+    .select({ notificationChannels: weddingsTable.notificationChannels })
+    .from(weddingsTable)
+    .orderBy(asc(weddingsTable.id))
+    .limit(1);
+  if (!wedding?.notificationChannels.includes(parsed.data.channel)) {
+    res.status(400).json({ error: "This notification channel is disabled in wedding settings." });
     return;
   }
 
