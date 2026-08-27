@@ -9,22 +9,22 @@ WedPlan helps couples host a beautiful, organised wedding experience with guest 
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string. See `.env.example` for local setup and optional settings.
+- Required env: `MONGODB_URI` — MongoDB connection string. `MONGODB_DB_NAME` defaults to `wedplan`.
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
 - API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
+- DB: MongoDB + official MongoDB Node.js driver
+- Validation: Zod (`zod/v4`)
 - API codegen: Orval (from OpenAPI spec)
 - Build: Vite frontend + esbuild backend bundle
 
 ## Where things live
 
 - `lib/api-spec/openapi.yaml` — source of truth for the WedPlan API and generated client hooks.
-- `lib/db/src/schema/wedding.ts` — wedding, guest, notification, Aso Ebi, and order persistence models.
+- `lib/db/src/schema/wedding.ts` — typed wedding, guest, notification, Aso Ebi, and order documents.
+- `lib/db/src/repository.ts` — MongoDB persistence operations used by the backend.
 - `artifacts/wedplan/backend/src/routes/wedding.ts` — endpoint handlers and first-run example data.
 - `artifacts/wedplan/frontend/src/` — guest-facing wedding site and organizer dashboard routes.
 - `artifacts/wedplan/frontend/src/pages/Settings.tsx` — editable public-page copy, hero background selection, and workspace menu labels.
@@ -38,6 +38,8 @@ WedPlan helps couples host a beautiful, organised wedding experience with guest 
 - Wedding settings are stored as calendar-date strings, keeping the displayed wedding day stable across timezones.
 - Guest arrival check-in is gated by the white-wedding calendar date in the Africa/Lagos timezone and requires the registered email address.
 - The backend owns the single web process, serving the Vite build and routing `/api` from the same origin. The frontend always uses relative `/api` paths.
+- Public numeric IDs are preserved in MongoDB so existing API clients, payment references, and QR/check-in behavior remain compatible.
+- The running application uses MongoDB exclusively.
 
 ## Product
 

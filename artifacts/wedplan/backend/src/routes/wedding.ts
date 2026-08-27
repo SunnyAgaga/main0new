@@ -1,12 +1,35 @@
 import { Router, type IRouter } from "express";
-import { and, asc, count, desc, eq } from "drizzle-orm";
 import {
-  asoEbiItemsTable,
-  asoEbiOrdersTable,
-  db,
-  guestsTable,
-  notificationCampaignsTable,
-  weddingsTable,
+  countAsoEbiOrders,
+  countGuests,
+  countNotificationCampaigns,
+  createAsoEbiItem,
+  createAsoEbiOrder,
+  createAsoEbiOrders,
+  createGuest,
+  createGuests,
+  createNotificationCampaign,
+  createNotificationCampaigns,
+  createWedding,
+  findAsoEbiOrderById,
+  findAsoEbiOrderByPaymentReference,
+  findAsoEbiOrdersByItemName,
+  findGuestByEmail,
+  findPrimaryWedding,
+  listAsoEbiItems,
+  listAsoEbiOrders,
+  listGuests,
+  listNotificationCampaigns,
+  updateAsoEbiItemByName,
+  updateAsoEbiOrder,
+  updateAsoEbiOrders,
+  updateGuest,
+  updateWedding,
+  type AsoEbiItem,
+  type AsoEbiOrder,
+  type Guest,
+  type NotificationCampaign,
+  type Wedding,
 } from "@workspace/db";
 import {
   CreateAsoEbiOrderBody,
@@ -37,7 +60,7 @@ import {
 const router: IRouter = Router();
 const PAYSTACK_API_BASE_URL = "https://api.paystack.co";
 
-const toGuest = (guest: typeof guestsTable.$inferSelect) => ({
+const toGuest = (guest: Guest) => ({
   ...guest,
   registeredAt: guest.registeredAt.toISOString(),
   checkedInAt: guest.checkedInAt?.toISOString() ?? null,
@@ -54,23 +77,23 @@ const getLagosCalendarDate = () => {
   return `${value("year")}-${value("month")}-${value("day")}`;
 };
 
-const toCampaign = (campaign: typeof notificationCampaignsTable.$inferSelect) => ({
+const toCampaign = (campaign: NotificationCampaign) => ({
   ...campaign,
   sentAt: campaign.sentAt.toISOString(),
 });
 
-const toItem = (item: typeof asoEbiItemsTable.$inferSelect) => ({
+const toItem = (item: AsoEbiItem) => ({
   ...item,
   price: Number(item.price),
 });
 
-const toOrder = (order: typeof asoEbiOrdersTable.$inferSelect) => ({
+const toOrder = (order: AsoEbiOrder) => ({
   ...order,
   amount: Number(order.amount),
   orderedAt: order.orderedAt.toISOString(),
 });
 
-const toWedding = (wedding: typeof weddingsTable.$inferSelect) => {
+const toWedding = (wedding: Wedding) => {
   const target = new Date(`${wedding.date}T00:00:00+01:00`).getTime();
   const daysRemaining = Math.max(
     0,
@@ -94,13 +117,9 @@ async function ensureSeedData(): Promise<void> {
 }
 
 async function seedData(): Promise<void> {
-  const [wedding] = await db
-    .select()
-    .from(weddingsTable)
-    .orderBy(asc(weddingsTable.id))
-    .limit(1);
+  const wedding = await findPrimaryWedding();
   if (!wedding) {
-    await db.insert(weddingsTable).values({
+    await createWedding({
       couple: "Tomiwa & Dami",
       date: "2026-11-14",
       venue: "The Balmoral, Federal Palace",
@@ -108,9 +127,8 @@ async function seedData(): Promise<void> {
     });
   }
 
-  const [guestCount] = await db.select({ value: count() }).from(guestsTable);
-  if (Number(guestCount?.value ?? 0) === 0) {
-    await db.insert(guestsTable).values([
+  if ((await countGuests()) === 0) {
+    await createGuests([
       {
         name: "Amara Okafor",
         email: "amara@example.com",
@@ -138,11 +156,8 @@ async function seedData(): Promise<void> {
     ]);
   }
 
-  const [campaignCount] = await db
-    .select({ value: count() })
-    .from(notificationCampaignsTable);
-  if (Number(campaignCount?.value ?? 0) === 0) {
-    await db.insert(notificationCampaignsTable).values([
+  if ((await countNotificationCampaigns()) === 0) {
+    await createNotificationCampaigns([
       {
         title: "Save the date is here",
         channel: "email",
@@ -204,31 +219,32 @@ async function seedData(): Promise<void> {
     ["Olive Senator", asoEbiSamples[2]],
   ] as const;
   for (const [legacyName, sample] of legacyItemUpdates) {
-    await db
-      .update(asoEbiItemsTable)
-      .set(sample)
-      .where(eq(asoEbiItemsTable.name, legacyName));
+    await updateAsoEbiItemByName(legacyName, {
+      ...sample,
+      price: Number(sample.price),
+    });
   }
 
-  const items = await db.select({ name: asoEbiItemsTable.name }).from(asoEbiItemsTable);
+  const items = await listAsoEbiItems();
   const existingItemNames = new Set(items.map((item) => item.name));
   const missingSamples = asoEbiSamples.filter((sample) => !existingItemNames.has(sample.name));
   if (missingSamples.length > 0) {
-    await db.insert(asoEbiItemsTable).values(missingSamples);
+    await Promise.all(
+      missingSamples.map((sample) =>
+        createAsoEbiItem({ ...sample, price: Number(sample.price) }),
+      ),
+    );
   }
 
-  const [orderCount] = await db
-    .select({ value: count() })
-    .from(asoEbiOrdersTable);
-  if (Number(orderCount?.value ?? 0) === 0) {
-    await db.insert(asoEbiOrdersTable).values([
+  if ((await countAsoEbiOrders()) === 0) {
+    await createAsoEbiOrders([
       {
         guestName: "Amara Okafor",
         phone: "+234 803 555 0190",
         email: "amara@example.com",
         itemName: "Aso Ebi Fabric — Ladies, 3 yards",
         quantity: 2,
-        amount: "48000.00",
+        amount: 48000,
         status: "paid",
         orderMode: "ready_to_pay",
         deliveryAddress: "Lagos, Nigeria",
@@ -239,7 +255,7 @@ async function seedData(): Promise<void> {
         email: "olu.nneka@example.com",
         itemName: "Aso Ebi Fabric — Ladies, 4 yards",
         quantity: 2,
-        amount: "64000.00",
+        amount: 64000,
         status: "pending",
         orderMode: "reservation",
         deliveryAddress: "Lagos, Nigeria",
@@ -253,15 +269,12 @@ async function seedData(): Promise<void> {
     ["Olive Senator", "Aso Ebi Fabric — Ladies, 5 yards", "40000.00"],
   ] as const;
   for (const [legacyName, itemName, unitPrice] of legacyOrderUpdates) {
-    const legacyOrders = await db
-      .select()
-      .from(asoEbiOrdersTable)
-      .where(eq(asoEbiOrdersTable.itemName, legacyName));
+    const legacyOrders = await findAsoEbiOrdersByItemName(legacyName);
     for (const order of legacyOrders) {
-      await db
-        .update(asoEbiOrdersTable)
-        .set({ itemName, amount: String(order.quantity * Number(unitPrice)) })
-        .where(eq(asoEbiOrdersTable.id, order.id));
+      await updateAsoEbiOrder(order.id, {
+        itemName,
+        amount: order.quantity * Number(unitPrice),
+      });
     }
   }
 
@@ -282,25 +295,16 @@ async function seedData(): Promise<void> {
     },
   ] as const;
   for (const details of demoContactUpdates) {
-    await db
-      .update(asoEbiOrdersTable)
-      .set(details)
-      .where(
-        and(
-          eq(asoEbiOrdersTable.guestName, details.guestName),
-          eq(asoEbiOrdersTable.phone, ""),
-        ),
-      );
+    await updateAsoEbiOrders(
+      { guestName: details.guestName, phone: "" },
+      details,
+    );
   }
 }
 
 router.get("/wedding", async (req, res): Promise<void> => {
   await ensureSeedData();
-  const [wedding] = await db
-    .select()
-    .from(weddingsTable)
-    .orderBy(asc(weddingsTable.id))
-    .limit(1);
+  const wedding = await findPrimaryWedding();
   if (!wedding) {
     req.log.error("Wedding seed was not available");
     res.status(500).json({ error: "Wedding data unavailable" });
@@ -319,32 +323,28 @@ router.patch("/wedding", async (req, res): Promise<void> => {
     return;
   }
 
-  const [current] = await db
-    .select()
-    .from(weddingsTable)
-    .orderBy(asc(weddingsTable.id))
-    .limit(1);
+  const current = await findPrimaryWedding();
   if (!current) {
     res.status(404).json({ error: "Wedding not found" });
     return;
   }
 
-  const [wedding] = await db
-    .update(weddingsTable)
-    .set({
-      ...parsed.data,
-      date: parsed.data.date,
-    })
-    .where(eq(weddingsTable.id, current.id))
-    .returning();
+  const wedding = await updateWedding(current.id, {
+    ...parsed.data,
+    date: parsed.data.date,
+  });
+  if (!wedding) {
+    res.status(404).json({ error: "Wedding not found" });
+    return;
+  }
 
   res.json(UpdateWeddingResponse.parse(toWedding(wedding)));
 });
 
 router.get("/dashboard", async (_req, res): Promise<void> => {
   await ensureSeedData();
-  const guests = await db.select().from(guestsTable);
-  const orders = await db.select().from(asoEbiOrdersTable);
+  const guests = await listGuests("asc");
+  const orders = await listAsoEbiOrders("asc");
   const attending = guests.filter((guest) => guest.rsvp === "attending").length;
   const pending = guests.filter((guest) => guest.rsvp === "pending").length;
   const declined = guests.filter((guest) => guest.rsvp === "declined").length;
@@ -386,10 +386,7 @@ router.get("/dashboard", async (_req, res): Promise<void> => {
 
 router.get("/guests", async (_req, res): Promise<void> => {
   await ensureSeedData();
-  const guests = await db
-    .select()
-    .from(guestsTable)
-    .orderBy(desc(guestsTable.registeredAt));
+  const guests = await listGuests();
   res.json(ListGuestsResponse.parse(guests.map(toGuest)));
 });
 
@@ -401,21 +398,20 @@ router.post("/guests", async (req, res): Promise<void> => {
     return;
   }
 
-  const [existing] = parsed.data.email
-    ? await db
-        .select()
-        .from(guestsTable)
-        .where(eq(guestsTable.email, parsed.data.email))
-    : [];
+  const existing = parsed.data.email
+    ? await findGuestByEmail(parsed.data.email)
+    : null;
   if (existing) {
     res.status(400).json({ error: "A guest with this email is already registered." });
     return;
   }
 
-  const [guest] = await db
-    .insert(guestsTable)
-    .values({ ...parsed.data, rsvp: parsed.data.rsvp ?? "pending", tags: ["New registration"] })
-    .returning();
+  const guest = await createGuest({
+    ...parsed.data,
+    email: parsed.data.email ?? null,
+    rsvp: parsed.data.rsvp ?? "pending",
+    tags: ["New registration"],
+  });
   res.status(201).json(CreateGuestResponse.parse(toGuest(guest)));
 });
 
@@ -427,11 +423,9 @@ router.patch("/guests/:id/rsvp", async (req, res): Promise<void> => {
     return;
   }
 
-  const [guest] = await db
-    .update(guestsTable)
-    .set({ rsvp: parsed.data.rsvp })
-    .where(eq(guestsTable.id, params.data.id))
-    .returning();
+  const guest = await updateGuest(params.data.id, {
+    rsvp: parsed.data.rsvp,
+  });
   if (!guest) {
     res.status(404).json({ error: "Guest not found" });
     return;
@@ -448,11 +442,7 @@ router.post("/guests/check-in", async (req, res): Promise<void> => {
     return;
   }
 
-  const [wedding] = await db
-    .select()
-    .from(weddingsTable)
-    .orderBy(asc(weddingsTable.id))
-    .limit(1);
+  const wedding = await findPrimaryWedding();
   if (!wedding) {
     res.status(404).json({ error: "Wedding not found" });
     return;
@@ -467,11 +457,7 @@ router.post("/guests/check-in", async (req, res): Promise<void> => {
   }
 
   const email = parsed.data.email.trim().toLowerCase();
-  const [guest] = await db
-    .select()
-    .from(guestsTable)
-    .where(eq(guestsTable.email, email))
-    .limit(1);
+  const guest = await findGuestByEmail(email);
   if (!guest) {
     res.status(404).json({ error: "We could not find a registration for that email address." });
     return;
@@ -482,20 +468,19 @@ router.post("/guests/check-in", async (req, res): Promise<void> => {
     return;
   }
 
-  const [checkedInGuest] = await db
-    .update(guestsTable)
-    .set({ checkedInAt: new Date() })
-    .where(eq(guestsTable.id, guest.id))
-    .returning();
+  const checkedInGuest = await updateGuest(guest.id, {
+    checkedInAt: new Date(),
+  });
+  if (!checkedInGuest) {
+    res.status(404).json({ error: "Guest not found" });
+    return;
+  }
   res.json(CheckInGuestResponse.parse(toGuest(checkedInGuest)));
 });
 
 router.get("/notifications", async (_req, res): Promise<void> => {
   await ensureSeedData();
-  const campaigns = await db
-    .select()
-    .from(notificationCampaignsTable)
-    .orderBy(desc(notificationCampaignsTable.sentAt));
+  const campaigns = await listNotificationCampaigns();
   res.json(ListNotificationsResponse.parse(campaigns.map(toCampaign)));
 });
 
@@ -507,35 +492,29 @@ router.post("/notifications", async (req, res): Promise<void> => {
     return;
   }
 
-  const [wedding] = await db
-    .select({ notificationChannels: weddingsTable.notificationChannels })
-    .from(weddingsTable)
-    .orderBy(asc(weddingsTable.id))
-    .limit(1);
+  const wedding = await findPrimaryWedding();
   if (!wedding?.notificationChannels.includes(parsed.data.channel)) {
     res.status(400).json({ error: "This notification channel is disabled in wedding settings." });
     return;
   }
 
-  const [campaign] = await db
-    .insert(notificationCampaignsTable)
-    .values({ ...parsed.data, status: "scheduled", opens: 0 })
-    .returning();
+  const campaign = await createNotificationCampaign({
+    ...parsed.data,
+    status: "scheduled",
+    opens: 0,
+  });
   res.status(201).json(CreateNotificationResponse.parse(toCampaign(campaign)));
 });
 
 router.get("/aso-ebi", async (_req, res): Promise<void> => {
   await ensureSeedData();
-  const items = await db.select().from(asoEbiItemsTable);
+  const items = await listAsoEbiItems();
   res.json(ListAsoEbiResponse.parse(items.map(toItem)));
 });
 
 router.get("/aso-ebi/orders", async (_req, res): Promise<void> => {
   await ensureSeedData();
-  const orders = await db
-    .select()
-    .from(asoEbiOrdersTable)
-    .orderBy(desc(asoEbiOrdersTable.orderedAt));
+  const orders = await listAsoEbiOrders();
   res.json(ListAsoEbiOrdersResponse.parse(orders.map(toOrder)));
 });
 
@@ -546,15 +525,13 @@ router.post("/aso-ebi/orders", async (req, res): Promise<void> => {
     return;
   }
 
-  const [order] = await db
-    .insert(asoEbiOrdersTable)
-    .values({
-      ...parsed.data,
-      amount: String(parsed.data.amount),
-      status: "pending",
-      paymentStatus: parsed.data.orderMode === "reservation" ? "unpaid" : "pending",
-    })
-    .returning();
+  const order = await createAsoEbiOrder({
+    ...parsed.data,
+    email: parsed.data.email ?? null,
+    status: "pending",
+    paymentStatus:
+      parsed.data.orderMode === "reservation" ? "unpaid" : "pending",
+  });
   res.status(201).json(CreateAsoEbiOrderResponse.parse(toOrder(order)));
 });
 
@@ -572,11 +549,7 @@ router.post("/payments/paystack/initialize", async (req, res): Promise<void> => 
     return;
   }
 
-  const [order] = await db
-    .select()
-    .from(asoEbiOrdersTable)
-    .where(eq(asoEbiOrdersTable.id, parsed.data.orderId))
-    .limit(1);
+  const order = await findAsoEbiOrderById(parsed.data.orderId);
   if (!order) {
     res.status(404).json({ error: "Order not found." });
     return;
@@ -617,10 +590,10 @@ router.post("/payments/paystack/initialize", async (req, res): Promise<void> => 
     return;
   }
 
-  await db
-    .update(asoEbiOrdersTable)
-    .set({ paymentReference: result.data.reference ?? reference, paymentStatus: "pending" })
-    .where(eq(asoEbiOrdersTable.id, order.id));
+  await updateAsoEbiOrder(order.id, {
+    paymentReference: result.data.reference ?? reference,
+    paymentStatus: "pending",
+  });
   res.json(InitializePaystackPaymentResponse.parse({
     reference: result.data.reference ?? reference,
     authorizationUrl: result.data.authorization_url,
@@ -666,17 +639,13 @@ router.get("/payments/paystack/verify/:reference", async (req, res): Promise<voi
   }
 
   const reference = result.data.reference ?? parsed.data.reference;
-  const [order] = await db
-    .select()
-    .from(asoEbiOrdersTable)
-    .where(eq(asoEbiOrdersTable.paymentReference, reference))
-    .limit(1);
+  const order = await findAsoEbiOrderByPaymentReference(reference);
   const paid = result.data.status === "success";
   if (order) {
-    await db
-      .update(asoEbiOrdersTable)
-      .set({ paymentStatus: paid ? "paid" : "failed", status: paid ? "paid" : "pending" })
-      .where(eq(asoEbiOrdersTable.id, order.id));
+    await updateAsoEbiOrder(order.id, {
+      paymentStatus: paid ? "paid" : "failed",
+      status: paid ? "paid" : "pending",
+    });
   }
 
   res.json(VerifyPaystackPaymentResponse.parse({
