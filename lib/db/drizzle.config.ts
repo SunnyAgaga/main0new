@@ -14,10 +14,19 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL, ensure the database is provisioned");
 }
 
+const databaseUrl = process.env.DATABASE_URL;
+
+// Managed Postgres providers (DigitalOcean, Heroku, RDS...) present a cert
+// signed by their own CA, which Node does not trust by default. drizzle-kit
+// does not honour `sslmode`/`uselibpqcompat` from the URL, so set ssl here.
+// Only applied when the URL asks for SSL, so local Postgres is unaffected.
+const wantsSsl = /[?&]sslmode=(require|prefer|verify-ca|verify-full)/.test(databaseUrl);
+
 export default defineConfig({
   schema: path.join(__dirname, "./src/schema/index.ts"),
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: databaseUrl,
+    ...(wantsSsl ? { ssl: { rejectUnauthorized: false } } : {}),
   },
 });
