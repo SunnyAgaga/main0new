@@ -3,21 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: WedPlan wedding RSVP and asoebi commerce API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
-  - name: wedding
-    description: Wedding overview and settings
-  - name: guests
-    description: Guest registration and RSVP management
-  - name: notifications
-    description: Guest communication
-  - name: aso-ebi
-    description: Aso Ebi catalog and orders
+  - name: event
+    description: Public wedding event details
+  - name: asoebi
+    description: Asoebi catalog
+  - name: rsvp
+    description: Guest RSVP submissions
+  - name: checkout
+    description: Payment checkout
+  - name: admin
+    description: Authenticated dashboard administration
 paths:
   /healthz:
     get:
@@ -32,88 +34,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
-  /wedding:
+  /event:
     get:
-      operationId: getWedding
-      tags: [wedding]
-      summary: Get wedding details
+      operationId: getEvent
+      tags: [event]
+      summary: Get wedding event details
       responses:
         "200":
-          description: Wedding details
+          description: Event details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Wedding"
-    patch:
-      operationId: updateWedding
-      tags: [wedding]
-      summary: Update wedding settings
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/WeddingUpdate"
-      responses:
-        "200":
-          description: Updated wedding details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Wedding"
-  /dashboard:
+                $ref: "#/components/schemas/Event"
+  /asoebi:
     get:
-      operationId: getDashboard
-      tags: [wedding]
-      summary: Get dashboard summary
+      operationId: listAsoebi
+      tags: [asoebi]
+      summary: List available asoebi items
       responses:
         "200":
-          description: Dashboard summary
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Dashboard"
-  /guests:
-    get:
-      operationId: listGuests
-      tags: [guests]
-      summary: List registered guests
-      responses:
-        "200":
-          description: Guests
+          description: Available asoebi
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Guest"
+                  $ref: "#/components/schemas/AsoebiItem"
+  /rsvps:
     post:
-      operationId: createGuest
-      tags: [guests]
-      summary: Register a guest
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/GuestInput"
-      responses:
-        "201":
-          description: Registered guest
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Guest"
-  /guests/{id}/rsvp:
-    patch:
-      operationId: updateGuestRsvp
-      tags: [guests]
-      summary: Update a guest RSVP
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: number }
+      operationId: createRsvp
+      tags: [rsvp]
+      summary: Submit a guest RSVP
       requestBody:
         required: true
         content:
@@ -121,145 +72,143 @@ paths:
             schema:
               $ref: "#/components/schemas/RsvpInput"
       responses:
-        "200":
-          description: Updated guest
+        "201":
+          description: RSVP submitted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Guest"
-  /guests/check-in:
+                $ref: "#/components/schemas/RsvpResult"
+        "400":
+          description: Invalid RSVP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /checkout/flutterwave:
     post:
-      operationId: checkInGuest
-      tags: [guests]
-      summary: Confirm a registered guest at the white wedding
+      operationId: startFlutterwaveCheckout
+      tags: [checkout]
+      summary: Create a Flutterwave checkout link for an RSVP
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CheckInInput"
+              $ref: "#/components/schemas/CheckoutInput"
       responses:
         "200":
-          description: Guest checked in
+          description: Flutterwave checkout link
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Guest"
-        "403":
-          description: Check-in is not active until the white wedding date
-        "404":
-          description: Registered guest not found
-  /notifications:
-    get:
-      operationId: listNotifications
-      tags: [notifications]
-      summary: List notification campaigns
-      responses:
-        "200":
-          description: Notification campaigns
+                $ref: "#/components/schemas/CheckoutResponse"
+        "400":
+          description: Invalid checkout request
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Notification"
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Flutterwave is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /checkout/bank-transfer:
     post:
-      operationId: createNotification
-      tags: [notifications]
-      summary: Create a notification campaign
+      operationId: createBankTransferOrder
+      tags: [checkout]
+      summary: Create a bank transfer order
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NotificationInput"
+              $ref: "#/components/schemas/CheckoutInput"
       responses:
         "201":
-          description: Notification campaign
+          description: Bank transfer instructions
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Notification"
-  /aso-ebi:
+                $ref: "#/components/schemas/BankTransferResponse"
+        "400":
+          description: Invalid checkout request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Bank transfer is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/overview:
     get:
-      operationId: listAsoEbi
-      tags: [aso-ebi]
-      summary: List Aso Ebi items
+      operationId: getAdminOverview
+      tags: [admin]
+      summary: Get dashboard summary
       responses:
         "200":
-          description: Aso Ebi catalog
+          description: Dashboard summary
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AsoEbiItem"
-  /aso-ebi/orders:
+                $ref: "#/components/schemas/AdminOverview"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/payment-config:
     get:
-      operationId: listAsoEbiOrders
-      tags: [aso-ebi]
-      summary: List Aso Ebi orders
+      operationId: getPaymentConfig
+      tags: [admin]
+      summary: Get safe payment configuration status
       responses:
         "200":
-          description: Aso Ebi orders
+          description: Payment configuration
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AsoEbiOrder"
-    post:
-      operationId: createAsoEbiOrder
-      tags: [aso-ebi]
-      summary: Create an Aso Ebi order
+                $ref: "#/components/schemas/PaymentConfig"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updatePaymentConfig
+      tags: [admin]
+      summary: Update payment configuration
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AsoEbiOrderInput"
-      responses:
-        "201":
-          description: Aso Ebi order
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AsoEbiOrder"
-  /payments/paystack/initialize:
-    post:
-      operationId: initializePaystackPayment
-      tags: [payments]
-      summary: Initialize a Paystack checkout for an Aso Ebi order
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PaystackPaymentInput"
+              $ref: "#/components/schemas/PaymentConfigInput"
       responses:
         "200":
-          description: Paystack authorization details
+          description: Updated payment configuration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaystackPayment"
-  /payments/paystack/verify/{reference}:
-    get:
-      operationId: verifyPaystackPayment
-      tags: [payments]
-      summary: Verify a Paystack payment and update its order
-      parameters:
-        - name: reference
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: Verified payment
+                $ref: "#/components/schemas/PaymentConfig"
+        "400":
+          description: Invalid payment configuration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaystackPaymentVerification"
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -269,222 +218,140 @@ components:
           type: string
       required:
         - status
-    Wedding:
+    Event:
       type: object
-      required: [id, couple, date, traditionalDate, whiteWeddingDate, venue, city, daysRemaining, eyebrow, venueDescription, dressCode, asoEbiTitle, asoEbiSubtitle, backgroundImage, menuDashboard, menuGuests, menuNotifications, menuAsoEbi, menuSettings, paymentDeadline, paymentBank, paymentAccountName, paymentAccountNumber, paymentTransferRemark, paymentInstructions, paymentMethods, notificationChannels, paystackConfigured]
+      required: [id, coupleNames, date, venue, rsvpDeadline, welcomeMessage]
       properties:
-        id: { type: number }
-        couple: { type: string }
-        date: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
-        traditionalDate: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
-        whiteWeddingDate: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+        id: { type: string }
+        coupleNames: { type: string }
+        date: { type: string }
         venue: { type: string }
-        city: { type: string }
-        daysRemaining: { type: number }
-        eyebrow: { type: string }
-        venueDescription: { type: string }
-        dressCode: { type: string }
-        asoEbiTitle: { type: string }
-        asoEbiSubtitle: { type: string }
-        backgroundImage: { type: string }
-        menuDashboard: { type: string }
-        menuGuests: { type: string }
-        menuNotifications: { type: string }
-        menuAsoEbi: { type: string }
-        menuSettings: { type: string }
-        paymentDeadline: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
-        paymentBank: { type: string }
-        paymentAccountName: { type: string }
-        paymentAccountNumber: { type: string }
-        paymentTransferRemark: { type: string }
-        paymentInstructions: { type: string }
-        paymentMethods:
-          type: array
-          items: { type: string, enum: [paystack_card, paystack_transfer, custom_transfer] }
-        notificationChannels:
-          type: array
-          minItems: 1
-          items: { type: string, enum: [email, sms, whatsapp] }
-        paystackConfigured: { type: boolean }
-    WeddingUpdate:
+        rsvpDeadline: { type: string }
+        welcomeMessage: { type: string }
+    AsoebiItem:
       type: object
-      required: [couple, date, traditionalDate, whiteWeddingDate, venue, city, eyebrow, venueDescription, dressCode, asoEbiTitle, asoEbiSubtitle, backgroundImage, menuDashboard, menuGuests, menuNotifications, menuAsoEbi, menuSettings, paymentDeadline, paymentBank, paymentAccountName, paymentAccountNumber, paymentTransferRemark, paymentInstructions, paymentMethods, notificationChannels]
-      properties:
-        couple: { type: string }
-        date: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
-        traditionalDate: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
-        whiteWeddingDate: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
-        venue: { type: string }
-        city: { type: string }
-        eyebrow: { type: string }
-        venueDescription: { type: string }
-        dressCode: { type: string }
-        asoEbiTitle: { type: string }
-        asoEbiSubtitle: { type: string }
-        backgroundImage: { type: string }
-        menuDashboard: { type: string }
-        menuGuests: { type: string }
-        menuNotifications: { type: string }
-        menuAsoEbi: { type: string }
-        menuSettings: { type: string }
-        paymentDeadline: { type: string, pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
-        paymentBank: { type: string }
-        paymentAccountName: { type: string }
-        paymentAccountNumber: { type: string }
-        paymentTransferRemark: { type: string }
-        paymentInstructions: { type: string }
-        paymentMethods:
-          type: array
-          items: { type: string, enum: [paystack_card, paystack_transfer, custom_transfer] }
-        notificationChannels:
-          type: array
-          minItems: 1
-          items: { type: string, enum: [email, sms, whatsapp] }
-    Dashboard:
-      type: object
-      required: [registered, attending, pending, declined, rsvpRate, totalCollected, recentActivity]
-      properties:
-        registered: { type: number }
-        attending: { type: number }
-        pending: { type: number }
-        declined: { type: number }
-        rsvpRate: { type: number }
-        totalCollected: { type: number }
-        recentActivity:
-          type: array
-          items: { $ref: "#/components/schemas/Activity" }
-    Activity:
-      type: object
-      required: [id, text, time, kind]
-      properties:
-        id: { type: number }
-        text: { type: string }
-        time: { type: string }
-        kind: { type: string }
-    Guest:
-      type: object
-      required: [id, name, phone, partySize, rsvp, friendOf, registeredAt, tags, checkedInAt, advice, notes]
+      required: [id, name, description, price, currency, imageUrl, sizes, available]
       properties:
         id: { type: number }
         name: { type: string }
-        email: { type: string, nullable: true, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
-        phone: { type: string }
-        partySize: { type: number, minimum: 1 }
-        rsvp: { type: string, enum: [attending, pending, declined] }
-        friendOf: { type: string, enum: [bride, groom, both], nullable: true }
-        registeredAt: { type: string }
-        checkedInAt: { type: string, nullable: true }
-        advice: { type: string }
-        notes: { type: string }
-        tags:
+        description: { type: string }
+        price: { type: number }
+        currency: { type: string }
+        imageUrl: { type: string }
+        sizes:
           type: array
           items: { type: string }
-    GuestInput:
-      type: object
-      required: [name, phone, friendOf]
-      properties:
-        name: { type: string }
-        email: { type: string, nullable: true, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
-        phone: { type: string }
-        partySize: { type: number, minimum: 1 }
-        rsvp: { type: string, enum: [attending, declined, pending] }
-        friendOf: { type: string, enum: [bride, groom, both] }
-        advice: { type: string }
-        notes: { type: string }
+        available: { type: boolean }
     RsvpInput:
       type: object
-      required: [rsvp]
+      required: [guestName, email, attending, asoebiInterest]
       properties:
-        rsvp: { type: string, enum: [attending, pending, declined] }
-    CheckInInput:
+        guestName: { type: string, minLength: 2 }
+        email: { type: string }
+        phone: { type: string }
+        attending: { type: boolean }
+        guestCount: { type: number, minimum: 1, maximum: 10 }
+        asoebiInterest:
+          type: string
+          enum: [yes, no]
+        asoebiItemId: { type: ["number", "null"] }
+        asoebiSize: { type: ["string", "null"] }
+        note: { type: string }
+    RsvpResult:
       type: object
-      required: [email]
-      properties:
-        email: { type: string, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
-    Notification:
-      type: object
-      required: [id, title, channel, audience, status, sentAt, opens]
-      properties:
-        id: { type: number }
-        title: { type: string }
-        channel: { type: string, enum: [email, sms, whatsapp] }
-        audience: { type: string }
-        status: { type: string, enum: [sent, scheduled, draft] }
-        sentAt: { type: string }
-        opens: { type: number }
-    NotificationInput:
-      type: object
-      required: [title, channel, audience]
-      properties:
-        title: { type: string }
-        channel: { type: string, enum: [email, sms, whatsapp] }
-        audience: { type: string }
-    AsoEbiItem:
-      type: object
-      required: [id, name, color, price, available, image]
-      properties:
-        id: { type: number }
-        name: { type: string }
-        color: { type: string }
-        price: { type: number }
-        available: { type: number }
-        image: { type: string }
-    AsoEbiOrder:
-      type: object
-      required: [id, guestName, phone, itemName, quantity, amount, status, orderedAt, email, orderMode, paymentMethod, paymentStatus, paymentReference, capSize, deliveryAddress, notes, proofFileName]
+      required: [id, guestName, email, attending, asoebiInterest, nextStep]
       properties:
         id: { type: number }
         guestName: { type: string }
-        phone: { type: string }
-        email: { type: string, nullable: true }
-        itemName: { type: string }
-        quantity: { type: number }
-        amount: { type: number }
-        status: { type: string, enum: [paid, pending, collected] }
-        orderedAt: { type: string }
-        orderMode: { type: string, enum: [ready_to_pay, reservation] }
-        paymentMethod: { type: string, enum: [paystack_card, paystack_transfer, custom_transfer] }
-        paymentStatus: { type: string, enum: [unpaid, pending, paid, failed] }
-        paymentReference: { type: string, nullable: true }
-        capSize: { type: string }
-        deliveryAddress: { type: string }
-        notes: { type: string }
-        proofFileName: { type: string, nullable: true }
-    AsoEbiOrderInput:
+        email: { type: string }
+        attending: { type: boolean }
+        asoebiInterest: { type: string, enum: [yes, no] }
+        nextStep: { type: string, enum: [complete, cart] }
+        cartItem:
+          type: ["object", "null"]
+          properties:
+            id: { type: number }
+            name: { type: string }
+            price: { type: number }
+            currency: { type: string }
+            size: { type: string }
+          required: [id, name, price, currency, size]
+    CheckoutInput:
       type: object
-      required: [guestName, phone, itemName, quantity, amount, orderMode, paymentMethod, deliveryAddress]
+      required: [rsvpId, guestName, email, itemId, size]
       properties:
+        rsvpId: { type: number }
         guestName: { type: string }
-        phone: { type: string }
-        email: { type: string, nullable: true }
-        itemName: { type: string }
-        quantity: { type: number, minimum: 1 }
+        email: { type: string }
+        itemId: { type: number }
+        size: { type: string }
         amount: { type: number, minimum: 0 }
-        orderMode: { type: string, enum: [ready_to_pay, reservation] }
-        paymentMethod: { type: string, enum: [paystack_card, paystack_transfer, custom_transfer] }
-        capSize: { type: string }
-        deliveryAddress: { type: string }
-        notes: { type: string }
-        proofFileName: { type: string, nullable: true }
-    PaystackPaymentInput:
+    CheckoutResponse:
       type: object
-      required: [orderId, email]
-      properties:
-        orderId: { type: number }
-        email: { type: string, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
-    PaystackPayment:
-      type: object
-      required: [reference, authorizationUrl, accessCode]
+      required: [reference, checkoutUrl]
       properties:
         reference: { type: string }
-        authorizationUrl: { type: string }
-        accessCode: { type: string }
-    PaystackPaymentVerification:
+        checkoutUrl: { type: string }
+    BankTransferResponse:
       type: object
-      required: [reference, status, paid, orderId]
+      required: [reference, amount, currency, bankName, accountName, accountNumber, instructions]
       properties:
         reference: { type: string }
-        status: { type: string }
-        paid: { type: boolean }
-        orderId: { type: number, nullable: true }
+        amount: { type: number }
+        currency: { type: string }
+        bankName: { type: string }
+        accountName: { type: string }
+        accountNumber: { type: string }
+        instructions: { type: string }
+    PaymentConfig:
+      type: object
+      required: [flutterwaveConfigured, bankTransferConfigured, flutterwaveKeyHint, bankTransfer]
+      properties:
+        flutterwaveConfigured: { type: boolean }
+        flutterwaveKeyHint: { type: string }
+        bankTransferConfigured: { type: boolean }
+        bankTransfer:
+          $ref: "#/components/schemas/BankTransferDetails"
+    PaymentConfigInput:
+      type: object
+      required: [flutterwaveEnabled, flutterwaveSecretKey, bankTransferEnabled, bankTransfer]
+      properties:
+        flutterwaveEnabled: { type: boolean }
+        flutterwaveSecretKey: { type: string }
+        bankTransferEnabled: { type: boolean }
+        bankTransfer:
+          $ref: "#/components/schemas/BankTransferDetails"
+    BankTransferDetails:
+      type: object
+      required: [bankName, accountName, accountNumber, instructions]
+      properties:
+        bankName: { type: string }
+        accountName: { type: string }
+        accountNumber: { type: string }
+        instructions: { type: string }
+    AdminOverview:
+      type: object
+      required: [totalRsvps, attendingCount, asoebiInterestCount, paidOrders, recentRsvps]
+      properties:
+        totalRsvps: { type: number }
+        attendingCount: { type: number }
+        asoebiInterestCount: { type: number }
+        paidOrders: { type: number }
+        recentRsvps:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecentRsvp"
+    RecentRsvp:
+      type: object
+      required: [guestName, attending, asoebiInterest, createdAt]
+      properties:
+        guestName: { type: string }
+        attending: { type: boolean }
+        asoebiInterest: { type: string, enum: [yes, no] }
+        createdAt: { type: string }
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
 
