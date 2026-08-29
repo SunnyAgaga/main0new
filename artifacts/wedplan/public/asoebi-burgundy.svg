@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <radialGradient id="bg" cx=".32" cy=".22" r=".9">
+      <stop stop-color="#a54b63"/>
+      <stop offset=".65" stop-color="#56162c"/>
+      <stop offset="1" stop-color="#260815"/>
+    </radialGradient>
+    <pattern id="motif" width="94" height="94" patternUnits="userSpaceOnUse">
+      <path d="M47 8 58 36 86 47 58 58 47 86 36 58 8 47 36 36Z" fill="none" stroke="#d6ab55" stroke-width="3" opacity=".52"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <rect width="800" height="600" fill="url(#motif)"/>
+  <path d="M288 172c58-66 166-66 224 0l-42 83 70 235H260l70-235Z" fill="#711f38"/>
+  <path d="M330 255h140l70 235H260Z" fill="#8f2b49"/>
+  <path d="M330 255h140" stroke="#d6ab55" stroke-width="12"/>
+  <circle cx="400" cy="178" r="40" fill="#bb6b79"/>
+  <text x="400" y="555" text-anchor="middle" font-family="serif" font-size="28" fill="#f5dfb0">BURGUNDY VELVET</text>
+</svg>

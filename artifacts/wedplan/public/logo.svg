@@ -1,0 +1,7 @@
+<svg width="200" height="40" viewBox="0 0 200 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="40" fill="transparent"/>
+  <circle cx="20" cy="20" r="14" fill="#125C40" fill-opacity="0.2"/>
+  <circle cx="20" cy="20" r="10" fill="#125C40"/>
+  <path d="M20 14L24.5 23H15.5L20 14Z" fill="#D4AF37"/>
+  <text x="44" y="27" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#125C40" letter-spacing="1">WedPlan</text>
+</svg>

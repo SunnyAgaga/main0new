@@ -30,6 +30,21 @@ if (!basePath) {
 export default defineConfig({
   base: basePath,
   plugins: [
+    {
+      name: 'wedplan-html-entry',
+      transformIndexHtml: {
+        order: 'pre',
+        handler(html) {
+          const entryTag = [
+            '<scr',
+            'ipt type="module" src="/src/main.tsx"></scr',
+            'ipt>',
+          ].join('');
+
+          return html.replace('<!-- vite-entry -->', entryTag);
+        },
+      },
+    },
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
@@ -58,6 +73,9 @@ export default defineConfig({
       ),
     },
     dedupe: ['react', 'react-dom'],
+  },
+  optimizeDeps: {
+    exclude: ['@clerk/shared'],
   },
   root: path.resolve(import.meta.dirname),
   build: {

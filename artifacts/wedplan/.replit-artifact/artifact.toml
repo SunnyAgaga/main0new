@@ -1,7 +1,7 @@
 kind = "web"
 previewPath = "/"
 title = "WedPlan Wedding Platform"
-description = "A wedding guest and event management platform for creating beautiful guest experiences, collecting RSVPs, coordinating Aso Ebi orders, tracking payments, and communicating with invited guests."
+description = "A wedding planning and guest RSVP platform with an admin dashboard, asoebi shopping, and secure payment collection for couples and their guests."
 version = "1.0.0"
 id = "artifacts/wedplan"
 router = "path"

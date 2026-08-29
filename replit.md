@@ -1,6 +1,6 @@
-# WedPlan Wedding Platform
+# [Project name]
 
-WedPlan helps couples host a beautiful, organised wedding experience with guest registration, RSVP tracking, campaign planning, Aso Ebi ordering, and payment progress in one place.
+_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
 
 ## Run & Operate
 
@@ -22,31 +22,19 @@ WedPlan helps couples host a beautiful, organised wedding experience with guest 
 
 ## Where things live
 
-- `lib/api-spec/openapi.yaml` — source of truth for the WedPlan API and generated client hooks.
-- `lib/db/src/schema/wedding.ts` — wedding, guest, notification, Aso Ebi, and order persistence models.
-- `artifacts/api-server/src/routes/wedding.ts` — endpoint handlers and first-run example data.
-- `artifacts/wedplan/src/` — guest-facing wedding site and organizer dashboard routes.
-- `artifacts/wedplan/src/pages/Settings.tsx` — editable public-page copy, hero background selection, and workspace menu labels.
-- `artifacts/wedplan/src/pages/CheckIn.tsx` — QR-linked guest arrival confirmation for the white-wedding date.
+_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
 
 ## Architecture decisions
 
-- The public event site and organizer workspace share the same wedding data and API, so guest activity is immediately visible to the planning team.
-- The first release stores notification campaigns and payment/order progress internally; live delivery or payment collection should be connected through a provider before production use.
-- Seed data is added on first API use so the preview starts with a realistic, usable wedding workspace.
-- Wedding settings are stored as calendar-date strings, keeping the displayed wedding day stable across timezones.
-- Guest arrival check-in is gated by the white-wedding calendar date in the Africa/Lagos timezone and requires the registered email address.
+_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
 
 ## Product
 
-- A wedding homepage with a live event countdown, venue details, RSVP registration, and Aso Ebi browsing.
-- A workspace for tracking guests, attendance progress, communications, Aso Ebi stock and orders, and collected order payments.
-- A settings page that publishes edits to wedding copy, the hero image, and all workspace navigation labels.
-- A printable QR code that opens a protected event-day guest check-in page.
+_Describe the high-level user-facing capabilities of this app once they exist._
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- All repository updates must go only to `SunnyAgaga/main0new` on the `MGUPDATE` branch. Do not push project updates to another repository or branch.
 
 ## Gotchas
 

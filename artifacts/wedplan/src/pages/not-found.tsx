@@ -1,22 +1,24 @@
+import { Card, CardContent } from "@/components/ui/card";
+import { AlertCircle } from "lucide-react";
 import { Link } from "wouter";
-import { HeartCrack } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-6">
-      <div className="text-center max-w-md animate-in zoom-in-95 duration-500">
-        <HeartCrack className="h-16 w-16 text-muted-foreground mx-auto mb-6 opacity-30" />
-        <h1 className="text-4xl font-serif text-primary mb-4">Page Not Found</h1>
-        <p className="text-muted-foreground mb-8 text-lg">
-          We couldn't find the page you're looking for. It might have been moved or the link is incorrect.
-        </p>
-        <Link href="/">
-          <Button size="lg" className="w-full sm:w-auto h-12 text-base px-8">
-            Return to Homepage
-          </Button>
-        </Link>
-      </div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-background">
+      <Card className="w-full max-w-md mx-4 shadow-xl border-none">
+        <CardContent className="pt-6 text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+          <h1 className="text-2xl font-bold font-serif text-foreground">Page Not Found</h1>
+          <p className="text-sm text-muted-foreground">
+            The page you are looking for does not exist.
+          </p>
+          <div className="pt-4">
+            <Link href="/" className="text-primary hover:underline text-sm font-medium">
+              Return to Home
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

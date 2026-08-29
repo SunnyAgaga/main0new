@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff5d8"/>
+      <stop offset="1" stop-color="#b99243"/>
+    </linearGradient>
+    <pattern id="weave" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M0 0 24 24M24 0 0 24" stroke="#fff" stroke-width="1" opacity=".3"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="600" fill="url(#bg)"/>
+  <rect width="800" height="600" fill="url(#weave)"/>
+  <circle cx="640" cy="110" r="180" fill="#f5d783" opacity=".35"/>
+  <path d="M300 170c30-45 170-45 200 0l45 75-44 244H299l-44-244Z" fill="#f8e8b5"/>
+  <path d="M335 165h130v325H335Z" fill="#d4ae5d"/>
+  <path d="M320 160h160l-30 75H350Z" fill="#fff3cb"/>
+  <path d="M318 155q82-80 164 0" fill="none" stroke="#4b3820" stroke-width="20"/>
+  <text x="400" y="555" text-anchor="middle" font-family="serif" font-size="28" fill="#4b3820">CHAMPAGNE SENATOR</text>
+</svg>
