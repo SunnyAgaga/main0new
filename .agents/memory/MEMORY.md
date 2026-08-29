@@ -1,0 +1,1 @@
+- [GitHub connector Git uploads](github-connector-git-uploads.md) — Cloudflare may block encoded HTML script tags; use build-time generation and verify local/remote tree hashes.
