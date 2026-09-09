@@ -580,6 +580,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /delivery-options:
+    get:
+      operationId: getDeliveryOptions
+      tags: [event]
+      summary: Get public delivery options (pickup, fee, enabled providers)
+      responses:
+        "200":
+          description: Delivery options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicDeliveryOptions"
   /admin/delivery-config:
     get:
       operationId: getDeliveryConfig
@@ -975,6 +987,7 @@ components:
           type: ["string", "null"]
           enum: [pickup, delivery, null]
         deliveryAddress: { type: ["string", "null"] }
+        deliveryProvider: { type: ["string", "null"] }
         note: { type: string }
     CartItem:
       type: object
@@ -1005,6 +1018,7 @@ components:
           type: ["string", "null"]
           enum: [pickup, delivery, null]
         deliveryAddress: { type: ["string", "null"] }
+        deliveryProvider: { type: ["string", "null"] }
     GiftCheckoutInput:
       type: object
       required: [guestName, email, amount]
@@ -1079,9 +1093,34 @@ components:
         accountName: { type: string }
         accountNumber: { type: string }
         instructions: { type: string }
+    DeliveryProvider:
+      type: object
+      required: [id, name, fee, enabled]
+      properties:
+        id: { type: string }
+        name: { type: string, minLength: 1 }
+        fee: { type: number, minimum: 0 }
+        enabled: { type: boolean }
+    PublicDeliveryProvider:
+      type: object
+      required: [name, fee]
+      properties:
+        name: { type: string }
+        fee: { type: number }
+    PublicDeliveryOptions:
+      type: object
+      required: [deliveryEnabled, pickupLocation, deliveryFee, providers]
+      properties:
+        deliveryEnabled: { type: boolean }
+        pickupLocation: { type: string }
+        deliveryFee: { type: number }
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicDeliveryProvider"
     DeliveryConfig:
       type: object
-      required: [deliveryEnabled, providerConfigured, providerName, webhookUrl, webhookSecretConfigured, pickupLocation, deliveryFee]
+      required: [deliveryEnabled, providerConfigured, providerName, webhookUrl, webhookSecretConfigured, pickupLocation, deliveryFee, providers]
       properties:
         deliveryEnabled: { type: boolean }
         providerConfigured: { type: boolean }
@@ -1090,9 +1129,13 @@ components:
         webhookSecretConfigured: { type: boolean }
         pickupLocation: { type: string }
         deliveryFee: { type: number }
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeliveryProvider"
     DeliveryConfigInput:
       type: object
-      required: [deliveryEnabled, providerName, apiKey, webhookSecret, pickupLocation, deliveryFee]
+      required: [deliveryEnabled, providerName, apiKey, webhookSecret, pickupLocation, deliveryFee, providers]
       properties:
         deliveryEnabled: { type: boolean }
         providerName: { type: string }
@@ -1100,6 +1143,10 @@ components:
         webhookSecret: { type: string }
         pickupLocation: { type: string }
         deliveryFee: { type: number, minimum: 0 }
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeliveryProvider"
     NotificationConfig:
       type: object
       required: [emailEnabled, emailConfigured, mailgunDomain, mailgunFromEmail, smsEnabled, smsConfigured, twilioFromNumber]
@@ -1131,7 +1178,7 @@ components:
         url: { type: string, minLength: 1 }
     SiteSettings:
       type: object
-      required: [musicEnabled, playlist, logoUrl, heroImageUrl, backgroundColor, primaryColor, accentColor]
+      required: [musicEnabled, playlist, logoUrl, logoHeight, heroImageUrl, backgroundColor, primaryColor, accentColor]
       properties:
         musicEnabled: { type: boolean }
         playlist:
@@ -1139,13 +1186,14 @@ components:
           items:
             $ref: "#/components/schemas/MusicTrack"
         logoUrl: { type: string }
+        logoHeight: { type: number }
         heroImageUrl: { type: string }
         backgroundColor: { type: string }
         primaryColor: { type: string }
         accentColor: { type: string }
     SiteSettingsInput:
       type: object
-      required: [musicEnabled, playlist, logoUrl, heroImageUrl, backgroundColor, primaryColor, accentColor]
+      required: [musicEnabled, playlist, logoUrl, logoHeight, heroImageUrl, backgroundColor, primaryColor, accentColor]
       properties:
         musicEnabled: { type: boolean }
         playlist:
@@ -1153,6 +1201,7 @@ components:
           items:
             $ref: "#/components/schemas/MusicTrack"
         logoUrl: { type: string }
+        logoHeight: { type: number }
         heroImageUrl: { type: string }
         backgroundColor: { type: string }
         primaryColor: { type: string }

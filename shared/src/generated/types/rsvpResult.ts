@@ -22,4 +22,6 @@ export interface RsvpResult {
   deliveryMethod?: RsvpResultDeliveryMethod;
   /** @nullable */
   deliveryAddress?: string | null;
+  /** @nullable */
+  deliveryProvider?: string | null;
 }

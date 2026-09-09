@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -14,7 +14,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle2, Copy, Lock } from 'lucide-react';
+import { CheckCircle2, Copy, Lock, Plus, Trash2, Truck } from 'lucide-react';
+
+const deliveryProviderSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, 'Required'),
+  fee: z.coerce.number().min(0),
+  enabled: z.boolean(),
+});
 
 const deliveryConfigSchema = z.object({
   deliveryEnabled: z.boolean(),
@@ -23,6 +30,7 @@ const deliveryConfigSchema = z.object({
   webhookSecret: z.string().optional(),
   pickupLocation: z.string(),
   deliveryFee: z.coerce.number().min(0),
+  providers: z.array(deliveryProviderSchema),
 });
 
 type DeliveryConfigValues = z.infer<typeof deliveryConfigSchema>;
@@ -43,8 +51,11 @@ export default function DashboardDelivery() {
       webhookSecret: '',
       pickupLocation: '',
       deliveryFee: 0,
+      providers: [],
     },
   });
+
+  const providerFields = useFieldArray({ control: form.control, name: 'providers' });
 
   useEffect(() => {
     if (config && !initialized.current) {
@@ -56,6 +67,7 @@ export default function DashboardDelivery() {
         webhookSecret: '',
         pickupLocation: config.pickupLocation,
         deliveryFee: config.deliveryFee,
+        providers: config.providers,
       });
     }
   }, [config, form]);
@@ -69,6 +81,7 @@ export default function DashboardDelivery() {
         webhookSecret: values.webhookSecret || '',
         pickupLocation: values.pickupLocation,
         deliveryFee: values.deliveryFee,
+        providers: values.providers,
       },
     }, {
       onSuccess: (updated) => {
@@ -207,6 +220,88 @@ export default function DashboardDelivery() {
                   </FormItem>
                 )}
               />
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-sm bg-card">
+            <CardHeader>
+              <CardTitle className="text-xl font-serif text-primary flex items-center gap-2">
+                <Truck className="w-5 h-5" /> Delivery Options
+              </CardTitle>
+              <CardDescription>
+                Named delivery services guests can choose from, e.g. Bolt, Dellyman, GIG Logistics — each with its own fee.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {providerFields.fields.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-2 text-center">No delivery options yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {providerFields.fields.map((field, index) => (
+                    <div key={field.id} className="flex items-end gap-3 p-3 rounded-lg border border-border bg-background">
+                      <FormField
+                        control={form.control}
+                        name={`providers.${index}.name`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormLabel>Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g. Bolt" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`providers.${index}.fee`}
+                        render={({ field }) => (
+                          <FormItem className="w-32">
+                            <FormLabel>Fee (NGN)</FormLabel>
+                            <FormControl>
+                              <Input type="number" min="0" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`providers.${index}.enabled`}
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col items-center gap-2">
+                            <FormLabel>Enabled</FormLabel>
+                            <FormControl>
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => providerFields.remove(index)}
+                        aria-label="Remove delivery option"
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() =>
+                  providerFields.append({ id: crypto.randomUUID(), name: '', fee: 0, enabled: true })
+                }
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Delivery Option
+              </Button>
             </CardContent>
           </Card>
 

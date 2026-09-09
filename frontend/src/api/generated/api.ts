@@ -40,6 +40,7 @@ import type {
   NotificationConfigInput,
   PaymentConfig,
   PaymentConfigInput,
+  PublicDeliveryOptions,
   RsvpInput,
   RsvpResult,
   SiteSettings,
@@ -1802,6 +1803,83 @@ export const useDeleteAdminUser = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getDeleteAdminUserMutationOptions(options));
     }
+
+export const getGetDeliveryOptionsUrl = () => {
+
+
+
+
+  return `/api/delivery-options`
+}
+
+/**
+ * @summary Get public delivery options (pickup, fee, enabled providers)
+ */
+export const getDeliveryOptions = async ( options?: Parameters<typeof customFetch>[1]): Promise<PublicDeliveryOptions> => {
+
+  return customFetch<PublicDeliveryOptions>(getGetDeliveryOptionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDeliveryOptionsQueryKey = () => {
+    return [
+    `/api/delivery-options`
+    ] as const;
+    }
+
+
+export const getGetDeliveryOptionsQueryOptions = <TData = Awaited<ReturnType<typeof getDeliveryOptions>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDeliveryOptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDeliveryOptionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDeliveryOptions>>> = ({ signal }) => getDeliveryOptions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDeliveryOptions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDeliveryOptionsQueryResult = NonNullable<Awaited<ReturnType<typeof getDeliveryOptions>>>
+export type GetDeliveryOptionsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get public delivery options (pickup, fee, enabled providers)
+ */
+
+export function useGetDeliveryOptions<TData = Awaited<ReturnType<typeof getDeliveryOptions>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDeliveryOptions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDeliveryOptionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetDeliveryConfigUrl = () => {
 

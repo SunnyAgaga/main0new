@@ -10,6 +10,7 @@ function toSiteSettings(config: SiteSettings | null | undefined) {
     musicEnabled: Boolean(config?.musicEnabled),
     playlist: config?.playlist ?? [],
     logoUrl: config?.logoUrl ?? "",
+    logoHeight: config?.logoHeight || 32,
     heroImageUrl: config?.heroImageUrl ?? "",
     backgroundColor: config?.backgroundColor || "#fdf9f3",
     primaryColor: config?.primaryColor || "#1c4d3a",

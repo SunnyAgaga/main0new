@@ -4,24 +4,32 @@ import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Countdown } from '@/components/countdown';
 import { Monogram, getMonogramInitials } from '@/components/monogram';
-import { useAuth } from '@/lib/auth';
 
 export default function Home() {
   const { data: event, isLoading, error } = useGetEvent();
   const { data: settings } = useGetSiteSettings();
-  const { user } = useAuth();
   const logoSrc = settings?.logoUrl || `${import.meta.env.BASE_URL}logo.svg`;
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background relative overflow-hidden">
       {settings?.heroImageUrl ? (
-        <div
-          className="absolute inset-0 pointer-events-none bg-cover bg-center opacity-20"
-          style={{ backgroundImage: `url(${settings.heroImageUrl})` }}
-        />
+        <>
+          <div
+            className="absolute inset-0 pointer-events-none bg-cover bg-center"
+            style={{ backgroundImage: `url(${settings.heroImageUrl})` }}
+          />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                'linear-gradient(180deg, hsl(var(--background) / 0.55) 0%, hsl(var(--background) / 0.88) 55%, hsl(var(--background)) 100%)',
+            }}
+          />
+        </>
       ) : (
-        <div className="absolute inset-0 pointer-events-none opacity-20" style={{
-          backgroundImage: "radial-gradient(circle at top right, hsl(43, 74%, 49%), transparent 50%), radial-gradient(circle at bottom left, hsl(158, 64%, 20%), transparent 50%)"
+        <div className="absolute inset-0 pointer-events-none opacity-30" style={{
+          backgroundImage:
+            'radial-gradient(circle at top right, hsl(var(--accent)), transparent 55%), radial-gradient(circle at bottom left, hsl(var(--primary)), transparent 55%)',
         }} />
       )}
 
@@ -32,15 +40,10 @@ export default function Home() {
         />
       </div>
 
-      <header className="w-full flex justify-between items-center p-6 lg:px-12 relative z-10">
+      <header className="w-full flex items-center p-6 lg:px-12 relative z-10">
         <div className="flex items-center gap-2">
-          <img src={logoSrc} alt="Logo" className="h-8 object-contain" />
+          <img src={logoSrc} alt="Logo" style={{ height: settings?.logoHeight ?? 32 }} className="object-contain" />
         </div>
-        {user && (
-          <Link href="/dashboard" className="text-sm font-medium text-primary hover:underline underline-offset-4">
-            Dashboard
-          </Link>
-        )}
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center p-6 text-center z-10">

@@ -28,5 +28,7 @@ export interface RsvpInput {
   deliveryMethod?: RsvpInputDeliveryMethod;
   /** @nullable */
   deliveryAddress?: string | null;
+  /** @nullable */
+  deliveryProvider?: string | null;
   note?: string;
 }

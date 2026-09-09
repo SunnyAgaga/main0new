@@ -78,6 +78,7 @@ router.post("/rsvps", async (req, res): Promise<void> => {
 
   let deliveryMethod: "pickup" | "delivery" | null = null;
   let deliveryAddress: string | null = null;
+  let deliveryProvider: string | null = null;
 
   if (wantsAsoebi) {
     if (!input.deliveryMethod) {
@@ -90,6 +91,8 @@ router.post("/rsvps", async (req, res): Promise<void> => {
     }
     deliveryMethod = input.deliveryMethod;
     deliveryAddress = input.deliveryMethod === "delivery" ? input.deliveryAddress!.trim() : null;
+    deliveryProvider =
+      input.deliveryMethod === "delivery" ? input.deliveryProvider?.trim() || null : null;
   }
 
   const rsvp = await insertRsvp({
@@ -114,6 +117,7 @@ router.post("/rsvps", async (req, res): Promise<void> => {
     })),
     deliveryMethod,
     deliveryAddress,
+    deliveryProvider,
     note: input.note || null,
   });
 
@@ -156,6 +160,7 @@ router.post("/rsvps", async (req, res): Promise<void> => {
       cartItems,
       deliveryMethod: rsvp.deliveryMethod,
       deliveryAddress: rsvp.deliveryAddress,
+      deliveryProvider: rsvp.deliveryProvider,
     }),
   );
 });

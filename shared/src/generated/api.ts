@@ -227,6 +227,7 @@ export const CreateRsvpBody = zod.object({
 })).optional(),
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullish(),
   "deliveryAddress": zod.string().nullish(),
+  "deliveryProvider": zod.string().nullish(),
   "note": zod.string().optional()
 })
 
@@ -247,7 +248,8 @@ export const CreateRsvpResponse = zod.object({
   "quantity": zod.number()
 })),
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullish(),
-  "deliveryAddress": zod.string().nullish()
+  "deliveryAddress": zod.string().nullish(),
+  "deliveryProvider": zod.string().nullish()
 })
 
 
@@ -461,8 +463,27 @@ export const DeleteAdminUserResponse = zod.void()
 
 
 /**
+ * @summary Get public delivery options (pickup, fee, enabled providers)
+ */
+export const GetDeliveryOptionsResponse = zod.object({
+  "deliveryEnabled": zod.boolean(),
+  "pickupLocation": zod.string(),
+  "deliveryFee": zod.number(),
+  "providers": zod.array(zod.object({
+  "name": zod.string(),
+  "fee": zod.number()
+}))
+})
+
+
+/**
  * @summary Get safe delivery configuration status
  */
+
+export const getDeliveryConfigResponseProvidersItemFeeMin = 0;
+
+
+
 export const GetDeliveryConfigResponse = zod.object({
   "deliveryEnabled": zod.boolean(),
   "providerConfigured": zod.boolean(),
@@ -470,7 +491,13 @@ export const GetDeliveryConfigResponse = zod.object({
   "webhookUrl": zod.string(),
   "webhookSecretConfigured": zod.boolean(),
   "pickupLocation": zod.string(),
-  "deliveryFee": zod.number()
+  "deliveryFee": zod.number(),
+  "providers": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string().min(1),
+  "fee": zod.number().min(getDeliveryConfigResponseProvidersItemFeeMin),
+  "enabled": zod.boolean()
+}))
 })
 
 
@@ -480,6 +507,9 @@ export const GetDeliveryConfigResponse = zod.object({
 export const updateDeliveryConfigBodyDeliveryFeeMin = 0;
 
 
+export const updateDeliveryConfigBodyProvidersItemFeeMin = 0;
+
+
 
 export const UpdateDeliveryConfigBody = zod.object({
   "deliveryEnabled": zod.boolean(),
@@ -487,8 +517,19 @@ export const UpdateDeliveryConfigBody = zod.object({
   "apiKey": zod.string(),
   "webhookSecret": zod.string(),
   "pickupLocation": zod.string(),
-  "deliveryFee": zod.number().min(updateDeliveryConfigBodyDeliveryFeeMin)
+  "deliveryFee": zod.number().min(updateDeliveryConfigBodyDeliveryFeeMin),
+  "providers": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string().min(1),
+  "fee": zod.number().min(updateDeliveryConfigBodyProvidersItemFeeMin),
+  "enabled": zod.boolean()
+}))
 })
+
+
+export const updateDeliveryConfigResponseProvidersItemFeeMin = 0;
+
+
 
 export const UpdateDeliveryConfigResponse = zod.object({
   "deliveryEnabled": zod.boolean(),
@@ -497,7 +538,13 @@ export const UpdateDeliveryConfigResponse = zod.object({
   "webhookUrl": zod.string(),
   "webhookSecretConfigured": zod.boolean(),
   "pickupLocation": zod.string(),
-  "deliveryFee": zod.number()
+  "deliveryFee": zod.number(),
+  "providers": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string().min(1),
+  "fee": zod.number().min(updateDeliveryConfigResponseProvidersItemFeeMin),
+  "enabled": zod.boolean()
+}))
 })
 
 
@@ -554,6 +601,7 @@ export const GetSiteSettingsResponse = zod.object({
   "url": zod.string().min(1)
 })),
   "logoUrl": zod.string(),
+  "logoHeight": zod.number(),
   "heroImageUrl": zod.string(),
   "backgroundColor": zod.string(),
   "primaryColor": zod.string(),
@@ -575,6 +623,7 @@ export const UpdateSiteSettingsBody = zod.object({
   "url": zod.string().min(1)
 })),
   "logoUrl": zod.string(),
+  "logoHeight": zod.number(),
   "heroImageUrl": zod.string(),
   "backgroundColor": zod.string(),
   "primaryColor": zod.string(),
@@ -592,6 +641,7 @@ export const UpdateSiteSettingsResponse = zod.object({
   "url": zod.string().min(1)
 })),
   "logoUrl": zod.string(),
+  "logoHeight": zod.number(),
   "heroImageUrl": zod.string(),
   "backgroundColor": zod.string(),
   "primaryColor": zod.string(),
@@ -659,6 +709,7 @@ export const ImportSpotifyPlaylistResponse = zod.object({
   "url": zod.string().min(1)
 })),
   "logoUrl": zod.string(),
+  "logoHeight": zod.number(),
   "heroImageUrl": zod.string(),
   "backgroundColor": zod.string(),
   "primaryColor": zod.string(),

@@ -20,6 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, logout } = useAuth();
   const { data: settings } = useGetSiteSettings();
   const logoSrc = settings?.logoUrl || `${import.meta.env.BASE_URL}logo.svg`;
+  const logoHeight = Math.min(settings?.logoHeight ?? 24, 40);
 
   return (
     <SidebarProvider>
@@ -27,7 +28,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar className="border-r border-border">
           <SidebarHeader className="p-4 flex items-center justify-between border-b border-border">
             <Link href="/" className="flex items-center gap-2">
-              <img src={logoSrc} alt="Logo" className="h-6 object-contain" />
+              <img src={logoSrc} alt="Logo" style={{ height: logoHeight }} className="object-contain" />
             </Link>
           </SidebarHeader>
           <SidebarContent className="p-4">
@@ -69,7 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <header className="h-14 border-b border-border flex items-center px-4 md:hidden">
             <SidebarTrigger />
             <div className="ml-4">
-              <img src={logoSrc} alt="Logo" className="h-5 object-contain" />
+              <img src={logoSrc} alt="Logo" style={{ height: logoHeight }} className="object-contain" />
             </div>
           </header>
           <main className="flex-1 overflow-auto p-6 md:p-8">

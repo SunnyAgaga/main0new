@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { useForm, useFieldArray, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useListAsoebi, useCreateRsvp, useGetEvent, type AsoebiItem } from '@/api';
+import { useListAsoebi, useCreateRsvp, useGetEvent, useGetDeliveryOptions, type AsoebiItem } from '@/api';
 
 import { Check, Heart, Info, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,7 @@ const rsvpSchema = z.object({
   asoebiSelections: z.array(asoebiSelectionSchema).default([]),
   deliveryMethod: z.enum(['pickup', 'delivery']).optional().nullable(),
   deliveryAddress: z.string().optional(),
+  deliveryProvider: z.string().optional().nullable(),
   note: z.string().optional(),
 }).refine(data => {
   if (data.asoebiInterest === 'yes') {
@@ -226,6 +227,7 @@ export default function RsvpPage() {
 
   const { data: event } = useGetEvent();
   const { data: asoebiItems, isLoading: loadingAsoebi } = useListAsoebi();
+  const { data: deliveryOptions } = useGetDeliveryOptions();
   const createRsvp = useCreateRsvp();
 
   const form = useForm<RsvpFormValues>({
@@ -554,7 +556,14 @@ export default function RsvpPage() {
                                   <FormControl>
                                     <RadioGroupItem value="pickup" />
                                   </FormControl>
-                                  <FormLabel className="font-normal cursor-pointer flex-1">Pick up at the venue</FormLabel>
+                                  <FormLabel className="font-normal cursor-pointer flex-1">
+                                    Pick up at the venue
+                                    {deliveryOptions?.pickupLocation && (
+                                      <span className="block text-xs text-muted-foreground font-normal mt-0.5">
+                                        {deliveryOptions.pickupLocation}
+                                      </span>
+                                    )}
+                                  </FormLabel>
                                 </FormItem>
                                 <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
                                   <FormControl>
@@ -570,19 +579,58 @@ export default function RsvpPage() {
                       />
 
                       {watchDeliveryMethod === 'delivery' && (
-                        <FormField
-                          control={form.control}
-                          name="deliveryAddress"
-                          render={({ field }) => (
-                            <FormItem className="animate-in slide-in-from-top-4 fade-in duration-300">
-                              <FormLabel>Delivery Address</FormLabel>
-                              <FormControl>
-                                <Textarea placeholder="Street address, city, state" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
+                        <div className="space-y-4 animate-in slide-in-from-top-4 fade-in duration-300">
+                          {(deliveryOptions?.providers.length ?? 0) > 0 && (
+                            <FormField
+                              control={form.control}
+                              name="deliveryProvider"
+                              render={({ field }) => (
+                                <FormItem className="space-y-3">
+                                  <FormLabel>Choose a delivery service</FormLabel>
+                                  <FormControl>
+                                    <RadioGroup
+                                      onValueChange={field.onChange}
+                                      defaultValue={field.value ?? undefined}
+                                      className="flex flex-col space-y-2"
+                                    >
+                                      {deliveryOptions!.providers.map((provider) => (
+                                        <FormItem
+                                          key={provider.name}
+                                          className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer"
+                                        >
+                                          <FormControl>
+                                            <RadioGroupItem value={provider.name} />
+                                          </FormControl>
+                                          <FormLabel className="font-normal cursor-pointer flex-1">
+                                            {provider.name}
+                                            {provider.fee > 0 && (
+                                              <span className="text-muted-foreground"> — ₦{provider.fee.toLocaleString()}</span>
+                                            )}
+                                          </FormLabel>
+                                        </FormItem>
+                                      ))}
+                                    </RadioGroup>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
                           )}
-                        />
+
+                          <FormField
+                            control={form.control}
+                            name="deliveryAddress"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Delivery Address</FormLabel>
+                                <FormControl>
+                                  <Textarea placeholder="Street address, city, state" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       )}
                     </div>
                   )}

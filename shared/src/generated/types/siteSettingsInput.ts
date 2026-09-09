@@ -11,6 +11,7 @@ export interface SiteSettingsInput {
   musicEnabled: boolean;
   playlist: MusicTrack[];
   logoUrl: string;
+  logoHeight: number;
   heroImageUrl: string;
   backgroundColor: string;
   primaryColor: string;
