@@ -7,30 +7,23 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(async ({ mode }) => {
   // Loads `.env` from this package's directory so `pnpm dev` works without
   // manually exporting/sourcing environment variables first. Real process
-  // env vars (e.g. from Replit) still take precedence over the file.
-  const env = { ...process.env, ...loadEnv(mode, import.meta.dirname, '') };
+  // Load the repo-root .env (the backend reads the same file). Prefix '' means
+  // all keys, not just VITE_*. Real environment variables win over the file.
+  const env = { ...loadEnv(mode, path.resolve(import.meta.dirname, '..'), ''), ...process.env };
 
-  const rawPort = env.PORT;
-
-  if (!rawPort) {
-    throw new Error(
-      'PORT environment variable is required but was not provided.',
-    );
-  }
-
-  const port = Number(rawPort);
+  // The dev server's own port. Deliberately NOT `PORT` - that is the backend's
+  // port in the shared root .env, and reusing it makes the two collide.
+  const port = Number(env.FRONTEND_PORT ?? 5173);
 
   if (Number.isNaN(port) || port <= 0) {
-    throw new Error(`Invalid PORT value: "${rawPort}"`);
+    throw new Error(`Invalid FRONTEND_PORT value: "${env.FRONTEND_PORT}"`);
   }
 
-  const basePath = env.BASE_PATH;
+  // Where to proxy /api. Falls back to the backend's PORT from the root .env.
+  const apiPort = env.API_SERVER_PORT ?? env.PORT ?? '8080';
 
-  if (!basePath) {
-    throw new Error(
-      'BASE_PATH environment variable is required but was not provided.',
-    );
-  }
+  // Path the app is served from; '/' for a root domain.
+  const basePath = env.BASE_PATH ?? '/';
 
   return {
     base: basePath,
@@ -80,7 +73,7 @@ export default defineConfig(async ({ mode }) => {
       },
       proxy: {
         '/api': {
-          target: `http://localhost:${env.API_SERVER_PORT ?? '8080'}`,
+          target: `http://localhost:${apiPort}`,
           changeOrigin: true,
         },
       },

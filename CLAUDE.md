@@ -84,11 +84,12 @@ Root `.env`, loaded by the backend via `node --env-file-if-exists`.
 | `BASE_PATH` | yes | `/` for a root domain |
 | `NODE_ENV` | no | `production` enables JSON logs |
 | `LOG_LEVEL` | no | defaults to `info` |
+| `FRONTEND_PORT` | no | Vite dev-server port, default 5173. **Not** `PORT` — that is the backend's, and sharing one value makes them collide. |
 
-**Vite does not read `.env` for `PORT`/`BASE_PATH`.** Vite's `.env` handling only covers
-`VITE_`-prefixed *client* vars; `vite.config.ts` reads `process.env`, which a `.env` file
-does not populate. Those two must be real shell env vars — that is why the dev/build
-scripts set them inline. Adding them to `.env` will not work.
+`vite.config.ts` calls `loadEnv(mode, <repo root>, '')` so it reads this same root
+`.env`, with real environment variables taking precedence. `PORT` defaults to 5173 and
+`BASE_PATH` to `/`, so `npm run build` works with no environment at all. Note that Vite's
+*client* bundle still only exposes `VITE_`-prefixed vars via `import.meta.env`.
 
 **Payment keys are not env vars.** Flutterwave secret/webhook keys live in the
 `payment_configs` collection, edited from the dashboard. Don't add `FLW_*` env vars.
@@ -144,6 +145,9 @@ single-port serving.
 
 ## Gotchas that have actually bitten
 
+- **Typecheck**: workspace `tsconfig.json`s deliberately have no `references`. Adding
+  them requires `composite: true` and breaks `--noEmit`; cross-package types resolve
+  through `node_modules` instead.
 - **Express 5**: `app.get('*')` throws at startup (`Missing parameter name at index 1`).
   Use `'/*splat'` — and note `'/*splat'` does **not** match `/` itself, so a naive SPA
   fallback 404s the homepage. An `app.use()` middleware avoids both.
