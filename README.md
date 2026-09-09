@@ -148,7 +148,7 @@ Keep the API running with a process manager, e.g. pm2:
 ```bash
 npm i -g pm2
 cd backend
-pm2 start dist/index.mjs --name wedplan --node-args="--env-file-if-exists=../.env"
+pm2 start dist/index.mjs --name wedplan
 pm2 save && pm2 startup
 ```
 

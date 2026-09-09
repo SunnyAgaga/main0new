@@ -1,3 +1,4 @@
+import "./lib/load-env"; // must stay first - populates process.env before ./db loads
 import {
   asoebiItemsCollection,
   insertAsoebiItem,
