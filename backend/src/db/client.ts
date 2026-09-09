@@ -9,6 +9,13 @@ if (!process.env.MONGODB_URI) {
 export const mongoClient = new MongoClient(process.env.MONGODB_URI);
 await mongoClient.connect();
 
+if (!process.env.MONGODB_DB) {
+  // Without this, mongoClient.db(undefined) silently falls back to the database
+  // named in the URI path - or "test" when the URI has none - and the app looks
+  // like it works while reading and writing the wrong database.
+  throw new Error("MONGODB_DB must be set to the database name.");
+}
+
 export const db: Db = mongoClient.db(process.env.MONGODB_DB);
 
 await Promise.all([

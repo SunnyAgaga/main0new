@@ -79,7 +79,7 @@ Root `.env`, loaded by the backend via `node --env-file-if-exists`.
 | Var | Required | Notes |
 |---|---|---|
 | `MONGODB_URI` | yes | throws on startup if missing |
-| `MONGODB_DB` | yes | database name |
+| `MONGODB_DB` | yes | database name; startup throws if missing. Guarded because `client.db(undefined)` silently falls back to `test` |
 | `PORT` | yes | backend port (8080 in dev) |
 | `BASE_PATH` | yes | `/` for a root domain |
 | `NODE_ENV` | no | `production` enables JSON logs |

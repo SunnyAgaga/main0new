@@ -70,7 +70,7 @@ LOG_LEVEL=info
 | Variable | Required | Description |
 |---|---|---|
 | `MONGODB_URI` | yes | Connection string. The server exits on startup without it. |
-| `MONGODB_DB` | yes | Database name. |
+| `MONGODB_DB` | yes | Database name. The server refuses to start without it — note it is `MONGODB_DB`, not `MONGODB_DB_NAME`. |
 | `PORT` | yes | Port the API listens on. |
 | `BASE_PATH` | yes | Path the app is served from. `/` for a root domain. |
 | `NODE_ENV` | no | `production` switches logs to JSON. |
