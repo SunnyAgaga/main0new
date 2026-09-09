@@ -15,3 +15,4 @@
 export * from "./asoebi";
 export * from "./auth";
 export * from "./spotify";
+export * from "./uploads";

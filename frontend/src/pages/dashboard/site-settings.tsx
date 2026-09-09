@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useRef, useState } from 'react';
+import { useForm, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import {
   useUpdateSiteSettings,
   getGetSiteSettingsQueryKey,
 } from '@/api';
+import { customFetch, ApiError } from '@/api/custom-fetch';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -19,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { ImagePlus, Loader2 } from 'lucide-react';
 
 const eventSchema = z.object({
   coupleNames: z.string().min(1, 'Required'),
@@ -233,6 +235,105 @@ function EventDetailsCard() {
   );
 }
 
+function useImageUpload() {
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
+
+  const upload = async (file: File): Promise<string | null> => {
+    setUploading(true);
+    try {
+      const result = await customFetch<{ url: string }>('/api/admin/uploads', {
+        method: 'POST',
+        body: (() => {
+          const formData = new FormData();
+          formData.append('file', file);
+          return formData;
+        })(),
+      });
+      return result.url;
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Upload failed',
+        description: err instanceof ApiError ? (err.data as { error?: string } | null)?.error || err.message : 'An error occurred.',
+      });
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return { upload, uploading };
+}
+
+function ImageUrlField({
+  control,
+  name,
+  label,
+  description,
+  previewClassName,
+}: {
+  control: Control<ThemeValues>;
+  name: 'logoUrl' | 'heroImageUrl';
+  label: string;
+  description: string;
+  previewClassName: string;
+}) {
+  const { upload, uploading } = useImageUpload();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <div className="flex items-start gap-3">
+            {field.value ? (
+              <img src={field.value} alt="" className={previewClassName} />
+            ) : null}
+            <div className="flex-1 space-y-2">
+              <FormControl>
+                <Input placeholder="https://example.com/image.png" {...field} />
+              </FormControl>
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!file) return;
+                  const url = await upload(file);
+                  if (url) field.onChange(url);
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={uploading}
+                onClick={() => inputRef.current?.click()}
+              >
+                {uploading ? (
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                ) : (
+                  <ImagePlus className="w-4 h-4 mr-1" />
+                )}
+                {uploading ? 'Uploading...' : 'Upload Image'}
+              </Button>
+            </div>
+          </div>
+          <FormDescription>{description}</FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
 function LookAndFeelCard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -297,34 +398,20 @@ function LookAndFeelCard() {
             <CardDescription>Logo, hero image and colors used across the site.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FormField
+            <ImageUrlField
               control={form.control}
               name="logoUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Logo URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://example.com/logo.png" {...field} />
-                  </FormControl>
-                  <FormDescription>Leave blank to use the default WedPlan logo.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Logo"
+              description="Leave blank to use the default WedPlan logo."
+              previewClassName="h-14 w-14 rounded object-contain border border-input bg-background p-1"
             />
 
-            <FormField
+            <ImageUrlField
               control={form.control}
               name="heroImageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Hero Background Image URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://example.com/hero.jpg" {...field} />
-                  </FormControl>
-                  <FormDescription>Shown behind the countdown on the home page. Leave blank for none.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Hero Background Image"
+              description="Shown behind the countdown on the home page. Leave blank for none."
+              previewClassName="h-14 w-24 rounded object-cover border border-input bg-background"
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
