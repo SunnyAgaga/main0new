@@ -46,6 +46,8 @@ export * from './publicDeliveryOptions';
 export * from './publicDeliveryProvider';
 export * from './recentRsvp';
 export * from './recentRsvpAsoebiInterest';
+export * from './rsvpFormCopy';
+export * from './rsvpFormCopyInput';
 export * from './rsvpInput';
 export * from './rsvpInputAsoebiInterest';
 export * from './rsvpInputDeliveryMethod';

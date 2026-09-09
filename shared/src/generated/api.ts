@@ -693,6 +693,159 @@ export const UpdateNotificationConfigResponse = zod.object({
 
 
 /**
+ * @summary Get the editable text shown on the public RSVP form
+ */
+export const GetRsvpFormCopyResponse = zod.object({
+  "pageTitle": zod.string(),
+  "guestInfoHeading": zod.string(),
+  "fullNameLabel": zod.string(),
+  "emailLabel": zod.string(),
+  "phoneLabel": zod.string(),
+  "attendanceHeading": zod.string(),
+  "attendingQuestion": zod.string(),
+  "attendingYesLabel": zod.string(),
+  "attendingNoLabel": zod.string(),
+  "guestCountLabel": zod.string(),
+  "adultsOnlyNotice": zod.string(),
+  "asoebiQuestion": zod.string(),
+  "asoebiYesLabel": zod.string(),
+  "asoebiNoLabel": zod.string(),
+  "asoebiPickerHint": zod.string(),
+  "additionalGuestsHeading": zod.string(),
+  "deliveryHeading": zod.string(),
+  "deliveryQuestion": zod.string(),
+  "pickupLabel": zod.string(),
+  "deliveryLabel": zod.string(),
+  "deliveryProviderQuestion": zod.string(),
+  "deliveryAddressLabel": zod.string(),
+  "giftHeading": zod.string(),
+  "giftQuestion": zod.string(),
+  "giftYesLabel": zod.string(),
+  "giftNoLabel": zod.string(),
+  "giftAmountLabel": zod.string(),
+  "noteLabel": zod.string(),
+  "submitLabel": zod.string(),
+  "submitWithPaymentLabel": zod.string(),
+  "completeAttendingTitle": zod.string(),
+  "completeAttendingMessage": zod.string(),
+  "completeDecliningTitle": zod.string(),
+  "completeDecliningMessage": zod.string()
+})
+
+
+/**
+ * @summary Update the text shown on the public RSVP form (admin role only)
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export const UpdateRsvpFormCopyBody = zod.object({
+  "pageTitle": zod.string().min(1),
+  "guestInfoHeading": zod.string().min(1),
+  "fullNameLabel": zod.string().min(1),
+  "emailLabel": zod.string().min(1),
+  "phoneLabel": zod.string().min(1),
+  "attendanceHeading": zod.string().min(1),
+  "attendingQuestion": zod.string().min(1),
+  "attendingYesLabel": zod.string().min(1),
+  "attendingNoLabel": zod.string().min(1),
+  "guestCountLabel": zod.string().min(1),
+  "adultsOnlyNotice": zod.string(),
+  "asoebiQuestion": zod.string().min(1),
+  "asoebiYesLabel": zod.string().min(1),
+  "asoebiNoLabel": zod.string().min(1),
+  "asoebiPickerHint": zod.string(),
+  "additionalGuestsHeading": zod.string().min(1),
+  "deliveryHeading": zod.string().min(1),
+  "deliveryQuestion": zod.string().min(1),
+  "pickupLabel": zod.string().min(1),
+  "deliveryLabel": zod.string().min(1),
+  "deliveryProviderQuestion": zod.string().min(1),
+  "deliveryAddressLabel": zod.string().min(1),
+  "giftHeading": zod.string().min(1),
+  "giftQuestion": zod.string().min(1),
+  "giftYesLabel": zod.string().min(1),
+  "giftNoLabel": zod.string().min(1),
+  "giftAmountLabel": zod.string().min(1),
+  "noteLabel": zod.string().min(1),
+  "submitLabel": zod.string().min(1),
+  "submitWithPaymentLabel": zod.string().min(1),
+  "completeAttendingTitle": zod.string().min(1),
+  "completeAttendingMessage": zod.string().min(1),
+  "completeDecliningTitle": zod.string().min(1),
+  "completeDecliningMessage": zod.string().min(1)
+})
+
+export const UpdateRsvpFormCopyResponse = zod.object({
+  "pageTitle": zod.string(),
+  "guestInfoHeading": zod.string(),
+  "fullNameLabel": zod.string(),
+  "emailLabel": zod.string(),
+  "phoneLabel": zod.string(),
+  "attendanceHeading": zod.string(),
+  "attendingQuestion": zod.string(),
+  "attendingYesLabel": zod.string(),
+  "attendingNoLabel": zod.string(),
+  "guestCountLabel": zod.string(),
+  "adultsOnlyNotice": zod.string(),
+  "asoebiQuestion": zod.string(),
+  "asoebiYesLabel": zod.string(),
+  "asoebiNoLabel": zod.string(),
+  "asoebiPickerHint": zod.string(),
+  "additionalGuestsHeading": zod.string(),
+  "deliveryHeading": zod.string(),
+  "deliveryQuestion": zod.string(),
+  "pickupLabel": zod.string(),
+  "deliveryLabel": zod.string(),
+  "deliveryProviderQuestion": zod.string(),
+  "deliveryAddressLabel": zod.string(),
+  "giftHeading": zod.string(),
+  "giftQuestion": zod.string(),
+  "giftYesLabel": zod.string(),
+  "giftNoLabel": zod.string(),
+  "giftAmountLabel": zod.string(),
+  "noteLabel": zod.string(),
+  "submitLabel": zod.string(),
+  "submitWithPaymentLabel": zod.string(),
+  "completeAttendingTitle": zod.string(),
+  "completeAttendingMessage": zod.string(),
+  "completeDecliningTitle": zod.string(),
+  "completeDecliningMessage": zod.string()
+})
+
+
+/**
  * @summary Get public site settings (music playlist)
  */
 

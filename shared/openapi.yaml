@@ -783,6 +783,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /rsvp-form-copy:
+    get:
+      operationId: getRsvpFormCopy
+      tags: [event]
+      summary: Get the editable text shown on the public RSVP form
+      responses:
+        "200":
+          description: RSVP form copy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RsvpFormCopy"
+  /admin/rsvp-form-copy:
+    put:
+      operationId: updateRsvpFormCopy
+      tags: [admin]
+      summary: Update the text shown on the public RSVP form (admin role only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RsvpFormCopyInput"
+      responses:
+        "200":
+          description: Updated RSVP form copy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RsvpFormCopy"
+        "400":
+          description: Invalid RSVP form copy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /site-settings:
     get:
       operationId: getSiteSettings
@@ -1106,6 +1154,82 @@ components:
         deliveryProvider: { type: ["string", "null"] }
         note: { type: ["string", "null"] }
         createdAt: { type: string }
+    RsvpFormCopy:
+      type: object
+      required: [pageTitle, guestInfoHeading, fullNameLabel, emailLabel, phoneLabel, attendanceHeading, attendingQuestion, attendingYesLabel, attendingNoLabel, guestCountLabel, adultsOnlyNotice, asoebiQuestion, asoebiYesLabel, asoebiNoLabel, asoebiPickerHint, additionalGuestsHeading, deliveryHeading, deliveryQuestion, pickupLabel, deliveryLabel, deliveryProviderQuestion, deliveryAddressLabel, giftHeading, giftQuestion, giftYesLabel, giftNoLabel, giftAmountLabel, noteLabel, submitLabel, submitWithPaymentLabel, completeAttendingTitle, completeAttendingMessage, completeDecliningTitle, completeDecliningMessage]
+      properties:
+        pageTitle: { type: string }
+        guestInfoHeading: { type: string }
+        fullNameLabel: { type: string }
+        emailLabel: { type: string }
+        phoneLabel: { type: string }
+        attendanceHeading: { type: string }
+        attendingQuestion: { type: string }
+        attendingYesLabel: { type: string }
+        attendingNoLabel: { type: string }
+        guestCountLabel: { type: string }
+        adultsOnlyNotice: { type: string }
+        asoebiQuestion: { type: string }
+        asoebiYesLabel: { type: string }
+        asoebiNoLabel: { type: string }
+        asoebiPickerHint: { type: string }
+        additionalGuestsHeading: { type: string }
+        deliveryHeading: { type: string }
+        deliveryQuestion: { type: string }
+        pickupLabel: { type: string }
+        deliveryLabel: { type: string }
+        deliveryProviderQuestion: { type: string }
+        deliveryAddressLabel: { type: string }
+        giftHeading: { type: string }
+        giftQuestion: { type: string }
+        giftYesLabel: { type: string }
+        giftNoLabel: { type: string }
+        giftAmountLabel: { type: string }
+        noteLabel: { type: string }
+        submitLabel: { type: string }
+        submitWithPaymentLabel: { type: string }
+        completeAttendingTitle: { type: string }
+        completeAttendingMessage: { type: string }
+        completeDecliningTitle: { type: string }
+        completeDecliningMessage: { type: string }
+    RsvpFormCopyInput:
+      type: object
+      required: [pageTitle, guestInfoHeading, fullNameLabel, emailLabel, phoneLabel, attendanceHeading, attendingQuestion, attendingYesLabel, attendingNoLabel, guestCountLabel, adultsOnlyNotice, asoebiQuestion, asoebiYesLabel, asoebiNoLabel, asoebiPickerHint, additionalGuestsHeading, deliveryHeading, deliveryQuestion, pickupLabel, deliveryLabel, deliveryProviderQuestion, deliveryAddressLabel, giftHeading, giftQuestion, giftYesLabel, giftNoLabel, giftAmountLabel, noteLabel, submitLabel, submitWithPaymentLabel, completeAttendingTitle, completeAttendingMessage, completeDecliningTitle, completeDecliningMessage]
+      properties:
+        pageTitle: { type: string, minLength: 1 }
+        guestInfoHeading: { type: string, minLength: 1 }
+        fullNameLabel: { type: string, minLength: 1 }
+        emailLabel: { type: string, minLength: 1 }
+        phoneLabel: { type: string, minLength: 1 }
+        attendanceHeading: { type: string, minLength: 1 }
+        attendingQuestion: { type: string, minLength: 1 }
+        attendingYesLabel: { type: string, minLength: 1 }
+        attendingNoLabel: { type: string, minLength: 1 }
+        guestCountLabel: { type: string, minLength: 1 }
+        adultsOnlyNotice: { type: string }
+        asoebiQuestion: { type: string, minLength: 1 }
+        asoebiYesLabel: { type: string, minLength: 1 }
+        asoebiNoLabel: { type: string, minLength: 1 }
+        asoebiPickerHint: { type: string }
+        additionalGuestsHeading: { type: string, minLength: 1 }
+        deliveryHeading: { type: string, minLength: 1 }
+        deliveryQuestion: { type: string, minLength: 1 }
+        pickupLabel: { type: string, minLength: 1 }
+        deliveryLabel: { type: string, minLength: 1 }
+        deliveryProviderQuestion: { type: string, minLength: 1 }
+        deliveryAddressLabel: { type: string, minLength: 1 }
+        giftHeading: { type: string, minLength: 1 }
+        giftQuestion: { type: string, minLength: 1 }
+        giftYesLabel: { type: string, minLength: 1 }
+        giftNoLabel: { type: string, minLength: 1 }
+        giftAmountLabel: { type: string, minLength: 1 }
+        noteLabel: { type: string, minLength: 1 }
+        submitLabel: { type: string, minLength: 1 }
+        submitWithPaymentLabel: { type: string, minLength: 1 }
+        completeAttendingTitle: { type: string, minLength: 1 }
+        completeAttendingMessage: { type: string, minLength: 1 }
+        completeDecliningTitle: { type: string, minLength: 1 }
+        completeDecliningMessage: { type: string, minLength: 1 }
     CartItem:
       type: object
       required: [guestName, asoebiItemId, name, price, currency, size, quantity]

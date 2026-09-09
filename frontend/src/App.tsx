@@ -22,6 +22,7 @@ import DashboardNotifications from '@/pages/dashboard/notifications';
 import DashboardMusic from '@/pages/dashboard/music';
 import DashboardAsoebi from '@/pages/dashboard/asoebi';
 import DashboardRsvps from '@/pages/dashboard/rsvps';
+import DashboardRsvpForm from '@/pages/dashboard/rsvp-form';
 import DashboardSiteSettings from '@/pages/dashboard/site-settings';
 import { SiteTheme } from '@/components/site-theme';
 
@@ -67,6 +68,12 @@ function Router() {
       <Route path="/dashboard/rsvps">
         <ProtectedDashboard adminOnly>
           <DashboardRsvps />
+        </ProtectedDashboard>
+      </Route>
+
+      <Route path="/dashboard/rsvp-form">
+        <ProtectedDashboard adminOnly>
+          <DashboardRsvpForm />
         </ProtectedDashboard>
       </Route>
 

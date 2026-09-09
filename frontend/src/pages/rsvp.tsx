@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { useForm, useFieldArray, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useListAsoebi, useCreateRsvp, useGetEvent, useGetDeliveryOptions, type AsoebiItem } from '@/api';
+import { useListAsoebi, useCreateRsvp, useGetEvent, useGetDeliveryOptions, useGetRsvpFormCopy, type AsoebiItem } from '@/api';
 
 import { Check, Heart, Info, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -238,6 +238,7 @@ export default function RsvpPage() {
   const { data: event } = useGetEvent();
   const { data: asoebiItems, isLoading: loadingAsoebi } = useListAsoebi();
   const { data: deliveryOptions } = useGetDeliveryOptions();
+  const { data: copy } = useGetRsvpFormCopy();
   const createRsvp = useCreateRsvp();
 
   const form = useForm<RsvpFormValues>({
@@ -325,12 +326,14 @@ export default function RsvpPage() {
             {watchAttending ? <Check className="w-10 h-10" /> : <Heart className="w-10 h-10" />}
           </div>
           <h1 className="text-3xl font-serif font-bold text-foreground">
-            {watchAttending ? "We can't wait to see you!" : "You will be missed!"}
+            {watchAttending
+              ? (copy?.completeAttendingTitle ?? "We can't wait to see you!")
+              : (copy?.completeDecliningTitle ?? "You will be missed!")}
           </h1>
           <p className="text-muted-foreground">
             {watchAttending
-              ? "Your RSVP has been confirmed and your details have been saved."
-              : "Thank you for letting us know. We hope to celebrate with you another time."}
+              ? (copy?.completeAttendingMessage ?? "Your RSVP has been confirmed and your details have been saved.")
+              : (copy?.completeDecliningMessage ?? "Thank you for letting us know. We hope to celebrate with you another time.")}
           </p>
           <Button onClick={() => setLocation('/')} variant="outline" className="mt-8">
             Return Home
@@ -344,7 +347,7 @@ export default function RsvpPage() {
     <div className="min-h-[100dvh] bg-background py-12 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-serif font-bold text-foreground">RSVP</h1>
+          <h1 className="text-4xl font-serif font-bold text-foreground">{copy?.pageTitle ?? 'RSVP'}</h1>
           {event && <p className="text-muted-foreground">{event.coupleNames} • {new Date(event.weddingDate).toLocaleDateString()}</p>}
         </div>
 
@@ -355,7 +358,7 @@ export default function RsvpPage() {
 
                 {/* Personal Details */}
                 <div className="space-y-6">
-                  <h3 className="text-lg font-serif font-semibold text-primary border-b border-border pb-2">Guest Information</h3>
+                  <h3 className="text-lg font-serif font-semibold text-primary border-b border-border pb-2">{copy?.guestInfoHeading ?? 'Guest Information'}</h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
@@ -363,7 +366,7 @@ export default function RsvpPage() {
                       name="guestName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Name</FormLabel>
+                          <FormLabel>{copy?.fullNameLabel ?? 'Full Name'}</FormLabel>
                           <FormControl>
                             <Input placeholder="Jane Doe" {...field} />
                           </FormControl>
@@ -376,7 +379,7 @@ export default function RsvpPage() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email Address</FormLabel>
+                          <FormLabel>{copy?.emailLabel ?? 'Email Address'}</FormLabel>
                           <FormControl>
                             <Input type="email" placeholder="jane@example.com" {...field} />
                           </FormControl>
@@ -391,7 +394,7 @@ export default function RsvpPage() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone Number (Optional)</FormLabel>
+                        <FormLabel>{copy?.phoneLabel ?? 'Phone Number (Optional)'}</FormLabel>
                         <FormControl>
                           <Input type="tel" placeholder="+234..." {...field} />
                         </FormControl>
@@ -403,14 +406,14 @@ export default function RsvpPage() {
 
                 {/* Attendance */}
                 <div className="space-y-6 pt-2">
-                  <h3 className="text-lg font-serif font-semibold text-primary border-b border-border pb-2">Attendance</h3>
+                  <h3 className="text-lg font-serif font-semibold text-primary border-b border-border pb-2">{copy?.attendanceHeading ?? 'Attendance'}</h3>
 
                   <FormField
                     control={form.control}
                     name="attending"
                     render={({ field }) => (
                       <FormItem className="space-y-3">
-                        <FormLabel>Will you be attending?</FormLabel>
+                        <FormLabel>{copy?.attendingQuestion ?? 'Will you be attending?'}</FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={(val) => field.onChange(val === 'yes')}
@@ -421,13 +424,13 @@ export default function RsvpPage() {
                               <FormControl>
                                 <RadioGroupItem value="yes" />
                               </FormControl>
-                              <FormLabel className="font-normal cursor-pointer flex-1">Joyfully Accepts</FormLabel>
+                              <FormLabel className="font-normal cursor-pointer flex-1">{copy?.attendingYesLabel ?? 'Joyfully Accepts'}</FormLabel>
                             </FormItem>
                             <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
                               <FormControl>
                                 <RadioGroupItem value="no" />
                               </FormControl>
-                              <FormLabel className="font-normal cursor-pointer flex-1">Regretfully Declines</FormLabel>
+                              <FormLabel className="font-normal cursor-pointer flex-1">{copy?.attendingNoLabel ?? 'Regretfully Declines'}</FormLabel>
                             </FormItem>
                           </RadioGroup>
                         </FormControl>
@@ -445,7 +448,7 @@ export default function RsvpPage() {
                             name="guestCount"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Number of Guests (including yourself, max 3)</FormLabel>
+                                <FormLabel>{copy?.guestCountLabel ?? 'Number of Guests (including yourself, max 3)'}</FormLabel>
                                 <FormControl>
                                   <Input type="number" min="1" max="3" {...field} />
                                 </FormControl>
@@ -453,12 +456,14 @@ export default function RsvpPage() {
                               </FormItem>
                             )}
                           />
-                          <Alert className="bg-primary/5 border-primary/20">
-                            <Info className="h-4 w-4 text-primary" />
-                            <AlertDescription className="text-foreground/80">
-                              Please note: this is an adults-only celebration. No children allowed, kindly plan accordingly.
-                            </AlertDescription>
-                          </Alert>
+                          {(copy?.adultsOnlyNotice ?? 'Please note: this is an adults-only celebration. No children allowed, kindly plan accordingly.') && (
+                            <Alert className="bg-primary/5 border-primary/20">
+                              <Info className="h-4 w-4 text-primary" />
+                              <AlertDescription className="text-foreground/80">
+                                {copy?.adultsOnlyNotice ?? 'Please note: this is an adults-only celebration. No children allowed, kindly plan accordingly.'}
+                              </AlertDescription>
+                            </Alert>
+                          )}
                         </>
                        )}
 
@@ -467,7 +472,7 @@ export default function RsvpPage() {
                         name="asoebiInterest"
                         render={({ field }) => (
                           <FormItem className="space-y-3">
-                            <FormLabel>Would you like to purchase Asoebi?</FormLabel>
+                            <FormLabel>{copy?.asoebiQuestion ?? 'Would you like to purchase Asoebi?'}</FormLabel>
                             <FormControl>
                               <RadioGroup
                                 onValueChange={field.onChange}
@@ -478,13 +483,13 @@ export default function RsvpPage() {
                                   <FormControl>
                                     <RadioGroupItem value="yes" />
                                   </FormControl>
-                                  <FormLabel className="font-normal cursor-pointer flex-1">Yes, show me the options</FormLabel>
+                                  <FormLabel className="font-normal cursor-pointer flex-1">{copy?.asoebiYesLabel ?? 'Yes, show me the options'}</FormLabel>
                                 </FormItem>
                                 <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
                                   <FormControl>
                                     <RadioGroupItem value="no" />
                                   </FormControl>
-                                  <FormLabel className="font-normal cursor-pointer flex-1">No, I'll wear my own outfit</FormLabel>
+                                  <FormLabel className="font-normal cursor-pointer flex-1">{copy?.asoebiNoLabel ?? "No, I'll wear my own outfit"}</FormLabel>
                                 </FormItem>
                               </RadioGroup>
                             </FormControl>
@@ -501,7 +506,7 @@ export default function RsvpPage() {
                         Select Asoebi for {form.watch('guestName') || 'yourself'}
                       </h4>
                       <p className="text-xs text-muted-foreground -mt-2">
-                        Pick as many items as you like, in any combination, and use +/- to set quantity.
+                        {copy?.asoebiPickerHint ?? 'Pick as many items as you like, in any combination, and use +/- to set quantity.'}
                       </p>
                       <AsoebiPicker
                         control={form.control}
@@ -524,7 +529,7 @@ export default function RsvpPage() {
                   {watchAttending === true && fields.length > 0 && (
                     <div className="space-y-4 pt-2">
                       <h3 className="text-lg font-serif font-semibold text-primary border-b border-border pb-2">
-                        Additional Guests
+                        {copy?.additionalGuestsHeading ?? 'Additional Guests'}
                       </h3>
                       {fields.map((guestField, index) => (
                         <div key={guestField.id} className="space-y-4 p-4 rounded-xl border border-border bg-background">
@@ -563,14 +568,14 @@ export default function RsvpPage() {
                   {watchAsoebiInterest === 'yes' && (
                     <div className="space-y-4 pt-2">
                       <h3 className="text-lg font-serif font-semibold text-primary border-b border-border pb-2">
-                        Asoebi Delivery
+                        {copy?.deliveryHeading ?? 'Asoebi Delivery'}
                       </h3>
                       <FormField
                         control={form.control}
                         name="deliveryMethod"
                         render={({ field }) => (
                           <FormItem className="space-y-3">
-                            <FormLabel>How would you like to receive your order?</FormLabel>
+                            <FormLabel>{copy?.deliveryQuestion ?? 'How would you like to receive your order?'}</FormLabel>
                             <FormControl>
                               <RadioGroup
                                 onValueChange={field.onChange}
@@ -582,7 +587,7 @@ export default function RsvpPage() {
                                     <RadioGroupItem value="pickup" />
                                   </FormControl>
                                   <FormLabel className="font-normal cursor-pointer flex-1">
-                                    Pick up at the venue
+                                    {copy?.pickupLabel ?? 'Pick up at the venue'}
                                     {deliveryOptions?.pickupLocation && (
                                       <span className="block text-xs text-muted-foreground font-normal mt-0.5">
                                         {deliveryOptions.pickupLocation}
@@ -594,7 +599,7 @@ export default function RsvpPage() {
                                   <FormControl>
                                     <RadioGroupItem value="delivery" />
                                   </FormControl>
-                                  <FormLabel className="font-normal cursor-pointer flex-1">Deliver to my address</FormLabel>
+                                  <FormLabel className="font-normal cursor-pointer flex-1">{copy?.deliveryLabel ?? 'Deliver to my address'}</FormLabel>
                                 </FormItem>
                               </RadioGroup>
                             </FormControl>
@@ -611,7 +616,7 @@ export default function RsvpPage() {
                               name="deliveryProvider"
                               render={({ field }) => (
                                 <FormItem className="space-y-3">
-                                  <FormLabel>Choose a delivery service</FormLabel>
+                                  <FormLabel>{copy?.deliveryProviderQuestion ?? 'Choose a delivery service'}</FormLabel>
                                   <FormControl>
                                     <RadioGroup
                                       onValueChange={field.onChange}
@@ -647,7 +652,7 @@ export default function RsvpPage() {
                             name="deliveryAddress"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Delivery Address</FormLabel>
+                                <FormLabel>{copy?.deliveryAddressLabel ?? 'Delivery Address'}</FormLabel>
                                 <FormControl>
                                   <Textarea placeholder="Street address, city, state" {...field} />
                                 </FormControl>
@@ -664,14 +669,14 @@ export default function RsvpPage() {
                 {watchAttending !== undefined && (
                   <div className="space-y-4 pt-2">
                     <h3 className="text-lg font-serif font-semibold text-primary border-b border-border pb-2">
-                      Send a Gift (Optional)
+                      {copy?.giftHeading ?? 'Send a Gift (Optional)'}
                     </h3>
                     <FormField
                       control={form.control}
                       name="wantsGift"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel>Would you also like to send a monetary gift?</FormLabel>
+                          <FormLabel>{copy?.giftQuestion ?? 'Would you also like to send a monetary gift?'}</FormLabel>
                           <FormControl>
                             <RadioGroup
                               onValueChange={field.onChange}
@@ -682,13 +687,13 @@ export default function RsvpPage() {
                                 <FormControl>
                                   <RadioGroupItem value="yes" />
                                 </FormControl>
-                                <FormLabel className="font-normal cursor-pointer flex-1">Yes, I'd like to send a gift</FormLabel>
+                                <FormLabel className="font-normal cursor-pointer flex-1">{copy?.giftYesLabel ?? "Yes, I'd like to send a gift"}</FormLabel>
                               </FormItem>
                               <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
                                 <FormControl>
                                   <RadioGroupItem value="no" />
                                 </FormControl>
-                                <FormLabel className="font-normal cursor-pointer flex-1">No, not right now</FormLabel>
+                                <FormLabel className="font-normal cursor-pointer flex-1">{copy?.giftNoLabel ?? 'No, not right now'}</FormLabel>
                               </FormItem>
                             </RadioGroup>
                           </FormControl>
@@ -703,7 +708,7 @@ export default function RsvpPage() {
                         name="giftAmount"
                         render={({ field }) => (
                           <FormItem className="animate-in slide-in-from-top-4 fade-in duration-300">
-                            <FormLabel>Gift Amount (NGN)</FormLabel>
+                            <FormLabel>{copy?.giftAmountLabel ?? 'Gift Amount (NGN)'}</FormLabel>
                             <FormControl>
                               <Input type="number" min="1000" placeholder="e.g. 25000" {...field} value={field.value ?? ''} />
                             </FormControl>
@@ -722,7 +727,7 @@ export default function RsvpPage() {
                     name="note"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Message for the Couple (Optional)</FormLabel>
+                        <FormLabel>{copy?.noteLabel ?? 'Message for the Couple (Optional)'}</FormLabel>
                         <FormControl>
                           <Textarea placeholder="Any dietary requirements or well wishes?" {...field} />
                         </FormControl>
@@ -738,7 +743,11 @@ export default function RsvpPage() {
                   className="w-full h-14 text-lg rounded-xl mt-8"
                   disabled={createRsvp.isPending}
                 >
-                  {createRsvp.isPending ? "Submitting..." : watchAsoebiInterest === 'yes' ? "Continue to Payment" : "Submit RSVP"}
+                  {createRsvp.isPending
+                    ? "Submitting..."
+                    : watchAsoebiInterest === 'yes'
+                      ? (copy?.submitWithPaymentLabel ?? "Continue to Payment")
+                      : (copy?.submitLabel ?? "Submit RSVP")}
                 </Button>
 
               </form>
