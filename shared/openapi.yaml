@@ -118,6 +118,119 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AsoebiItem"
+  /admin/asoebi:
+    post:
+      operationId: createAsoebiItem
+      tags: [admin]
+      summary: Create an asoebi catalog item (admin role only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AsoebiItemInput"
+      responses:
+        "201":
+          description: Asoebi item created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsoebiItem"
+        "400":
+          description: Invalid asoebi item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/asoebi/{id}:
+    put:
+      operationId: updateAsoebiItem
+      tags: [admin]
+      summary: Update an asoebi catalog item (admin role only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AsoebiItemInput"
+      responses:
+        "200":
+          description: Updated asoebi item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AsoebiItem"
+        "400":
+          description: Invalid asoebi item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Asoebi item not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteAsoebiItem
+      tags: [admin]
+      summary: Remove an asoebi catalog item (admin role only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "204":
+          description: Asoebi item removed
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Asoebi item not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /rsvps:
     post:
       operationId: createRsvp
@@ -431,6 +544,172 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/delivery-config:
+    get:
+      operationId: getDeliveryConfig
+      tags: [admin]
+      summary: Get safe delivery configuration status
+      responses:
+        "200":
+          description: Delivery configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryConfig"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateDeliveryConfig
+      tags: [admin]
+      summary: Update delivery configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeliveryConfigInput"
+      responses:
+        "200":
+          description: Updated delivery configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryConfig"
+        "400":
+          description: Invalid delivery configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/notification-config:
+    get:
+      operationId: getNotificationConfig
+      tags: [admin]
+      summary: Get safe notification configuration status
+      responses:
+        "200":
+          description: Notification configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationConfig"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateNotificationConfig
+      tags: [admin]
+      summary: Update notification configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationConfigInput"
+      responses:
+        "200":
+          description: Updated notification configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationConfig"
+        "400":
+          description: Invalid notification configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /site-settings:
+    get:
+      operationId: getSiteSettings
+      tags: [event]
+      summary: Get public site settings (music playlist)
+      responses:
+        "200":
+          description: Site settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteSettings"
+  /admin/site-settings:
+    put:
+      operationId: updateSiteSettings
+      tags: [admin]
+      summary: Update site settings (music playlist)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SiteSettingsInput"
+      responses:
+        "200":
+          description: Updated site settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteSettings"
+        "400":
+          description: Invalid site settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -466,6 +745,16 @@ components:
         sizes:
           type: array
           items: { type: string }
+        available: { type: boolean }
+    AsoebiItemInput:
+      type: object
+      required: [category, name, description, price, imageUrl, available]
+      properties:
+        category: { type: string, enum: [women, men] }
+        name: { type: string, minLength: 1 }
+        description: { type: string }
+        price: { type: number, minimum: 0 }
+        imageUrl: { type: string }
         available: { type: boolean }
     AsoebiSelectionInput:
       type: object
@@ -503,6 +792,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AsoebiSelectionInput"
+        deliveryMethod:
+          type: ["string", "null"]
+          enum: [pickup, delivery, null]
+        deliveryAddress: { type: ["string", "null"] }
         note: { type: string }
     CartItem:
       type: object
@@ -529,6 +822,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CartItem"
+        deliveryMethod:
+          type: ["string", "null"]
+          enum: [pickup, delivery, null]
+        deliveryAddress: { type: ["string", "null"] }
     GiftCheckoutInput:
       type: object
       required: [guestName, email, amount]
@@ -603,6 +900,74 @@ components:
         accountName: { type: string }
         accountNumber: { type: string }
         instructions: { type: string }
+    DeliveryConfig:
+      type: object
+      required: [deliveryEnabled, providerConfigured, providerName, webhookUrl, webhookSecretConfigured, pickupLocation, deliveryFee]
+      properties:
+        deliveryEnabled: { type: boolean }
+        providerConfigured: { type: boolean }
+        providerName: { type: string }
+        webhookUrl: { type: string }
+        webhookSecretConfigured: { type: boolean }
+        pickupLocation: { type: string }
+        deliveryFee: { type: number }
+    DeliveryConfigInput:
+      type: object
+      required: [deliveryEnabled, providerName, apiKey, webhookSecret, pickupLocation, deliveryFee]
+      properties:
+        deliveryEnabled: { type: boolean }
+        providerName: { type: string }
+        apiKey: { type: string }
+        webhookSecret: { type: string }
+        pickupLocation: { type: string }
+        deliveryFee: { type: number, minimum: 0 }
+    NotificationConfig:
+      type: object
+      required: [emailEnabled, emailConfigured, mailgunDomain, mailgunFromEmail, smsEnabled, smsConfigured, twilioFromNumber]
+      properties:
+        emailEnabled: { type: boolean }
+        emailConfigured: { type: boolean }
+        mailgunDomain: { type: string }
+        mailgunFromEmail: { type: string }
+        smsEnabled: { type: boolean }
+        smsConfigured: { type: boolean }
+        twilioFromNumber: { type: string }
+    NotificationConfigInput:
+      type: object
+      required: [emailEnabled, mailgunApiKey, mailgunDomain, mailgunFromEmail, smsEnabled, twilioAccountSid, twilioAuthToken, twilioFromNumber]
+      properties:
+        emailEnabled: { type: boolean }
+        mailgunApiKey: { type: string }
+        mailgunDomain: { type: string }
+        mailgunFromEmail: { type: string }
+        smsEnabled: { type: boolean }
+        twilioAccountSid: { type: string }
+        twilioAuthToken: { type: string }
+        twilioFromNumber: { type: string }
+    MusicTrack:
+      type: object
+      required: [title, url]
+      properties:
+        title: { type: string, minLength: 1 }
+        url: { type: string, minLength: 1 }
+    SiteSettings:
+      type: object
+      required: [musicEnabled, playlist]
+      properties:
+        musicEnabled: { type: boolean }
+        playlist:
+          type: array
+          items:
+            $ref: "#/components/schemas/MusicTrack"
+    SiteSettingsInput:
+      type: object
+      required: [musicEnabled, playlist]
+      properties:
+        musicEnabled: { type: boolean }
+        playlist:
+          type: array
+          items:
+            $ref: "#/components/schemas/MusicTrack"
     AdminOverview:
       type: object
       required: [totalRsvps, attendingCount, asoebiInterestCount, paidOrders, recentRsvps]

@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Route, Switch, useLocation, Router as WouterRouter, Redirect } from 'wouter';
 import { AuthProvider, useAuth } from '@/lib/auth';
+import { MusicPlayer } from '@/components/music-player';
 
 import NotFound from '@/pages/not-found';
 import Home from '@/pages/home';
@@ -16,6 +17,10 @@ import DashboardLayout from '@/components/dashboard-layout';
 import DashboardIndex from '@/pages/dashboard/index';
 import DashboardPayments from '@/pages/dashboard/payments';
 import DashboardTeam from '@/pages/dashboard/team';
+import DashboardDelivery from '@/pages/dashboard/delivery';
+import DashboardNotifications from '@/pages/dashboard/notifications';
+import DashboardMusic from '@/pages/dashboard/music';
+import DashboardAsoebi from '@/pages/dashboard/asoebi';
 
 const queryClient = new QueryClient();
 
@@ -50,9 +55,33 @@ function Router() {
         </ProtectedDashboard>
       </Route>
 
+      <Route path="/dashboard/asoebi">
+        <ProtectedDashboard adminOnly>
+          <DashboardAsoebi />
+        </ProtectedDashboard>
+      </Route>
+
       <Route path="/dashboard/payments">
         <ProtectedDashboard adminOnly>
           <DashboardPayments />
+        </ProtectedDashboard>
+      </Route>
+
+      <Route path="/dashboard/delivery">
+        <ProtectedDashboard adminOnly>
+          <DashboardDelivery />
+        </ProtectedDashboard>
+      </Route>
+
+      <Route path="/dashboard/notifications">
+        <ProtectedDashboard adminOnly>
+          <DashboardNotifications />
+        </ProtectedDashboard>
+      </Route>
+
+      <Route path="/dashboard/music">
+        <ProtectedDashboard adminOnly>
+          <DashboardMusic />
         </ProtectedDashboard>
       </Route>
 
@@ -81,6 +110,7 @@ function App() {
             <RoutedErrorBoundary>
               <Router />
             </RoutedErrorBoundary>
+            <MusicPlayer />
           </AuthProvider>
         </WouterRouter>
         <Toaster />

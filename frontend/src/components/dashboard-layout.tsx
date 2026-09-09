@@ -1,7 +1,17 @@
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
-import { LayoutDashboard, LogOut, Settings, Users } from 'lucide-react';
+import { LayoutDashboard, LogOut, Settings, Users, Truck, Bell, Music, ShoppingBag } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
+
+const NAV_ITEMS = [
+  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: false },
+  { href: '/dashboard/asoebi', label: 'Asoebi Catalog', icon: ShoppingBag, adminOnly: true },
+  { href: '/dashboard/payments', label: 'Payment Settings', icon: Settings, adminOnly: true },
+  { href: '/dashboard/delivery', label: 'Delivery Settings', icon: Truck, adminOnly: true },
+  { href: '/dashboard/notifications', label: 'Notifications', icon: Bell, adminOnly: true },
+  { href: '/dashboard/music', label: 'Music', icon: Music, adminOnly: true },
+  { href: '/dashboard/team', label: 'Team', icon: Users, adminOnly: true },
+];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
@@ -18,34 +28,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </SidebarHeader>
           <SidebarContent className="p-4">
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location === '/dashboard'} tooltip="Overview">
-                  <Link href="/dashboard" className="flex items-center gap-3">
-                    <LayoutDashboard className="w-4 h-4" />
-                    <span>Overview</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              {user?.role === 'admin' && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={location === '/dashboard/payments'} tooltip="Payments">
-                    <Link href="/dashboard/payments" className="flex items-center gap-3">
-                      <Settings className="w-4 h-4" />
-                      <span>Payment Settings</span>
+              {NAV_ITEMS.filter((item) => !item.adminOnly || user?.role === 'admin').map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton asChild isActive={location === item.href} tooltip={item.label}>
+                    <Link href={item.href} className="flex items-center gap-3">
+                      <item.icon className="w-4 h-4" />
+                      <span>{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              )}
-              {user?.role === 'admin' && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={location === '/dashboard/team'} tooltip="Team">
-                    <Link href="/dashboard/team" className="flex items-center gap-3">
-                      <Users className="w-4 h-4" />
-                      <span>Team</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
+              ))}
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter className="p-4 border-t border-border flex flex-row items-center justify-between">

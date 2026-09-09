@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { ordersCollection, paymentConfigsCollection } from "@/db";
+import { deliveryConfigsCollection, ordersCollection, paymentConfigsCollection } from "@/db";
 
 const router: IRouter = Router();
 
@@ -41,6 +41,24 @@ router.post("/webhooks/flutterwave", async (req, res): Promise<void> => {
     req.log.info({ reference, status: nextStatus }, "Order status updated from webhook");
   }
 
+  res.status(200).end();
+});
+
+// Generic receiver for a future delivery/logistics provider. No specific
+// provider is wired up yet — this only verifies the shared secret and logs
+// the payload so the parsing logic can be filled in once a provider is
+// chosen, without moving the URL an admin has already registered elsewhere.
+router.post("/webhooks/delivery", async (req, res): Promise<void> => {
+  const config = await deliveryConfigsCollection().findOne({ id: 1 });
+  const signature = req.headers["x-webhook-secret"];
+
+  if (!config?.webhookSecret || signature !== config.webhookSecret) {
+    req.log.warn("Rejected delivery webhook with invalid or missing signature");
+    res.status(401).end();
+    return;
+  }
+
+  req.log.info({ body: req.body }, "Received delivery webhook (no provider wired up yet)");
   res.status(200).end();
 });
 

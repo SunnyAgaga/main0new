@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AsoebiItemCategory = typeof AsoebiItemCategory[keyof typeof AsoebiItemCategory];
+export type AsoebiItemInputCategory = typeof AsoebiItemInputCategory[keyof typeof AsoebiItemInputCategory];
 
 
-export const AsoebiItemCategory = {
+export const AsoebiItemInputCategory = {
   women: 'women',
   men: 'men',
 } as const;
