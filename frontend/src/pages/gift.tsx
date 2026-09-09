@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -50,6 +50,19 @@ export default function GiftPage() {
     resolver: zodResolver(giftSchema),
     defaultValues: { guestName: '', email: '', message: '' },
   });
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem('wedplan_gift_prefill');
+    if (!raw) return;
+    sessionStorage.removeItem('wedplan_gift_prefill');
+    try {
+      const prefill = JSON.parse(raw) as { guestName: string; email: string; amount: number };
+      form.reset({ guestName: prefill.guestName, email: prefill.email, amount: prefill.amount, message: '' });
+    } catch {
+      // ignore malformed prefill data
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFlutterwave = form.handleSubmit((values) => {
     flutterwaveMutation.mutate({ data: values }, {
@@ -201,7 +214,7 @@ export default function GiftPage() {
                         ))}
                       </div>
                       <FormControl>
-                        <Input type="number" min="1000" placeholder="Enter a custom amount" {...field} />
+                        <Input type="number" min="1000" placeholder="Enter a custom amount" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

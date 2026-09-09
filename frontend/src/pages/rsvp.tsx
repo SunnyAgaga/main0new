@@ -7,7 +7,7 @@ import { useListAsoebi, useCreateRsvp, useGetEvent, useGetDeliveryOptions, type 
 
 import { Check, Heart, Info, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,7 +39,17 @@ const rsvpSchema = z.object({
   deliveryMethod: z.enum(['pickup', 'delivery']).optional().nullable(),
   deliveryAddress: z.string().optional(),
   deliveryProvider: z.string().optional().nullable(),
+  wantsGift: z.enum(['yes', 'no']).optional(),
+  giftAmount: z.coerce.number().optional(),
   note: z.string().optional(),
+}).refine(data => {
+  if (data.wantsGift === 'yes') {
+    return (data.giftAmount ?? 0) >= 1000;
+  }
+  return true;
+}, {
+  message: "Minimum gift amount is NGN 1,000",
+  path: ['giftAmount']
 }).refine(data => {
   if (data.asoebiInterest === 'yes') {
     return data.asoebiSelections.length > 0;
@@ -252,6 +262,7 @@ export default function RsvpPage() {
   const watchAsoebiInterest = form.watch("asoebiInterest");
   const watchGuestCount = form.watch("guestCount");
   const watchDeliveryMethod = form.watch("deliveryMethod");
+  const watchWantsGift = form.watch("wantsGift");
 
   useEffect(() => {
     if (!watchAttending) return;
@@ -269,15 +280,29 @@ export default function RsvpPage() {
   }, [watchGuestCount, watchAttending]);
 
   const onSubmit = (values: RsvpFormValues) => {
+    const { wantsGift, giftAmount, ...rsvpValues } = values;
+
     createRsvp.mutate({ data: {
-      ...values,
+      ...rsvpValues,
       asoebiInterest: values.asoebiInterest as 'yes' | 'no',
       additionalGuests: values.attending ? values.additionalGuests : [],
     }}, {
       onSuccess: (result) => {
         sessionStorage.setItem('wedplan_rsvp', JSON.stringify(result));
+
+        const sendingGift = wantsGift === 'yes' && (giftAmount ?? 0) >= 1000;
+        if (sendingGift) {
+          sessionStorage.setItem('wedplan_gift_prefill', JSON.stringify({
+            guestName: values.guestName,
+            email: values.email,
+            amount: giftAmount,
+          }));
+        }
+
         if (result.nextStep === 'cart') {
           setLocation('/cart');
+        } else if (sendingGift) {
+          setLocation('/gift');
         } else {
           setIsComplete(true);
         }
@@ -635,6 +660,61 @@ export default function RsvpPage() {
                     </div>
                   )}
                 </div>
+
+                {watchAttending !== undefined && (
+                  <div className="space-y-4 pt-2">
+                    <h3 className="text-lg font-serif font-semibold text-primary border-b border-border pb-2">
+                      Send a Gift (Optional)
+                    </h3>
+                    <FormField
+                      control={form.control}
+                      name="wantsGift"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormLabel>Would you also like to send a monetary gift?</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value ?? undefined}
+                              className="flex flex-col space-y-2"
+                            >
+                              <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
+                                <FormControl>
+                                  <RadioGroupItem value="yes" />
+                                </FormControl>
+                                <FormLabel className="font-normal cursor-pointer flex-1">Yes, I'd like to send a gift</FormLabel>
+                              </FormItem>
+                              <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
+                                <FormControl>
+                                  <RadioGroupItem value="no" />
+                                </FormControl>
+                                <FormLabel className="font-normal cursor-pointer flex-1">No, not right now</FormLabel>
+                              </FormItem>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {watchWantsGift === 'yes' && (
+                      <FormField
+                        control={form.control}
+                        name="giftAmount"
+                        render={({ field }) => (
+                          <FormItem className="animate-in slide-in-from-top-4 fade-in duration-300">
+                            <FormLabel>Gift Amount (NGN)</FormLabel>
+                            <FormControl>
+                              <Input type="number" min="1000" placeholder="e.g. 25000" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormDescription>You'll complete payment on the next step.</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+                )}
 
                 <div className="space-y-6 pt-2">
                   <FormField

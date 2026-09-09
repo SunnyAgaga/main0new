@@ -7,7 +7,12 @@
  */
 
 export * from './additionalGuestInput';
+export * from './adminAdditionalGuest';
+export * from './adminAsoebiSelection';
 export * from './adminOverview';
+export * from './adminRsvp';
+export * from './adminRsvpAsoebiInterest';
+export * from './adminRsvpDeliveryMethod';
 export * from './asoebiItem';
 export * from './asoebiItemCategory';
 export * from './asoebiItemInput';

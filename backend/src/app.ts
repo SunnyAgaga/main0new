@@ -10,6 +10,13 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+// Production runs behind a reverse proxy that terminates TLS and forwards
+// plain HTTP internally. Without this, req.protocol always reports "http"
+// (from X-Forwarded-Proto being ignored), which leaks into every absolute
+// URL this app generates - Spotify's redirect_uri, payment webhook URLs,
+// checkout return URLs - as the wrong scheme.
+app.set("trust proxy", 1);
+
 app.use(
   pinoHttp({
     logger,

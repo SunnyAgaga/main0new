@@ -307,6 +307,24 @@ export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
   return doc;
 }
 
+export async function updateRsvp(id: number, input: InsertRsvp): Promise<Rsvp | null> {
+  return rsvpsCollection().findOneAndUpdate(
+    { id },
+    {
+      $set: {
+        ...input,
+        phone: input.phone ?? null,
+        note: input.note ?? null,
+        additionalGuests: input.additionalGuests.map((guest) => ({
+          name: guest.name,
+          asoebiSelections: guest.asoebiSelections,
+        })),
+      },
+    },
+    { returnDocument: "after" },
+  );
+}
+
 export async function insertOrder(input: InsertOrder): Promise<Order> {
   const doc: Order = {
     ...input,

@@ -463,6 +463,111 @@ export const DeleteAdminUserResponse = zod.void()
 
 
 /**
+ * @summary List all RSVPs (admin role only)
+ */
+export const ListAdminRsvpsResponseItem = zod.object({
+  "id": zod.number(),
+  "guestName": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullable(),
+  "attending": zod.boolean(),
+  "guestCount": zod.number(),
+  "additionalGuests": zod.array(zod.object({
+  "name": zod.string(),
+  "asoebiSelections": zod.array(zod.object({
+  "asoebiItemId": zod.number(),
+  "asoebiSize": zod.string(),
+  "quantity": zod.number()
+}))
+})),
+  "asoebiInterest": zod.enum(['yes', 'no']),
+  "asoebiSelections": zod.array(zod.object({
+  "asoebiItemId": zod.number(),
+  "asoebiSize": zod.string(),
+  "quantity": zod.number()
+})),
+  "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
+  "deliveryAddress": zod.string().nullable(),
+  "deliveryProvider": zod.string().nullable(),
+  "note": zod.string().nullable(),
+  "createdAt": zod.string()
+})
+export const ListAdminRsvpsResponse = zod.array(ListAdminRsvpsResponseItem)
+
+
+/**
+ * @summary Update a guest's RSVP (admin role only)
+ */
+export const UpdateAdminRsvpParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const updateAdminRsvpBodyGuestNameMin = 2;
+
+export const updateAdminRsvpBodyGuestCountMax = 3;
+
+export const updateAdminRsvpBodyAdditionalGuestsItemNameMin = 2;
+
+
+
+
+
+export const UpdateAdminRsvpBody = zod.object({
+  "guestName": zod.string().min(updateAdminRsvpBodyGuestNameMin),
+  "email": zod.string(),
+  "phone": zod.string().optional(),
+  "attending": zod.boolean(),
+  "guestCount": zod.number().min(1).max(updateAdminRsvpBodyGuestCountMax).optional(),
+  "additionalGuests": zod.array(zod.object({
+  "name": zod.string().min(updateAdminRsvpBodyAdditionalGuestsItemNameMin),
+  "asoebiSelections": zod.array(zod.object({
+  "itemId": zod.number(),
+  "size": zod.string(),
+  "quantity": zod.number().min(1)
+})).optional()
+})).optional(),
+  "asoebiInterest": zod.enum(['yes', 'no']),
+  "asoebiSelections": zod.array(zod.object({
+  "itemId": zod.number(),
+  "size": zod.string(),
+  "quantity": zod.number().min(1)
+})).optional(),
+  "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullish(),
+  "deliveryAddress": zod.string().nullish(),
+  "deliveryProvider": zod.string().nullish(),
+  "note": zod.string().optional()
+})
+
+export const UpdateAdminRsvpResponse = zod.object({
+  "id": zod.number(),
+  "guestName": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullable(),
+  "attending": zod.boolean(),
+  "guestCount": zod.number(),
+  "additionalGuests": zod.array(zod.object({
+  "name": zod.string(),
+  "asoebiSelections": zod.array(zod.object({
+  "asoebiItemId": zod.number(),
+  "asoebiSize": zod.string(),
+  "quantity": zod.number()
+}))
+})),
+  "asoebiInterest": zod.enum(['yes', 'no']),
+  "asoebiSelections": zod.array(zod.object({
+  "asoebiItemId": zod.number(),
+  "asoebiSize": zod.string(),
+  "quantity": zod.number()
+})),
+  "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
+  "deliveryAddress": zod.string().nullable(),
+  "deliveryProvider": zod.string().nullable(),
+  "note": zod.string().nullable(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Get public delivery options (pickup, fee, enabled providers)
  */
 export const GetDeliveryOptionsResponse = zod.object({
