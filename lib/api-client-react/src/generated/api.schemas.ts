@@ -12,14 +12,25 @@ export interface HealthStatus {
 export interface Event {
   id: string;
   coupleNames: string;
-  date: string;
-  venue: string;
+  traditionalDate: string;
+  traditionalVenue: string;
+  weddingDate: string;
+  weddingVenue: string;
   rsvpDeadline: string;
   welcomeMessage: string;
 }
 
+export type AsoebiItemCategory = typeof AsoebiItemCategory[keyof typeof AsoebiItemCategory];
+
+
+export const AsoebiItemCategory = {
+  women: 'women',
+  men: 'men',
+} as const;
+
 export interface AsoebiItem {
   id: number;
+  category: AsoebiItemCategory;
   name: string;
   description: string;
   price: number;
@@ -27,6 +38,19 @@ export interface AsoebiItem {
   imageUrl: string;
   sizes: string[];
   available: boolean;
+}
+
+export interface AsoebiSelectionInput {
+  itemId: number;
+  size: string;
+  /** @minimum 1 */
+  quantity: number;
+}
+
+export interface AdditionalGuestInput {
+  /** @minLength 2 */
+  name: string;
+  asoebiSelections?: AsoebiSelectionInput[];
 }
 
 export type RsvpInputAsoebiInterest = typeof RsvpInputAsoebiInterest[keyof typeof RsvpInputAsoebiInterest];
@@ -45,15 +69,23 @@ export interface RsvpInput {
   attending: boolean;
   /**
      * @minimum 1
-     * @maximum 10
+     * @maximum 3
      */
   guestCount?: number;
+  additionalGuests?: AdditionalGuestInput[];
   asoebiInterest: RsvpInputAsoebiInterest;
-  /** @nullable */
-  asoebiItemId?: number | null;
-  /** @nullable */
-  asoebiSize?: string | null;
+  asoebiSelections?: AsoebiSelectionInput[];
   note?: string;
+}
+
+export interface CartItem {
+  guestName: string;
+  asoebiItemId: number;
+  name: string;
+  price: number;
+  currency: string;
+  size: string;
+  quantity: number;
 }
 
 export type RsvpResultAsoebiInterest = typeof RsvpResultAsoebiInterest[keyof typeof RsvpResultAsoebiInterest];
@@ -72,17 +104,6 @@ export const RsvpResultNextStep = {
   cart: 'cart',
 } as const;
 
-/**
- * @nullable
- */
-export type RsvpResultCartItem = {
-  id: number;
-  name: string;
-  price: number;
-  currency: string;
-  size: string;
-} | null;
-
 export interface RsvpResult {
   id: number;
   guestName: string;
@@ -90,18 +111,32 @@ export interface RsvpResult {
   attending: boolean;
   asoebiInterest: RsvpResultAsoebiInterest;
   nextStep: RsvpResultNextStep;
-  /** @nullable */
-  cartItem?: RsvpResultCartItem;
+  cartItems: CartItem[];
+}
+
+export interface GiftCheckoutInput {
+  /** @minLength 2 */
+  guestName: string;
+  email: string;
+  /** @minimum 1 */
+  amount: number;
+  message?: string;
+}
+
+export interface CheckoutItemInput {
+  guestName: string;
+  itemId: number;
+  size: string;
+  /** @minimum 1 */
+  quantity?: number;
 }
 
 export interface CheckoutInput {
   rsvpId: number;
   guestName: string;
   email: string;
-  itemId: number;
-  size: string;
-  /** @minimum 0 */
-  amount?: number;
+  /** @minItems 1 */
+  items: CheckoutItemInput[];
 }
 
 export interface CheckoutResponse {
@@ -129,6 +164,8 @@ export interface BankTransferDetails {
 export interface PaymentConfig {
   flutterwaveConfigured: boolean;
   flutterwaveKeyHint: string;
+  webhookUrl: string;
+  webhookSecretConfigured: boolean;
   bankTransferConfigured: boolean;
   bankTransfer: BankTransferDetails;
 }
@@ -136,6 +173,7 @@ export interface PaymentConfig {
 export interface PaymentConfigInput {
   flutterwaveEnabled: boolean;
   flutterwaveSecretKey: string;
+  flutterwaveWebhookSecret?: string;
   bankTransferEnabled: boolean;
   bankTransfer: BankTransferDetails;
 }
@@ -165,5 +203,40 @@ export interface AdminOverview {
 
 export interface ErrorResponse {
   error: string;
+}
+
+export interface AuthCredentials {
+  email: string;
+  /** @minLength 8 */
+  password: string;
+}
+
+export type AuthUserRole = typeof AuthUserRole[keyof typeof AuthUserRole];
+
+
+export const AuthUserRole = {
+  admin: 'admin',
+  manager: 'manager',
+} as const;
+
+export interface AuthUser {
+  id: number;
+  email: string;
+  role: AuthUserRole;
+}
+
+export type CreateAdminUserInputRole = typeof CreateAdminUserInputRole[keyof typeof CreateAdminUserInputRole];
+
+
+export const CreateAdminUserInputRole = {
+  admin: 'admin',
+  manager: 'manager',
+} as const;
+
+export interface CreateAdminUserInput {
+  email: string;
+  /** @minLength 8 */
+  password: string;
+  role: CreateAdminUserInputRole;
 }
 

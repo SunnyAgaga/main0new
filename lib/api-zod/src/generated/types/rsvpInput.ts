@@ -5,6 +5,8 @@
  * WedPlan wedding RSVP and asoebi commerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { AdditionalGuestInput } from './additionalGuestInput';
+import type { AsoebiSelectionInput } from './asoebiSelectionInput';
 import type { RsvpInputAsoebiInterest } from './rsvpInputAsoebiInterest';
 
 export interface RsvpInput {
@@ -15,13 +17,11 @@ export interface RsvpInput {
   attending: boolean;
   /**
      * @minimum 1
-     * @maximum 10
+     * @maximum 3
      */
   guestCount?: number;
+  additionalGuests?: AdditionalGuestInput[];
   asoebiInterest: RsvpInputAsoebiInterest;
-  /** @nullable */
-  asoebiItemId?: number | null;
-  /** @nullable */
-  asoebiSize?: string | null;
+  asoebiSelections?: AsoebiSelectionInput[];
   note?: string;
 }

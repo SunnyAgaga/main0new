@@ -5,9 +5,11 @@
  * WedPlan wedding RSVP and asoebi commerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { AsoebiItemCategory } from './asoebiItemCategory';
 
 export interface AsoebiItem {
   id: number;
+  category: AsoebiItemCategory;
   name: string;
   description: string;
   price: number;

@@ -20,7 +20,65 @@ tags:
     description: Payment checkout
   - name: admin
     description: Authenticated dashboard administration
+  - name: auth
+    description: Admin account authentication
 paths:
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Log in to an admin account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthCredentials"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "400":
+          description: Invalid login request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Log out of the current session
+      responses:
+        "204":
+          description: Logged out
+  /auth/me:
+    get:
+      operationId: getAuthMe
+      tags: [auth]
+      summary: Get the current admin session
+      responses:
+        "200":
+          description: Current admin user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /healthz:
     get:
       operationId: healthCheck
@@ -144,6 +202,66 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /checkout/gift/flutterwave:
+    post:
+      operationId: startGiftFlutterwaveCheckout
+      tags: [checkout]
+      summary: Create a Flutterwave checkout link for a monetary gift
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GiftCheckoutInput"
+      responses:
+        "200":
+          description: Flutterwave checkout link
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckoutResponse"
+        "400":
+          description: Invalid gift request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Flutterwave is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /checkout/gift/bank-transfer:
+    post:
+      operationId: createGiftBankTransferOrder
+      tags: [checkout]
+      summary: Create a bank transfer order for a monetary gift
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GiftCheckoutInput"
+      responses:
+        "201":
+          description: Bank transfer instructions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BankTransferResponse"
+        "400":
+          description: Invalid gift request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Bank transfer is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /admin/overview:
     get:
       operationId: getAdminOverview
@@ -209,6 +327,110 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [admin]
+      summary: List admin users (admin role only)
+      responses:
+        "200":
+          description: Admin users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createAdminUser
+      tags: [admin]
+      summary: Create a new admin user (admin role only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAdminUserInput"
+      responses:
+        "201":
+          description: Admin user created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/users/{id}:
+    delete:
+      operationId: deleteAdminUser
+      tags: [admin]
+      summary: Remove an admin user (admin role only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "204":
+          description: Admin user removed
+        "400":
+          description: Cannot remove your own account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Admin user not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -220,19 +442,22 @@ components:
         - status
     Event:
       type: object
-      required: [id, coupleNames, date, venue, rsvpDeadline, welcomeMessage]
+      required: [id, coupleNames, traditionalDate, traditionalVenue, weddingDate, weddingVenue, rsvpDeadline, welcomeMessage]
       properties:
         id: { type: string }
         coupleNames: { type: string }
-        date: { type: string }
-        venue: { type: string }
+        traditionalDate: { type: string }
+        traditionalVenue: { type: string }
+        weddingDate: { type: string }
+        weddingVenue: { type: string }
         rsvpDeadline: { type: string }
         welcomeMessage: { type: string }
     AsoebiItem:
       type: object
-      required: [id, name, description, price, currency, imageUrl, sizes, available]
+      required: [id, category, name, description, price, currency, imageUrl, sizes, available]
       properties:
         id: { type: number }
+        category: { type: string, enum: [women, men] }
         name: { type: string }
         description: { type: string }
         price: { type: number }
@@ -242,6 +467,22 @@ components:
           type: array
           items: { type: string }
         available: { type: boolean }
+    AsoebiSelectionInput:
+      type: object
+      required: [itemId, size, quantity]
+      properties:
+        itemId: { type: number }
+        size: { type: string }
+        quantity: { type: number, minimum: 1 }
+    AdditionalGuestInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 2 }
+        asoebiSelections:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsoebiSelectionInput"
     RsvpInput:
       type: object
       required: [guestName, email, attending, asoebiInterest]
@@ -250,16 +491,33 @@ components:
         email: { type: string }
         phone: { type: string }
         attending: { type: boolean }
-        guestCount: { type: number, minimum: 1, maximum: 10 }
+        guestCount: { type: number, minimum: 1, maximum: 3 }
+        additionalGuests:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdditionalGuestInput"
         asoebiInterest:
           type: string
           enum: [yes, no]
-        asoebiItemId: { type: ["number", "null"] }
-        asoebiSize: { type: ["string", "null"] }
+        asoebiSelections:
+          type: array
+          items:
+            $ref: "#/components/schemas/AsoebiSelectionInput"
         note: { type: string }
+    CartItem:
+      type: object
+      required: [guestName, asoebiItemId, name, price, currency, size, quantity]
+      properties:
+        guestName: { type: string }
+        asoebiItemId: { type: number }
+        name: { type: string }
+        price: { type: number }
+        currency: { type: string }
+        size: { type: string }
+        quantity: { type: number }
     RsvpResult:
       type: object
-      required: [id, guestName, email, attending, asoebiInterest, nextStep]
+      required: [id, guestName, email, attending, asoebiInterest, nextStep, cartItems]
       properties:
         id: { type: number }
         guestName: { type: string }
@@ -267,25 +525,38 @@ components:
         attending: { type: boolean }
         asoebiInterest: { type: string, enum: [yes, no] }
         nextStep: { type: string, enum: [complete, cart] }
-        cartItem:
-          type: ["object", "null"]
-          properties:
-            id: { type: number }
-            name: { type: string }
-            price: { type: number }
-            currency: { type: string }
-            size: { type: string }
-          required: [id, name, price, currency, size]
+        cartItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartItem"
+    GiftCheckoutInput:
+      type: object
+      required: [guestName, email, amount]
+      properties:
+        guestName: { type: string, minLength: 2 }
+        email: { type: string }
+        amount: { type: number, minimum: 1 }
+        message: { type: string }
+    CheckoutItemInput:
+      type: object
+      required: [guestName, itemId, size]
+      properties:
+        guestName: { type: string }
+        itemId: { type: number }
+        size: { type: string }
+        quantity: { type: number, minimum: 1 }
     CheckoutInput:
       type: object
-      required: [rsvpId, guestName, email, itemId, size]
+      required: [rsvpId, guestName, email, items]
       properties:
         rsvpId: { type: number }
         guestName: { type: string }
         email: { type: string }
-        itemId: { type: number }
-        size: { type: string }
-        amount: { type: number, minimum: 0 }
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/CheckoutItemInput"
     CheckoutResponse:
       type: object
       required: [reference, checkoutUrl]
@@ -305,10 +576,12 @@ components:
         instructions: { type: string }
     PaymentConfig:
       type: object
-      required: [flutterwaveConfigured, bankTransferConfigured, flutterwaveKeyHint, bankTransfer]
+      required: [flutterwaveConfigured, bankTransferConfigured, flutterwaveKeyHint, webhookUrl, webhookSecretConfigured, bankTransfer]
       properties:
         flutterwaveConfigured: { type: boolean }
         flutterwaveKeyHint: { type: string }
+        webhookUrl: { type: string }
+        webhookSecretConfigured: { type: boolean }
         bankTransferConfigured: { type: boolean }
         bankTransfer:
           $ref: "#/components/schemas/BankTransferDetails"
@@ -318,6 +591,7 @@ components:
       properties:
         flutterwaveEnabled: { type: boolean }
         flutterwaveSecretKey: { type: string }
+        flutterwaveWebhookSecret: { type: string }
         bankTransferEnabled: { type: boolean }
         bankTransfer:
           $ref: "#/components/schemas/BankTransferDetails"
@@ -354,4 +628,24 @@ components:
       required: [error]
       properties:
         error: { type: string }
+    AuthCredentials:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string }
+        password: { type: string, minLength: 8 }
+    AuthUser:
+      type: object
+      required: [id, email, role]
+      properties:
+        id: { type: number }
+        email: { type: string }
+        role: { type: string, enum: [admin, manager] }
+    CreateAdminUserInput:
+      type: object
+      required: [email, password, role]
+      properties:
+        email: { type: string }
+        password: { type: string, minLength: 8 }
+        role: { type: string, enum: [admin, manager] }
 

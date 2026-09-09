@@ -1,12 +1,11 @@
 import { Link, useLocation } from 'wouter';
-import { useClerk, useUser } from '@clerk/react';
-import { LayoutDashboard, LogOut, Settings } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { LayoutDashboard, LogOut, Settings, Users } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
-  const { signOut } = useClerk();
-  const { user } = useUser();
+  const [location, setLocation] = useLocation();
+  const { user, logout } = useAuth();
 
   return (
     <SidebarProvider>
@@ -27,26 +26,41 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location === '/dashboard/payments'} tooltip="Payments">
-                  <Link href="/dashboard/payments" className="flex items-center gap-3">
-                    <Settings className="w-4 h-4" />
-                    <span>Payment Settings</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {user?.role === 'admin' && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location === '/dashboard/payments'} tooltip="Payments">
+                    <Link href="/dashboard/payments" className="flex items-center gap-3">
+                      <Settings className="w-4 h-4" />
+                      <span>Payment Settings</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              {user?.role === 'admin' && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location === '/dashboard/team'} tooltip="Team">
+                    <Link href="/dashboard/team" className="flex items-center gap-3">
+                      <Users className="w-4 h-4" />
+                      <span>Team</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter className="p-4 border-t border-border flex flex-row items-center justify-between">
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-sidebar-foreground">
-                {user?.fullName || user?.primaryEmailAddress?.emailAddress || 'Admin'}
+                {user?.email || 'Admin'}
               </p>
-              <p className="text-xs text-sidebar-foreground/60">Administrator</p>
+              <p className="text-xs text-sidebar-foreground/60 capitalize">{user?.role ?? 'Admin'}</p>
             </div>
             <button
               type="button"
-              onClick={() => void signOut({ redirectUrl: `${import.meta.env.BASE_URL}` })}
+              onClick={() => {
+                logout();
+                setLocation('/');
+              }}
               className="rounded-md p-2 text-sidebar-foreground/70 transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
               aria-label="Sign out"
             >

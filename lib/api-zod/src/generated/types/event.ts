@@ -9,8 +9,10 @@
 export interface Event {
   id: string;
   coupleNames: string;
-  date: string;
-  venue: string;
+  traditionalDate: string;
+  traditionalVenue: string;
+  weddingDate: string;
+  weddingVenue: string;
   rsvpDeadline: string;
   welcomeMessage: string;
 }

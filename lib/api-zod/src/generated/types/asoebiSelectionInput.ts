@@ -6,13 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-/**
- * @nullable
- */
-export type RsvpResultCartItem = {
-  id: number;
-  name: string;
-  price: number;
-  currency: string;
+export interface AsoebiSelectionInput {
+  itemId: number;
   size: string;
-} | null;
+  /** @minimum 1 */
+  quantity: number;
+}

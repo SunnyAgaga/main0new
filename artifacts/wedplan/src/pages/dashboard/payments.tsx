@@ -8,16 +8,18 @@ import { useGetPaymentConfig, useUpdatePaymentConfig, getGetPaymentConfigQueryKe
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle2, Lock } from 'lucide-react';
+import { CheckCircle2, Copy, Lock } from 'lucide-react';
 
 const paymentConfigSchema = z.object({
   flutterwaveEnabled: z.boolean(),
   flutterwaveSecretKey: z.string().optional(),
+  flutterwaveWebhookSecret: z.string().optional(),
   bankTransferEnabled: z.boolean(),
   bankTransfer: z.object({
     bankName: z.string().min(2, "Bank name required"),
@@ -41,6 +43,7 @@ export default function DashboardPayments() {
     defaultValues: {
       flutterwaveEnabled: false,
       flutterwaveSecretKey: "",
+      flutterwaveWebhookSecret: "",
       bankTransferEnabled: false,
       bankTransfer: {
         bankName: "",
@@ -57,6 +60,7 @@ export default function DashboardPayments() {
       form.reset({
         flutterwaveEnabled: config.flutterwaveConfigured,
         flutterwaveSecretKey: "", // We don't get the key back, just a hint
+        flutterwaveWebhookSecret: "", // We don't get the secret back either
         bankTransferEnabled: config.bankTransferConfigured,
         bankTransfer: config.bankTransfer || {
           bankName: "",
@@ -76,6 +80,7 @@ export default function DashboardPayments() {
       data: {
         flutterwaveEnabled: values.flutterwaveEnabled,
         flutterwaveSecretKey: values.flutterwaveSecretKey || "",
+        flutterwaveWebhookSecret: values.flutterwaveWebhookSecret || "",
         bankTransferEnabled: values.bankTransferEnabled,
         bankTransfer: values.bankTransfer
       }
@@ -87,6 +92,7 @@ export default function DashboardPayments() {
         });
         queryClient.setQueryData(getGetPaymentConfigQueryKey(), updatedData);
         form.setValue("flutterwaveSecretKey", ""); // clear field after save
+        form.setValue("flutterwaveWebhookSecret", "");
       },
       onError: (err) => {
         toast({
@@ -156,10 +162,54 @@ export default function DashboardPayments() {
                       <Lock className="w-3 h-3 text-muted-foreground" />
                     </FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder={config?.flutterwaveConfigured ? "Leave blank to keep existing key" : "FLWSECK_TEST-..."} {...field} />
+                      <Input type="password" placeholder={config?.flutterwaveConfigured ? "Leave blank to keep existing key" : "FLWSECK-... (live) or FLWSECK_TEST-... (test)"} {...field} />
                     </FormControl>
                     <FormDescription>
-                      The key is saved server-side and is never returned or displayed again.
+                      Both live (production) and test secret keys are accepted. The key is saved server-side and is never returned or displayed again.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-2 pt-2 border-t border-border">
+                <Label>Webhook URL</Label>
+                <div className="flex items-center gap-2">
+                  <Input readOnly value={config?.webhookUrl ?? ''} className="font-mono text-xs" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      if (config?.webhookUrl) {
+                        void navigator.clipboard.writeText(config.webhookUrl);
+                        toast({ title: 'Webhook URL copied' });
+                      }
+                    }}
+                    aria-label="Copy webhook URL"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-[0.8rem] text-muted-foreground">
+                  Paste this into your Flutterwave dashboard under Settings &rarr; Webhooks, so payments are marked paid automatically once confirmed.
+                </p>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="flutterwaveWebhookSecret"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      Webhook Secret Hash
+                      <Lock className="w-3 h-3 text-muted-foreground" />
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder={config?.webhookSecretConfigured ? "Leave blank to keep existing secret" : "Same secret hash set in Flutterwave"} {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      {config?.webhookSecretConfigured ? 'Webhook secret is configured.' : 'Not configured yet — payments will stay pending until this and the URL above are set.'}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

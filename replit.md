@@ -4,19 +4,20 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm dev` — run the API server and the wedplan frontend together (each loads its own `.env` automatically, no manual `source` needed)
+- `pnpm seed` — seed a default admin user (`SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD`, defaults to `admin@wedplan.test` / `changeme123`) and default Asoebi catalog items if none exist yet
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: copy `.env.example` to `.env` at the repo root and set `MONGODB_URI` (include the database name, e.g. `.../wedplan`) — shared by the API server and `pnpm seed`. Per-package `PORT`/`BASE_PATH` env vars live in `artifacts/api-server/.env` and `artifacts/wedplan/.env`.
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
 - API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
+- DB: MongoDB (native `mongodb` driver, no ORM)
+- Auth: custom email/password with scrypt hashing and Mongo-backed session cookies (no third-party auth provider)
+- Validation: Zod (`zod/v4`)
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
 
