@@ -76,6 +76,22 @@ router.post("/rsvps", async (req, res): Promise<void> => {
     additionalGuests.push({ name: guest.name, selections: resolved });
   }
 
+  let deliveryMethod: "pickup" | "delivery" | null = null;
+  let deliveryAddress: string | null = null;
+
+  if (wantsAsoebi) {
+    if (!input.deliveryMethod) {
+      res.status(400).json({ error: "Please select a pickup or delivery option." });
+      return;
+    }
+    if (input.deliveryMethod === "delivery" && !input.deliveryAddress?.trim()) {
+      res.status(400).json({ error: "Please provide a delivery address." });
+      return;
+    }
+    deliveryMethod = input.deliveryMethod;
+    deliveryAddress = input.deliveryMethod === "delivery" ? input.deliveryAddress!.trim() : null;
+  }
+
   const rsvp = await insertRsvp({
     guestName: input.guestName,
     email: input.email,
@@ -96,6 +112,8 @@ router.post("/rsvps", async (req, res): Promise<void> => {
       asoebiSize: selection.size,
       quantity: selection.quantity,
     })),
+    deliveryMethod,
+    deliveryAddress,
     note: input.note || null,
   });
 
@@ -136,6 +154,8 @@ router.post("/rsvps", async (req, res): Promise<void> => {
       asoebiInterest: rsvp.asoebiInterest,
       nextStep: cartItems.length > 0 ? "cart" : "complete",
       cartItems,
+      deliveryMethod: rsvp.deliveryMethod,
+      deliveryAddress: rsvp.deliveryAddress,
     }),
   );
 });

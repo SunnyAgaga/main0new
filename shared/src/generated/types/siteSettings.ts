@@ -5,7 +5,9 @@
  * WedPlan wedding RSVP and asoebi commerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { MusicTrack } from './musicTrack';
 
-export interface ErrorResponse {
-  error: string;
+export interface SiteSettings {
+  musicEnabled: boolean;
+  playlist: MusicTrack[];
 }

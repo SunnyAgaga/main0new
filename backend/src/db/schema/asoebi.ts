@@ -36,6 +36,8 @@ export interface Rsvp {
   additionalGuests: AdditionalGuest[];
   asoebiInterest: string;
   asoebiSelections: AsoebiSelection[];
+  deliveryMethod: "pickup" | "delivery" | null;
+  deliveryAddress: string | null;
   note: string | null;
   createdAt: Date;
 }
@@ -70,11 +72,49 @@ export interface Order {
   email: string;
   items: OrderLineItem[];
   giftMessage: string | null;
+  deliveryMethod: "pickup" | "delivery" | null;
+  deliveryAddress: string | null;
   totalAmount: number;
   currency: string;
   paymentMethod: string;
   status: string;
   createdAt: Date;
+}
+
+export interface DeliveryConfig {
+  id: 1;
+  deliveryEnabled: boolean;
+  providerName: string;
+  apiKey: string;
+  webhookSecret: string;
+  pickupLocation: string;
+  deliveryFee: number;
+  updatedAt: Date;
+}
+
+export interface NotificationConfig {
+  id: 1;
+  emailEnabled: boolean;
+  mailgunApiKey: string;
+  mailgunDomain: string;
+  mailgunFromEmail: string;
+  smsEnabled: boolean;
+  twilioAccountSid: string;
+  twilioAuthToken: string;
+  twilioFromNumber: string;
+  updatedAt: Date;
+}
+
+export interface MusicTrack {
+  title: string;
+  url: string;
+}
+
+export interface SiteSettings {
+  id: 1;
+  musicEnabled: boolean;
+  playlist: MusicTrack[];
+  updatedAt: Date;
 }
 
 export const asoebiItemsCollection = () =>
@@ -83,6 +123,12 @@ export const rsvpsCollection = () => db.collection<Rsvp>("rsvps");
 export const paymentConfigsCollection = () =>
   db.collection<PaymentConfig>("payment_configs");
 export const ordersCollection = () => db.collection<Order>("orders");
+export const deliveryConfigsCollection = () =>
+  db.collection<DeliveryConfig>("delivery_configs");
+export const notificationConfigsCollection = () =>
+  db.collection<NotificationConfig>("notification_configs");
+export const siteSettingsCollection = () =>
+  db.collection<SiteSettings>("site_settings");
 
 export const insertAsoebiItemSchema = z.object({
   category: z.enum(["women", "men"]),
@@ -118,6 +164,8 @@ export const insertRsvpSchema = z.object({
     .default([]),
   asoebiInterest: z.string(),
   asoebiSelections: z.array(asoebiSelectionSchema).default([]),
+  deliveryMethod: z.enum(["pickup", "delivery"]).nullable().default(null),
+  deliveryAddress: z.string().nullable().default(null),
   note: z.string().nullable().optional(),
 });
 export type InsertRsvp = z.infer<typeof insertRsvpSchema>;
@@ -140,6 +188,8 @@ export const insertOrderSchema = z.object({
     )
     .default([]),
   giftMessage: z.string().nullable().default(null),
+  deliveryMethod: z.enum(["pickup", "delivery"]).nullable().default(null),
+  deliveryAddress: z.string().nullable().default(null),
   totalAmount: z.number(),
   currency: z.string().default("NGN"),
   paymentMethod: z.string(),
@@ -157,6 +207,22 @@ export async function insertAsoebiItem(
   };
   await asoebiItemsCollection().insertOne(doc);
   return doc;
+}
+
+export async function updateAsoebiItem(
+  id: number,
+  input: Omit<InsertAsoebiItem, "sizes">,
+): Promise<AsoebiItem | null> {
+  return asoebiItemsCollection().findOneAndUpdate(
+    { id },
+    { $set: input },
+    { returnDocument: "after" },
+  );
+}
+
+export async function deleteAsoebiItem(id: number): Promise<boolean> {
+  const result = await asoebiItemsCollection().deleteOne({ id });
+  return result.deletedCount > 0;
 }
 
 export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
@@ -189,6 +255,39 @@ export async function upsertPaymentConfig(
   input: Omit<PaymentConfig, "id" | "updatedAt">,
 ): Promise<PaymentConfig> {
   const result = await paymentConfigsCollection().findOneAndUpdate(
+    { id: 1 },
+    { $set: { ...input, updatedAt: new Date() }, $setOnInsert: { id: 1 } },
+    { upsert: true, returnDocument: "after" },
+  );
+  return result!;
+}
+
+export async function upsertDeliveryConfig(
+  input: Omit<DeliveryConfig, "id" | "updatedAt">,
+): Promise<DeliveryConfig> {
+  const result = await deliveryConfigsCollection().findOneAndUpdate(
+    { id: 1 },
+    { $set: { ...input, updatedAt: new Date() }, $setOnInsert: { id: 1 } },
+    { upsert: true, returnDocument: "after" },
+  );
+  return result!;
+}
+
+export async function upsertNotificationConfig(
+  input: Omit<NotificationConfig, "id" | "updatedAt">,
+): Promise<NotificationConfig> {
+  const result = await notificationConfigsCollection().findOneAndUpdate(
+    { id: 1 },
+    { $set: { ...input, updatedAt: new Date() }, $setOnInsert: { id: 1 } },
+    { upsert: true, returnDocument: "after" },
+  );
+  return result!;
+}
+
+export async function upsertSiteSettings(
+  input: Omit<SiteSettings, "id" | "updatedAt">,
+): Promise<SiteSettings> {
+  const result = await siteSettingsCollection().findOneAndUpdate(
     { id: 1 },
     { $set: { ...input, updatedAt: new Date() }, $setOnInsert: { id: 1 } },
     { upsert: true, returnDocument: "after" },

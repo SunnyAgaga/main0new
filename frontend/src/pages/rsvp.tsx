@@ -36,6 +36,8 @@ const rsvpSchema = z.object({
   additionalGuests: z.array(additionalGuestSchema).default([]),
   asoebiInterest: z.enum(['yes', 'no'], { required_error: "Will you be buying asoebi?" }),
   asoebiSelections: z.array(asoebiSelectionSchema).default([]),
+  deliveryMethod: z.enum(['pickup', 'delivery']).optional().nullable(),
+  deliveryAddress: z.string().optional(),
   note: z.string().optional(),
 }).refine(data => {
   if (data.asoebiInterest === 'yes') {
@@ -45,6 +47,22 @@ const rsvpSchema = z.object({
 }, {
   message: "Please select at least one asoebi item",
   path: ['asoebiSelections']
+}).refine(data => {
+  if (data.asoebiInterest === 'yes') {
+    return !!data.deliveryMethod;
+  }
+  return true;
+}, {
+  message: "Please choose pickup or delivery",
+  path: ['deliveryMethod']
+}).refine(data => {
+  if (data.asoebiInterest === 'yes' && data.deliveryMethod === 'delivery') {
+    return !!data.deliveryAddress?.trim();
+  }
+  return true;
+}, {
+  message: "Please provide a delivery address",
+  path: ['deliveryAddress']
 });
 
 type RsvpFormValues = z.infer<typeof rsvpSchema>;
@@ -231,6 +249,7 @@ export default function RsvpPage() {
   const watchAttending = form.watch("attending");
   const watchAsoebiInterest = form.watch("asoebiInterest");
   const watchGuestCount = form.watch("guestCount");
+  const watchDeliveryMethod = form.watch("deliveryMethod");
 
   useEffect(() => {
     if (!watchAttending) return;
@@ -511,6 +530,60 @@ export default function RsvpPage() {
                           )}
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {watchAsoebiInterest === 'yes' && (
+                    <div className="space-y-4 pt-2">
+                      <h3 className="text-lg font-serif font-semibold text-primary border-b border-border pb-2">
+                        Asoebi Delivery
+                      </h3>
+                      <FormField
+                        control={form.control}
+                        name="deliveryMethod"
+                        render={({ field }) => (
+                          <FormItem className="space-y-3">
+                            <FormLabel>How would you like to receive your order?</FormLabel>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value ?? undefined}
+                                className="flex flex-col space-y-2"
+                              >
+                                <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
+                                  <FormControl>
+                                    <RadioGroupItem value="pickup" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal cursor-pointer flex-1">Pick up at the venue</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
+                                  <FormControl>
+                                    <RadioGroupItem value="delivery" />
+                                  </FormControl>
+                                  <FormLabel className="font-normal cursor-pointer flex-1">Deliver to my address</FormLabel>
+                                </FormItem>
+                              </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {watchDeliveryMethod === 'delivery' && (
+                        <FormField
+                          control={form.control}
+                          name="deliveryAddress"
+                          render={({ field }) => (
+                            <FormItem className="animate-in slide-in-from-top-4 fade-in duration-300">
+                              <FormLabel>Delivery Address</FormLabel>
+                              <FormControl>
+                                <Textarea placeholder="Street address, city, state" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
                     </div>
                   )}
                 </div>
