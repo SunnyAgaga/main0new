@@ -6,6 +6,10 @@ import {
   GetAdminOverviewResponse,
   GetPaymentConfigResponse,
   ListAdminUsersResponse,
+  ListAdminRsvpsResponse,
+  UpdateAdminRsvpBody,
+  UpdateAdminRsvpParams,
+  UpdateAdminRsvpResponse,
   UpdatePaymentConfigBody,
   UpdatePaymentConfigResponse,
 } from "@wedplan/shared";
@@ -16,12 +20,33 @@ import {
   ordersCollection,
   paymentConfigsCollection,
   rsvpsCollection,
+  updateRsvp,
   upsertPaymentConfig,
   usersCollection,
   type PaymentConfig,
+  type Rsvp,
 } from "@/db";
 import { requireAdmin, requireAuth } from "../middlewares/requireAuth";
 import { toAuthUser } from "./auth";
+
+function toAdminRsvp(rsvp: Rsvp) {
+  return {
+    id: rsvp.id,
+    guestName: rsvp.guestName,
+    email: rsvp.email,
+    phone: rsvp.phone,
+    attending: rsvp.attending,
+    guestCount: rsvp.guestCount,
+    additionalGuests: rsvp.additionalGuests,
+    asoebiInterest: rsvp.asoebiInterest,
+    asoebiSelections: rsvp.asoebiSelections,
+    deliveryMethod: rsvp.deliveryMethod,
+    deliveryAddress: rsvp.deliveryAddress,
+    deliveryProvider: rsvp.deliveryProvider,
+    note: rsvp.note,
+    createdAt: rsvp.createdAt.toISOString(),
+  };
+}
 
 const router: IRouter = Router();
 
@@ -187,6 +212,61 @@ router.delete("/admin/users/:id", requireAdmin, async (req, res): Promise<void> 
   await deleteUser(parsed.data.id);
   req.log.info({ userId: parsed.data.id }, "Admin user removed");
   res.status(204).end();
+});
+
+router.get("/admin/rsvps", requireAdmin, async (_req, res): Promise<void> => {
+  const rsvps = await rsvpsCollection().find({}).sort({ createdAt: -1 }).toArray();
+  res.json(ListAdminRsvpsResponse.parse(rsvps.map(toAdminRsvp)));
+});
+
+router.put("/admin/rsvps/:id", requireAdmin, async (req, res): Promise<void> => {
+  const paramsResult = UpdateAdminRsvpParams.safeParse(req.params);
+  if (!paramsResult.success) {
+    res.status(400).json({ error: paramsResult.error.message });
+    return;
+  }
+
+  const parsed = UpdateAdminRsvpBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const existing = await rsvpsCollection().findOne({ id: paramsResult.data.id });
+  if (!existing) {
+    res.status(404).json({ error: "RSVP not found." });
+    return;
+  }
+
+  const input = parsed.data;
+  const updated = await updateRsvp(paramsResult.data.id, {
+    guestName: input.guestName,
+    email: input.email,
+    phone: input.phone || null,
+    attending: input.attending,
+    guestCount: Math.max(1, Math.trunc(input.guestCount ?? 1)),
+    additionalGuests: (input.additionalGuests ?? []).map((guest) => ({
+      name: guest.name,
+      asoebiSelections: (guest.asoebiSelections ?? []).map((selection) => ({
+        asoebiItemId: selection.itemId,
+        asoebiSize: selection.size,
+        quantity: selection.quantity,
+      })),
+    })),
+    asoebiInterest: input.asoebiInterest,
+    asoebiSelections: (input.asoebiSelections ?? []).map((selection) => ({
+      asoebiItemId: selection.itemId,
+      asoebiSize: selection.size,
+      quantity: selection.quantity,
+    })),
+    deliveryMethod: input.deliveryMethod ?? null,
+    deliveryAddress: input.deliveryAddress ?? null,
+    deliveryProvider: input.deliveryProvider ?? null,
+    note: input.note || null,
+  });
+
+  req.log.info({ rsvpId: paramsResult.data.id }, "RSVP updated by admin");
+  res.json(UpdateAdminRsvpResponse.parse(toAdminRsvp(updated!)));
 });
 
 export default router;

@@ -21,6 +21,7 @@ import type {
 
 import type {
   AdminOverview,
+  AdminRsvp,
   AsoebiItem,
   AsoebiItemInput,
   AuthCredentials,
@@ -1802,6 +1803,172 @@ export const useDeleteAdminUser = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getDeleteAdminUserMutationOptions(options));
+    }
+
+export const getListAdminRsvpsUrl = () => {
+
+
+
+
+  return `/api/admin/rsvps`
+}
+
+/**
+ * @summary List all RSVPs (admin role only)
+ */
+export const listAdminRsvps = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminRsvp[]> => {
+
+  return customFetch<AdminRsvp[]>(getListAdminRsvpsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminRsvpsQueryKey = () => {
+    return [
+    `/api/admin/rsvps`
+    ] as const;
+    }
+
+
+export const getListAdminRsvpsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminRsvps>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminRsvps>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminRsvpsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminRsvps>>> = ({ signal }) => listAdminRsvps({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminRsvps>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminRsvpsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminRsvps>>>
+export type ListAdminRsvpsQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary List all RSVPs (admin role only)
+ */
+
+export function useListAdminRsvps<TData = Awaited<ReturnType<typeof listAdminRsvps>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminRsvps>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminRsvpsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateAdminRsvpUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/rsvps/${id}`
+}
+
+/**
+ * @summary Update a guest's RSVP (admin role only)
+ */
+export const updateAdminRsvp = async (id: number,
+    rsvpInput: RsvpInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminRsvp> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminRsvp>(getUpdateAdminRsvpUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(rsvpInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateAdminRsvpMutationKey = () => ['updateAdminRsvp'] as const;
+
+export const getUpdateAdminRsvpMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminRsvp>>, TError,UpdateAdminRsvpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateAdminRsvp>>, TError,UpdateAdminRsvpMutationVariables, TContext> => {
+
+const mutationKey = getUpdateAdminRsvpMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateAdminRsvp>>, UpdateAdminRsvpMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateAdminRsvp(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateAdminRsvpMutationResult = NonNullable<Awaited<ReturnType<typeof updateAdminRsvp>>>
+    export type UpdateAdminRsvpMutationBody = BodyType<RsvpInput>
+    export type UpdateAdminRsvpMutationError = ErrorType<ErrorResponse>
+    export type UpdateAdminRsvpMutationVariables = {id: number;data: BodyType<RsvpInput>}
+
+    /**
+ * @summary Update a guest's RSVP (admin role only)
+ */
+export const useUpdateAdminRsvp = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateAdminRsvp>>, TError,UpdateAdminRsvpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateAdminRsvp>>,
+        TError,
+        UpdateAdminRsvpMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateAdminRsvpMutationOptions(options));
     }
 
 export const getGetDeliveryOptionsUrl = () => {

@@ -131,6 +131,58 @@ export interface RsvpInput {
   note?: string;
 }
 
+export interface AdminAsoebiSelection {
+  asoebiItemId: number;
+  asoebiSize: string;
+  quantity: number;
+}
+
+export interface AdminAdditionalGuest {
+  name: string;
+  asoebiSelections: AdminAsoebiSelection[];
+}
+
+export type AdminRsvpAsoebiInterest = typeof AdminRsvpAsoebiInterest[keyof typeof AdminRsvpAsoebiInterest];
+
+
+export const AdminRsvpAsoebiInterest = {
+  yes: 'yes',
+  no: 'no',
+} as const;
+
+/**
+ * @nullable
+ */
+export type AdminRsvpDeliveryMethod = typeof AdminRsvpDeliveryMethod[keyof typeof AdminRsvpDeliveryMethod] | null;
+
+
+export const AdminRsvpDeliveryMethod = {
+  pickup: 'pickup',
+  delivery: 'delivery',
+} as const;
+
+export interface AdminRsvp {
+  id: number;
+  guestName: string;
+  email: string;
+  /** @nullable */
+  phone: string | null;
+  attending: boolean;
+  guestCount: number;
+  additionalGuests: AdminAdditionalGuest[];
+  asoebiInterest: AdminRsvpAsoebiInterest;
+  asoebiSelections: AdminAsoebiSelection[];
+  /** @nullable */
+  deliveryMethod: AdminRsvpDeliveryMethod;
+  /** @nullable */
+  deliveryAddress: string | null;
+  /** @nullable */
+  deliveryProvider: string | null;
+  /** @nullable */
+  note: string | null;
+  createdAt: string;
+}
+
 export interface CartItem {
   guestName: string;
   asoebiItemId: number;

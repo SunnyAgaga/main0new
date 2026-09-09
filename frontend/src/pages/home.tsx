@@ -98,15 +98,17 @@ export default function Home() {
               )}
 
               <div className="pt-4">
-                <Link href="/rsvp" className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-8 h-14 text-lg font-medium shadow-lg hover-elevate bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                  RSVP Now
-                </Link>
+                <div className="flex flex-wrap items-center justify-center gap-4">
+                  <Link href="/rsvp" className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-8 h-14 text-lg font-medium shadow-lg hover-elevate bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+                    RSVP Now
+                  </Link>
+                  <Link href="/gift" className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-8 h-14 text-lg font-medium border border-primary/30 text-primary hover-elevate hover:bg-primary/5 transition-colors">
+                    Send a Gift
+                  </Link>
+                </div>
                 <p className="text-sm text-muted-foreground mt-4">
                   Kindly respond by {format(new Date(event.rsvpDeadline), 'MMMM do, yyyy')}
                 </p>
-                <Link href="/gift" className="inline-block text-sm font-medium text-primary hover:underline underline-offset-4 mt-6">
-                  Prefer to send a gift instead? →
-                </Link>
               </div>
             </div>
           ) : null}

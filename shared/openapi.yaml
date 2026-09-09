@@ -580,6 +580,79 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/rsvps:
+    get:
+      operationId: listAdminRsvps
+      tags: [admin]
+      summary: List all RSVPs (admin role only)
+      responses:
+        "200":
+          description: RSVPs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminRsvp"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/rsvps/{id}:
+    put:
+      operationId: updateAdminRsvp
+      tags: [admin]
+      summary: Update a guest's RSVP (admin role only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RsvpInput"
+      responses:
+        "200":
+          description: Updated RSVP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminRsvp"
+        "400":
+          description: Invalid RSVP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: RSVP not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /delivery-options:
     get:
       operationId: getDeliveryOptions
@@ -989,6 +1062,50 @@ components:
         deliveryAddress: { type: ["string", "null"] }
         deliveryProvider: { type: ["string", "null"] }
         note: { type: string }
+    AdminAsoebiSelection:
+      type: object
+      required: [asoebiItemId, asoebiSize, quantity]
+      properties:
+        asoebiItemId: { type: number }
+        asoebiSize: { type: string }
+        quantity: { type: number }
+    AdminAdditionalGuest:
+      type: object
+      required: [name, asoebiSelections]
+      properties:
+        name: { type: string }
+        asoebiSelections:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAsoebiSelection"
+    AdminRsvp:
+      type: object
+      required: [id, guestName, email, phone, attending, guestCount, additionalGuests, asoebiInterest, asoebiSelections, deliveryMethod, deliveryAddress, deliveryProvider, note, createdAt]
+      properties:
+        id: { type: number }
+        guestName: { type: string }
+        email: { type: string }
+        phone: { type: ["string", "null"] }
+        attending: { type: boolean }
+        guestCount: { type: number }
+        additionalGuests:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAdditionalGuest"
+        asoebiInterest:
+          type: string
+          enum: [yes, no]
+        asoebiSelections:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAsoebiSelection"
+        deliveryMethod:
+          type: ["string", "null"]
+          enum: [pickup, delivery, null]
+        deliveryAddress: { type: ["string", "null"] }
+        deliveryProvider: { type: ["string", "null"] }
+        note: { type: ["string", "null"] }
+        createdAt: { type: string }
     CartItem:
       type: object
       required: [guestName, asoebiItemId, name, price, currency, size, quantity]

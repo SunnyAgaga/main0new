@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { useStartFlutterwaveCheckout, useCreateBankTransferOrder, type RsvpResult } from '@/api';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { CreditCard, Landmark, ArrowLeft } from 'lucide-react';
+import { CreditCard, Landmark, ArrowLeft, Gift } from 'lucide-react';
 
 export default function CartPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [rsvpData, setRsvpData] = useState<RsvpResult | null>(null);
+  const [hasGiftPending, setHasGiftPending] = useState(false);
 
   const flutterwaveMutation = useStartFlutterwaveCheckout();
   const bankTransferMutation = useCreateBankTransferOrder();
@@ -42,6 +43,8 @@ export default function CartPage() {
     } else {
       setLocation('/');
     }
+
+    setHasGiftPending(Boolean(sessionStorage.getItem('wedplan_gift_prefill')));
   }, [setLocation]);
 
   if (!rsvpData || !rsvpData.cartItems || rsvpData.cartItems.length === 0) {
@@ -205,6 +208,20 @@ export default function CartPage() {
                 {rsvpData.deliveryMethod === 'delivery' && rsvpData.deliveryAddress && (
                   <p className="text-sm text-muted-foreground mt-1">{rsvpData.deliveryAddress}</p>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {hasGiftPending && (
+            <Card className="border-none shadow-sm bg-card">
+              <CardContent className="p-4 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm text-foreground">
+                  <Gift className="w-4 h-4 text-primary" />
+                  You also wanted to send a gift.
+                </div>
+                <Link href="/gift" className="text-sm font-medium text-primary hover:underline underline-offset-4 whitespace-nowrap">
+                  Complete it →
+                </Link>
               </CardContent>
             </Card>
           )}
