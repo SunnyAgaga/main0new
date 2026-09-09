@@ -53,14 +53,14 @@ Target one workspace with `-w`, e.g. `npm run build -w @wedplan/backend`.
 
 ## Deploy
 
-Ubuntu VM, one port behind nginx. The backend serves the API *and* the frontend, so it's
-a single process.
+Ubuntu VM. The backend serves the API *and* the frontend, so the whole app runs as a
+single process on one port.
 
 **Prerequisites**
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs nginx git
+sudo apt-get install -y nodejs git
 sudo npm i -g pm2
 ```
 
@@ -80,33 +80,6 @@ pm2 save && pm2 startup                     # run the command it prints
 ```
 
 Verify: `curl localhost:8080/api/healthz` → `{"status":"ok"}`
-
-**nginx** — `/etc/nginx/sites-available/wedplan`:
-
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-    client_max_body_size 25m;
-
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host              $host;
-        proxy_set_header X-Real-IP         $remote_addr;
-        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-```bash
-sudo ln -sf /etc/nginx/sites-available/wedplan /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default
-sudo nginx -t && sudo systemctl reload nginx
-
-sudo certbot --nginx -d yourdomain.com --redirect
-sudo ufw allow OpenSSH && sudo ufw allow 'Nginx Full' && sudo ufw enable
-```
 
 **Redeploy**
 
