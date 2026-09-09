@@ -10,4 +10,9 @@ import type { MusicTrack } from './musicTrack';
 export interface SiteSettings {
   musicEnabled: boolean;
   playlist: MusicTrack[];
+  logoUrl: string;
+  heroImageUrl: string;
+  backgroundColor: string;
+  primaryColor: string;
+  accentColor: string;
 }

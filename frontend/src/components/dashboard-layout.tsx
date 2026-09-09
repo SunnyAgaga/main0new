@@ -1,10 +1,12 @@
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
-import { LayoutDashboard, LogOut, Settings, Users, Truck, Bell, Music, ShoppingBag } from 'lucide-react';
+import { LayoutDashboard, LogOut, Settings, Users, Truck, Bell, Music, ShoppingBag, Palette } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
+import { useGetSiteSettings } from '@/api';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: false },
+  { href: '/dashboard/site-settings', label: 'Site Settings', icon: Palette, adminOnly: true },
   { href: '/dashboard/asoebi', label: 'Asoebi Catalog', icon: ShoppingBag, adminOnly: true },
   { href: '/dashboard/payments', label: 'Payment Settings', icon: Settings, adminOnly: true },
   { href: '/dashboard/delivery', label: 'Delivery Settings', icon: Truck, adminOnly: true },
@@ -16,6 +18,8 @@ const NAV_ITEMS = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
+  const { data: settings } = useGetSiteSettings();
+  const logoSrc = settings?.logoUrl || `${import.meta.env.BASE_URL}logo.svg`;
 
   return (
     <SidebarProvider>
@@ -23,7 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar className="border-r border-border">
           <SidebarHeader className="p-4 flex items-center justify-between border-b border-border">
             <Link href="/" className="flex items-center gap-2">
-              <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="WedPlan Logo" className="h-6 object-contain" />
+              <img src={logoSrc} alt="Logo" className="h-6 object-contain" />
             </Link>
           </SidebarHeader>
           <SidebarContent className="p-4">
@@ -65,7 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <header className="h-14 border-b border-border flex items-center px-4 md:hidden">
             <SidebarTrigger />
             <div className="ml-4">
-              <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="WedPlan Logo" className="h-5 object-contain" />
+              <img src={logoSrc} alt="Logo" className="h-5 object-contain" />
             </div>
           </header>
           <main className="flex-1 overflow-auto p-6 md:p-8">

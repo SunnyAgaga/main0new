@@ -9,6 +9,11 @@ function toSiteSettings(config: SiteSettings | null | undefined) {
   return {
     musicEnabled: Boolean(config?.musicEnabled),
     playlist: config?.playlist ?? [],
+    logoUrl: config?.logoUrl ?? "",
+    heroImageUrl: config?.heroImageUrl ?? "",
+    backgroundColor: config?.backgroundColor || "#fdf9f3",
+    primaryColor: config?.primaryColor || "#1c4d3a",
+    accentColor: config?.accentColor || "#e3c878",
   };
 }
 
@@ -24,10 +29,7 @@ router.put("/admin/site-settings", requireAdmin, async (req, res): Promise<void>
     return;
   }
 
-  const config = await upsertSiteSettings({
-    musicEnabled: parsed.data.musicEnabled,
-    playlist: parsed.data.playlist,
-  });
+  const config = await upsertSiteSettings(parsed.data);
 
   req.log.info({ trackCount: config.playlist.length }, "Site settings updated");
   res.json(UpdateSiteSettingsResponse.parse(toSiteSettings(config)));

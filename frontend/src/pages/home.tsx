@@ -1,23 +1,40 @@
 import { Link } from 'wouter';
-import { useGetEvent } from '@/api';
+import { useGetEvent, useGetSiteSettings } from '@/api';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Countdown } from '@/components/countdown';
+import { Monogram, getMonogramInitials } from '@/components/monogram';
 import { useAuth } from '@/lib/auth';
 
 export default function Home() {
   const { data: event, isLoading, error } = useGetEvent();
+  const { data: settings } = useGetSiteSettings();
   const { user } = useAuth();
+  const logoSrc = settings?.logoUrl || `${import.meta.env.BASE_URL}logo.svg`;
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none opacity-20" style={{
-        backgroundImage: "radial-gradient(circle at top right, hsl(43, 74%, 49%), transparent 50%), radial-gradient(circle at bottom left, hsl(158, 64%, 20%), transparent 50%)"
-      }} />
+      {settings?.heroImageUrl ? (
+        <div
+          className="absolute inset-0 pointer-events-none bg-cover bg-center opacity-20"
+          style={{ backgroundImage: `url(${settings.heroImageUrl})` }}
+        />
+      ) : (
+        <div className="absolute inset-0 pointer-events-none opacity-20" style={{
+          backgroundImage: "radial-gradient(circle at top right, hsl(43, 74%, 49%), transparent 50%), radial-gradient(circle at bottom left, hsl(158, 64%, 20%), transparent 50%)"
+        }} />
+      )}
+
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+        <Monogram
+          initials={getMonogramInitials(event?.coupleNames ?? 'Wed & Plan')}
+          className="w-[420px] md:w-[600px] h-auto text-primary opacity-[0.05]"
+        />
+      </div>
 
       <header className="w-full flex justify-between items-center p-6 lg:px-12 relative z-10">
         <div className="flex items-center gap-2">
-          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="WedPlan Logo" className="h-8 object-contain" />
+          <img src={logoSrc} alt="Logo" className="h-8 object-contain" />
         </div>
         {user && (
           <Link href="/dashboard" className="text-sm font-medium text-primary hover:underline underline-offset-4">

@@ -21,6 +21,8 @@ import DashboardDelivery from '@/pages/dashboard/delivery';
 import DashboardNotifications from '@/pages/dashboard/notifications';
 import DashboardMusic from '@/pages/dashboard/music';
 import DashboardAsoebi from '@/pages/dashboard/asoebi';
+import DashboardSiteSettings from '@/pages/dashboard/site-settings';
+import { SiteTheme } from '@/components/site-theme';
 
 const queryClient = new QueryClient();
 
@@ -91,6 +93,12 @@ function Router() {
         </ProtectedDashboard>
       </Route>
 
+      <Route path="/dashboard/site-settings">
+        <ProtectedDashboard adminOnly>
+          <DashboardSiteSettings />
+        </ProtectedDashboard>
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -111,6 +119,7 @@ function App() {
               <Router />
             </RoutedErrorBoundary>
             <MusicPlayer />
+            <SiteTheme />
           </AuthProvider>
         </WouterRouter>
         <Toaster />

@@ -11,6 +11,7 @@ import webhooksRouter from "./webhooks";
 import deliveryRouter from "./delivery";
 import notificationsRouter from "./notifications";
 import siteSettingsRouter from "./site-settings";
+import spotifyRouter from "./spotify";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(webhooksRouter);
 router.use(deliveryRouter);
 router.use(notificationsRouter);
 router.use(siteSettingsRouter);
+router.use(spotifyRouter);
 
 export default router;

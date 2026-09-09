@@ -104,6 +104,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Event"
+  /admin/event:
+    put:
+      operationId: updateEvent
+      tags: [admin]
+      summary: Update wedding event details (admin role only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventInput"
+      responses:
+        "200":
+          description: Updated event details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "400":
+          description: Invalid event details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /asoebi:
     get:
       operationId: listAsoebi
@@ -710,6 +746,138 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/spotify-config:
+    get:
+      operationId: getSpotifyConfig
+      tags: [admin]
+      summary: Get Spotify connection status (admin role only)
+      responses:
+        "200":
+          description: Spotify configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpotifyConfig"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateSpotifyConfig
+      tags: [admin]
+      summary: Save Spotify app credentials (admin role only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpotifyConfigInput"
+      responses:
+        "200":
+          description: Updated Spotify configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpotifyConfig"
+        "400":
+          description: Invalid Spotify configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/spotify/playlists:
+    get:
+      operationId: listSpotifyPlaylists
+      tags: [admin]
+      summary: List the connected Spotify account's playlists (admin role only)
+      responses:
+        "200":
+          description: Spotify playlists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SpotifyPlaylist"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Spotify is not connected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/spotify/import/{playlistId}:
+    post:
+      operationId: importSpotifyPlaylist
+      tags: [admin]
+      summary: Import 30-second previews from a Spotify playlist into the site playlist (admin role only)
+      parameters:
+        - name: playlistId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Updated site settings with imported tracks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteSettings"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Playlist not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Spotify is not connected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -731,6 +899,17 @@ components:
         weddingVenue: { type: string }
         rsvpDeadline: { type: string }
         welcomeMessage: { type: string }
+    EventInput:
+      type: object
+      required: [coupleNames, traditionalDate, traditionalVenue, weddingDate, weddingVenue, rsvpDeadline, welcomeMessage]
+      properties:
+        coupleNames: { type: string, minLength: 1 }
+        traditionalDate: { type: string, minLength: 1 }
+        traditionalVenue: { type: string, minLength: 1 }
+        weddingDate: { type: string, minLength: 1 }
+        weddingVenue: { type: string, minLength: 1 }
+        rsvpDeadline: { type: string, minLength: 1 }
+        welcomeMessage: { type: string, minLength: 1 }
     AsoebiItem:
       type: object
       required: [id, category, name, description, price, currency, imageUrl, sizes, available]
@@ -952,22 +1131,53 @@ components:
         url: { type: string, minLength: 1 }
     SiteSettings:
       type: object
-      required: [musicEnabled, playlist]
+      required: [musicEnabled, playlist, logoUrl, heroImageUrl, backgroundColor, primaryColor, accentColor]
       properties:
         musicEnabled: { type: boolean }
         playlist:
           type: array
           items:
             $ref: "#/components/schemas/MusicTrack"
+        logoUrl: { type: string }
+        heroImageUrl: { type: string }
+        backgroundColor: { type: string }
+        primaryColor: { type: string }
+        accentColor: { type: string }
     SiteSettingsInput:
       type: object
-      required: [musicEnabled, playlist]
+      required: [musicEnabled, playlist, logoUrl, heroImageUrl, backgroundColor, primaryColor, accentColor]
       properties:
         musicEnabled: { type: boolean }
         playlist:
           type: array
           items:
             $ref: "#/components/schemas/MusicTrack"
+        logoUrl: { type: string }
+        heroImageUrl: { type: string }
+        backgroundColor: { type: string }
+        primaryColor: { type: string }
+        accentColor: { type: string }
+    SpotifyConfig:
+      type: object
+      required: [configured, connected, redirectUri, connectedPlaylistName]
+      properties:
+        configured: { type: boolean }
+        connected: { type: boolean }
+        redirectUri: { type: string }
+        connectedPlaylistName: { type: ["string", "null"] }
+    SpotifyConfigInput:
+      type: object
+      required: [clientId, clientSecret]
+      properties:
+        clientId: { type: string, minLength: 1 }
+        clientSecret: { type: string, minLength: 1 }
+    SpotifyPlaylist:
+      type: object
+      required: [id, name, trackCount]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        trackCount: { type: number }
     AdminOverview:
       type: object
       required: [totalRsvps, attendingCount, asoebiInterestCount, paidOrders, recentRsvps]
