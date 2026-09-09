@@ -68,6 +68,40 @@ export const GetEventResponse = zod.object({
 
 
 /**
+ * @summary Update wedding event details (admin role only)
+ */
+
+
+
+
+
+
+
+
+
+export const UpdateEventBody = zod.object({
+  "coupleNames": zod.string().min(1),
+  "traditionalDate": zod.string().min(1),
+  "traditionalVenue": zod.string().min(1),
+  "weddingDate": zod.string().min(1),
+  "weddingVenue": zod.string().min(1),
+  "rsvpDeadline": zod.string().min(1),
+  "welcomeMessage": zod.string().min(1)
+})
+
+export const UpdateEventResponse = zod.object({
+  "id": zod.string(),
+  "coupleNames": zod.string(),
+  "traditionalDate": zod.string(),
+  "traditionalVenue": zod.string(),
+  "weddingDate": zod.string(),
+  "weddingVenue": zod.string(),
+  "rsvpDeadline": zod.string(),
+  "welcomeMessage": zod.string()
+})
+
+
+/**
  * @summary List available asoebi items
  */
 export const ListAsoebiResponseItem = zod.object({
@@ -518,7 +552,12 @@ export const GetSiteSettingsResponse = zod.object({
   "playlist": zod.array(zod.object({
   "title": zod.string().min(1),
   "url": zod.string().min(1)
-}))
+})),
+  "logoUrl": zod.string(),
+  "heroImageUrl": zod.string(),
+  "backgroundColor": zod.string(),
+  "primaryColor": zod.string(),
+  "accentColor": zod.string()
 })
 
 
@@ -534,7 +573,12 @@ export const UpdateSiteSettingsBody = zod.object({
   "playlist": zod.array(zod.object({
   "title": zod.string().min(1),
   "url": zod.string().min(1)
-}))
+})),
+  "logoUrl": zod.string(),
+  "heroImageUrl": zod.string(),
+  "backgroundColor": zod.string(),
+  "primaryColor": zod.string(),
+  "accentColor": zod.string()
 })
 
 
@@ -546,7 +590,79 @@ export const UpdateSiteSettingsResponse = zod.object({
   "playlist": zod.array(zod.object({
   "title": zod.string().min(1),
   "url": zod.string().min(1)
-}))
+})),
+  "logoUrl": zod.string(),
+  "heroImageUrl": zod.string(),
+  "backgroundColor": zod.string(),
+  "primaryColor": zod.string(),
+  "accentColor": zod.string()
+})
+
+
+/**
+ * @summary Get Spotify connection status (admin role only)
+ */
+export const GetSpotifyConfigResponse = zod.object({
+  "configured": zod.boolean(),
+  "connected": zod.boolean(),
+  "redirectUri": zod.string(),
+  "connectedPlaylistName": zod.string().nullable()
+})
+
+
+/**
+ * @summary Save Spotify app credentials (admin role only)
+ */
+
+
+
+
+export const UpdateSpotifyConfigBody = zod.object({
+  "clientId": zod.string().min(1),
+  "clientSecret": zod.string().min(1)
+})
+
+export const UpdateSpotifyConfigResponse = zod.object({
+  "configured": zod.boolean(),
+  "connected": zod.boolean(),
+  "redirectUri": zod.string(),
+  "connectedPlaylistName": zod.string().nullable()
+})
+
+
+/**
+ * @summary List the connected Spotify account's playlists (admin role only)
+ */
+export const ListSpotifyPlaylistsResponseItem = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "trackCount": zod.number()
+})
+export const ListSpotifyPlaylistsResponse = zod.array(ListSpotifyPlaylistsResponseItem)
+
+
+/**
+ * @summary Import 30-second previews from a Spotify playlist into the site playlist (admin role only)
+ */
+export const ImportSpotifyPlaylistParams = zod.object({
+  "playlistId": zod.coerce.string()
+})
+
+
+
+
+
+export const ImportSpotifyPlaylistResponse = zod.object({
+  "musicEnabled": zod.boolean(),
+  "playlist": zod.array(zod.object({
+  "title": zod.string().min(1),
+  "url": zod.string().min(1)
+})),
+  "logoUrl": zod.string(),
+  "heroImageUrl": zod.string(),
+  "backgroundColor": zod.string(),
+  "primaryColor": zod.string(),
+  "accentColor": zod.string()
 })
 
 

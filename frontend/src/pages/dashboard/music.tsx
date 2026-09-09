@@ -3,7 +3,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useQueryClient } from '@tanstack/react-query';
-import { useGetSiteSettings, useUpdateSiteSettings, getGetSiteSettingsQueryKey } from '@/api';
+import {
+  useGetSiteSettings,
+  useUpdateSiteSettings,
+  getGetSiteSettingsQueryKey,
+  useGetSpotifyConfig,
+  useUpdateSpotifyConfig,
+  getGetSpotifyConfigQueryKey,
+  useListSpotifyPlaylists,
+  getListSpotifyPlaylistsQueryKey,
+  useImportSpotifyPlaylist,
+} from '@/api';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,8 +28,9 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Music, Plus, Trash2 } from 'lucide-react';
+import { Music, Plus, Trash2, Copy, CheckCircle2, Download } from 'lucide-react';
 
 const trackSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -27,6 +38,196 @@ const trackSchema = z.object({
 });
 
 type TrackValues = z.infer<typeof trackSchema>;
+
+const spotifyCredsSchema = z.object({
+  clientId: z.string().min(1, 'Required'),
+  clientSecret: z.string().min(1, 'Required'),
+});
+type SpotifyCredsValues = z.infer<typeof spotifyCredsSchema>;
+
+function SpotifyCard() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { data: spotify, isLoading } = useGetSpotifyConfig();
+  const updateConfig = useUpdateSpotifyConfig();
+  const importPlaylist = useImportSpotifyPlaylist();
+  const { data: playlists, isFetching: loadingPlaylists } = useListSpotifyPlaylists({
+    query: { enabled: Boolean(spotify?.connected), queryKey: getListSpotifyPlaylistsQueryKey() },
+  });
+
+  const form = useForm<SpotifyCredsValues>({
+    resolver: zodResolver(spotifyCredsSchema),
+    defaultValues: { clientId: '', clientSecret: '' },
+  });
+
+  const onSaveCreds = (values: SpotifyCredsValues) => {
+    updateConfig.mutate({ data: values }, {
+      onSuccess: (updated) => {
+        queryClient.setQueryData(getGetSpotifyConfigQueryKey(), updated);
+        toast({ title: 'Spotify app credentials saved' });
+        form.reset({ clientId: '', clientSecret: '' });
+      },
+      onError: (err) => {
+        toast({
+          variant: 'destructive',
+          title: 'Could not save',
+          description: err.data?.error || 'An error occurred.',
+        });
+      },
+    });
+  };
+
+  const onImport = (playlistId: string, playlistName: string) => {
+    importPlaylist.mutate({ playlistId }, {
+      onSuccess: (updated) => {
+        queryClient.setQueryData(getGetSiteSettingsQueryKey(), updated);
+        queryClient.invalidateQueries({ queryKey: getGetSpotifyConfigQueryKey() });
+        toast({ title: `Imported "${playlistName}"`, description: `${updated.playlist.length} track preview(s) added.` });
+      },
+      onError: (err) => {
+        toast({
+          variant: 'destructive',
+          title: 'Import failed',
+          description: err.data?.error || 'An error occurred.',
+        });
+      },
+    });
+  };
+
+  if (isLoading) return <Skeleton className="h-64 rounded-xl" />;
+
+  return (
+    <Card className="border-none shadow-sm bg-card">
+      <CardHeader>
+        <CardTitle className="text-xl font-serif text-primary flex items-center gap-2">
+          Connect Spotify
+        </CardTitle>
+        <CardDescription>
+          Import 30-second track previews from a Spotify playlist. Guests still hear them through your site's
+          music button — no Spotify account needed on their end.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSaveCreds)} className="space-y-4">
+            {spotify?.configured && (
+              <div className="bg-green-50 text-green-700 p-3 rounded-md flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4" />
+                Spotify app credentials saved.
+              </div>
+            )}
+
+            <FormField
+              control={form.control}
+              name="clientId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Client ID</FormLabel>
+                  <FormControl>
+                    <Input placeholder={spotify?.configured ? 'Leave blank to keep existing' : 'Your Spotify app Client ID'} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="clientSecret"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Client Secret</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder={spotify?.configured ? 'Leave blank to keep existing' : 'Your Spotify app Client Secret'} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="space-y-2 pt-2 border-t border-border">
+              <Label>Redirect URI</Label>
+              <div className="flex items-center gap-2">
+                <Input readOnly value={spotify?.redirectUri ?? ''} className="font-mono text-xs" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    if (spotify?.redirectUri) {
+                      void navigator.clipboard.writeText(spotify.redirectUri);
+                      toast({ title: 'Redirect URI copied' });
+                    }
+                  }}
+                  aria-label="Copy redirect URI"
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-[0.8rem] text-muted-foreground">
+                Paste this into your Spotify Developer Dashboard app's Redirect URIs before connecting.
+              </p>
+            </div>
+
+            <Button type="submit" disabled={updateConfig.isPending}>
+              {updateConfig.isPending ? 'Saving...' : 'Save Credentials'}
+            </Button>
+          </form>
+        </Form>
+
+        {spotify?.configured && (
+          <div className="pt-4 border-t border-border space-y-4">
+            {spotify.connected ? (
+              <div className="bg-green-50 text-green-700 p-3 rounded-md flex items-center gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4" />
+                Connected{spotify.connectedPlaylistName ? ` — last imported "${spotify.connectedPlaylistName}"` : ''}.
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Not connected yet.</p>
+            )}
+
+            <a href="/api/admin/spotify/connect">
+              <Button type="button" variant="outline">
+                {spotify.connected ? 'Reconnect Spotify' : 'Connect Spotify'}
+              </Button>
+            </a>
+
+            {spotify.connected && (
+              <div className="space-y-2">
+                <Label>Your Playlists</Label>
+                {loadingPlaylists ? (
+                  <Skeleton className="h-24 rounded-lg" />
+                ) : (playlists ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No playlists found on your Spotify account.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {playlists!.map((pl) => (
+                      <div key={pl.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-background">
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{pl.name}</p>
+                          <p className="text-xs text-muted-foreground">{pl.trackCount} tracks</p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={importPlaylist.isPending}
+                          onClick={() => onImport(pl.id, pl.name)}
+                        >
+                          <Download className="w-4 h-4 mr-1" />
+                          Import
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function DashboardMusic() {
   const { toast } = useToast();
@@ -42,7 +243,17 @@ export default function DashboardMusic() {
   });
 
   const save = (playlist: { title: string; url: string }[], musicEnabled: boolean, successMessage: string) => {
-    updateSettings.mutate({ data: { musicEnabled, playlist } }, {
+    updateSettings.mutate({
+      data: {
+        musicEnabled,
+        playlist,
+        logoUrl: settings?.logoUrl ?? '',
+        heroImageUrl: settings?.heroImageUrl ?? '',
+        backgroundColor: settings?.backgroundColor ?? '#fdf9f3',
+        primaryColor: settings?.primaryColor ?? '#1c4d3a',
+        accentColor: settings?.accentColor ?? '#e3c878',
+      },
+    }, {
       onSuccess: (updated) => {
         queryClient.setQueryData(getGetSiteSettingsQueryKey(), updated);
         toast({ title: successMessage });
@@ -176,6 +387,8 @@ export default function DashboardMusic() {
           </Dialog>
         </CardContent>
       </Card>
+
+      <SpotifyCard />
     </div>
   );
 }

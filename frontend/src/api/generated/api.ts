@@ -33,6 +33,7 @@ import type {
   DeliveryConfigInput,
   ErrorResponse,
   Event,
+  EventInput,
   GiftCheckoutInput,
   HealthStatus,
   NotificationConfig,
@@ -42,7 +43,10 @@ import type {
   RsvpInput,
   RsvpResult,
   SiteSettings,
-  SiteSettingsInput
+  SiteSettingsInput,
+  SpotifyConfig,
+  SpotifyConfigInput,
+  SpotifyPlaylist
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -461,6 +465,94 @@ export function useGetEvent<TData = Awaited<ReturnType<typeof getEvent>>, TError
 
 
 
+
+export const getUpdateEventUrl = () => {
+
+
+
+
+  return `/api/admin/event`
+}
+
+/**
+ * @summary Update wedding event details (admin role only)
+ */
+export const updateEvent = async (eventInput: EventInput, options?: Parameters<typeof customFetch>[1]): Promise<Event> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<Event>(getUpdateEventUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(eventInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateEventMutationKey = () => ['updateEvent'] as const;
+
+export const getUpdateEventMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,UpdateEventMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,UpdateEventMutationVariables, TContext> => {
+
+const mutationKey = getUpdateEventMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateEvent>>, UpdateEventMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateEvent(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateEventMutationResult = NonNullable<Awaited<ReturnType<typeof updateEvent>>>
+    export type UpdateEventMutationBody = BodyType<EventInput>
+    export type UpdateEventMutationError = ErrorType<ErrorResponse>
+    export type UpdateEventMutationVariables = {data: BodyType<EventInput>}
+
+    /**
+ * @summary Update wedding event details (admin role only)
+ */
+export const useUpdateEvent = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateEvent>>, TError,UpdateEventMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateEvent>>,
+        TError,
+        UpdateEventMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateEventMutationOptions(options));
+    }
 
 export const getListAsoebiUrl = () => {
 
@@ -2204,5 +2296,321 @@ export const useUpdateSiteSettings = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getUpdateSiteSettingsMutationOptions(options));
+    }
+
+export const getGetSpotifyConfigUrl = () => {
+
+
+
+
+  return `/api/admin/spotify-config`
+}
+
+/**
+ * @summary Get Spotify connection status (admin role only)
+ */
+export const getSpotifyConfig = async ( options?: Parameters<typeof customFetch>[1]): Promise<SpotifyConfig> => {
+
+  return customFetch<SpotifyConfig>(getGetSpotifyConfigUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSpotifyConfigQueryKey = () => {
+    return [
+    `/api/admin/spotify-config`
+    ] as const;
+    }
+
+
+export const getGetSpotifyConfigQueryOptions = <TData = Awaited<ReturnType<typeof getSpotifyConfig>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSpotifyConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSpotifyConfigQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSpotifyConfig>>> = ({ signal }) => getSpotifyConfig({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSpotifyConfig>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSpotifyConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getSpotifyConfig>>>
+export type GetSpotifyConfigQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get Spotify connection status (admin role only)
+ */
+
+export function useGetSpotifyConfig<TData = Awaited<ReturnType<typeof getSpotifyConfig>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSpotifyConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSpotifyConfigQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateSpotifyConfigUrl = () => {
+
+
+
+
+  return `/api/admin/spotify-config`
+}
+
+/**
+ * @summary Save Spotify app credentials (admin role only)
+ */
+export const updateSpotifyConfig = async (spotifyConfigInput: SpotifyConfigInput, options?: Parameters<typeof customFetch>[1]): Promise<SpotifyConfig> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<SpotifyConfig>(getUpdateSpotifyConfigUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(spotifyConfigInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateSpotifyConfigMutationKey = () => ['updateSpotifyConfig'] as const;
+
+export const getUpdateSpotifyConfigMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSpotifyConfig>>, TError,UpdateSpotifyConfigMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSpotifyConfig>>, TError,UpdateSpotifyConfigMutationVariables, TContext> => {
+
+const mutationKey = getUpdateSpotifyConfigMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSpotifyConfig>>, UpdateSpotifyConfigMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateSpotifyConfig(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSpotifyConfigMutationResult = NonNullable<Awaited<ReturnType<typeof updateSpotifyConfig>>>
+    export type UpdateSpotifyConfigMutationBody = BodyType<SpotifyConfigInput>
+    export type UpdateSpotifyConfigMutationError = ErrorType<ErrorResponse>
+    export type UpdateSpotifyConfigMutationVariables = {data: BodyType<SpotifyConfigInput>}
+
+    /**
+ * @summary Save Spotify app credentials (admin role only)
+ */
+export const useUpdateSpotifyConfig = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSpotifyConfig>>, TError,UpdateSpotifyConfigMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateSpotifyConfig>>,
+        TError,
+        UpdateSpotifyConfigMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateSpotifyConfigMutationOptions(options));
+    }
+
+export const getListSpotifyPlaylistsUrl = () => {
+
+
+
+
+  return `/api/admin/spotify/playlists`
+}
+
+/**
+ * @summary List the connected Spotify account's playlists (admin role only)
+ */
+export const listSpotifyPlaylists = async ( options?: Parameters<typeof customFetch>[1]): Promise<SpotifyPlaylist[]> => {
+
+  return customFetch<SpotifyPlaylist[]>(getListSpotifyPlaylistsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSpotifyPlaylistsQueryKey = () => {
+    return [
+    `/api/admin/spotify/playlists`
+    ] as const;
+    }
+
+
+export const getListSpotifyPlaylistsQueryOptions = <TData = Awaited<ReturnType<typeof listSpotifyPlaylists>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSpotifyPlaylists>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSpotifyPlaylistsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSpotifyPlaylists>>> = ({ signal }) => listSpotifyPlaylists({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSpotifyPlaylists>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSpotifyPlaylistsQueryResult = NonNullable<Awaited<ReturnType<typeof listSpotifyPlaylists>>>
+export type ListSpotifyPlaylistsQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary List the connected Spotify account's playlists (admin role only)
+ */
+
+export function useListSpotifyPlaylists<TData = Awaited<ReturnType<typeof listSpotifyPlaylists>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSpotifyPlaylists>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSpotifyPlaylistsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getImportSpotifyPlaylistUrl = (playlistId: string,) => {
+
+
+
+
+  return `/api/admin/spotify/import/${playlistId}`
+}
+
+/**
+ * @summary Import 30-second previews from a Spotify playlist into the site playlist (admin role only)
+ */
+export const importSpotifyPlaylist = async (playlistId: string, options?: Parameters<typeof customFetch>[1]): Promise<SiteSettings> => {
+
+  return customFetch<SiteSettings>(getImportSpotifyPlaylistUrl(playlistId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getImportSpotifyPlaylistMutationKey = () => ['importSpotifyPlaylist'] as const;
+
+export const getImportSpotifyPlaylistMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importSpotifyPlaylist>>, TError,ImportSpotifyPlaylistMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof importSpotifyPlaylist>>, TError,ImportSpotifyPlaylistMutationVariables, TContext> => {
+
+const mutationKey = getImportSpotifyPlaylistMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importSpotifyPlaylist>>, ImportSpotifyPlaylistMutationVariables> = (props) => {
+          const {playlistId} = props ?? {};
+
+          return  importSpotifyPlaylist(playlistId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportSpotifyPlaylistMutationResult = NonNullable<Awaited<ReturnType<typeof importSpotifyPlaylist>>>
+
+    export type ImportSpotifyPlaylistMutationError = ErrorType<ErrorResponse>
+    export type ImportSpotifyPlaylistMutationVariables = {playlistId: string}
+
+    /**
+ * @summary Import 30-second previews from a Spotify playlist into the site playlist (admin role only)
+ */
+export const useImportSpotifyPlaylist = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importSpotifyPlaylist>>, TError,ImportSpotifyPlaylistMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof importSpotifyPlaylist>>,
+        TError,
+        ImportSpotifyPlaylistMutationVariables,
+        TContext
+      > => {
+      return useMutation(getImportSpotifyPlaylistMutationOptions(options));
     }
 

@@ -114,7 +114,59 @@ export interface SiteSettings {
   id: 1;
   musicEnabled: boolean;
   playlist: MusicTrack[];
+  logoUrl: string;
+  heroImageUrl: string;
+  backgroundColor: string;
+  primaryColor: string;
+  accentColor: string;
   updatedAt: Date;
+}
+
+export const DEFAULT_SITE_SETTINGS: Omit<SiteSettings, "id" | "updatedAt"> = {
+  musicEnabled: false,
+  playlist: [],
+  logoUrl: "",
+  heroImageUrl: "",
+  backgroundColor: "#fdf9f3",
+  primaryColor: "#1c4d3a",
+  accentColor: "#e3c878",
+};
+
+export interface EventDetails {
+  id: 1;
+  coupleNames: string;
+  traditionalDate: string;
+  traditionalVenue: string;
+  weddingDate: string;
+  weddingVenue: string;
+  rsvpDeadline: string;
+  welcomeMessage: string;
+  updatedAt: Date;
+}
+
+export const DEFAULT_EVENT_DETAILS: Omit<EventDetails, "id" | "updatedAt"> = {
+  coupleNames: "Tola & Dami",
+  traditionalDate: "2026-12-10T12:00:00+01:00",
+  traditionalVenue: "The Adebayo Family Compound, Ibadan",
+  weddingDate: "2026-12-12T12:00:00+01:00",
+  weddingVenue: "The Monarch Event Centre, Lagos",
+  rsvpDeadline: "2026-11-15",
+  welcomeMessage:
+    "With joyful hearts, we invite you to celebrate the beginning of our forever.",
+};
+
+export const eventDetailsCollection = () =>
+  db.collection<EventDetails>("event_details");
+
+export async function upsertEventDetails(
+  input: Omit<EventDetails, "id" | "updatedAt">,
+): Promise<EventDetails> {
+  const result = await eventDetailsCollection().findOneAndUpdate(
+    { id: 1 },
+    { $set: { ...input, updatedAt: new Date() }, $setOnInsert: { id: 1 } },
+    { upsert: true, returnDocument: "after" },
+  );
+  return result!;
 }
 
 export const asoebiItemsCollection = () =>
@@ -285,11 +337,17 @@ export async function upsertNotificationConfig(
 }
 
 export async function upsertSiteSettings(
-  input: Omit<SiteSettings, "id" | "updatedAt">,
+  input: Partial<Omit<SiteSettings, "id" | "updatedAt">>,
 ): Promise<SiteSettings> {
+  const missingDefaults = Object.fromEntries(
+    Object.entries(DEFAULT_SITE_SETTINGS).filter(([key]) => !(key in input)),
+  );
   const result = await siteSettingsCollection().findOneAndUpdate(
     { id: 1 },
-    { $set: { ...input, updatedAt: new Date() }, $setOnInsert: { id: 1 } },
+    {
+      $set: { ...input, updatedAt: new Date() },
+      $setOnInsert: { id: 1, ...missingDefaults },
+    },
     { upsert: true, returnDocument: "after" },
   );
   return result!;

@@ -20,6 +20,23 @@ export interface Event {
   welcomeMessage: string;
 }
 
+export interface EventInput {
+  /** @minLength 1 */
+  coupleNames: string;
+  /** @minLength 1 */
+  traditionalDate: string;
+  /** @minLength 1 */
+  traditionalVenue: string;
+  /** @minLength 1 */
+  weddingDate: string;
+  /** @minLength 1 */
+  weddingVenue: string;
+  /** @minLength 1 */
+  rsvpDeadline: string;
+  /** @minLength 1 */
+  welcomeMessage: string;
+}
+
 export type AsoebiItemCategory = typeof AsoebiItemCategory[keyof typeof AsoebiItemCategory];
 
 
@@ -278,11 +295,42 @@ export interface MusicTrack {
 export interface SiteSettings {
   musicEnabled: boolean;
   playlist: MusicTrack[];
+  logoUrl: string;
+  heroImageUrl: string;
+  backgroundColor: string;
+  primaryColor: string;
+  accentColor: string;
 }
 
 export interface SiteSettingsInput {
   musicEnabled: boolean;
   playlist: MusicTrack[];
+  logoUrl: string;
+  heroImageUrl: string;
+  backgroundColor: string;
+  primaryColor: string;
+  accentColor: string;
+}
+
+export interface SpotifyConfig {
+  configured: boolean;
+  connected: boolean;
+  redirectUri: string;
+  /** @nullable */
+  connectedPlaylistName: string | null;
+}
+
+export interface SpotifyConfigInput {
+  /** @minLength 1 */
+  clientId: string;
+  /** @minLength 1 */
+  clientSecret: string;
+}
+
+export interface SpotifyPlaylist {
+  id: string;
+  name: string;
+  trackCount: number;
 }
 
 export type RecentRsvpAsoebiInterest = typeof RecentRsvpAsoebiInterest[keyof typeof RecentRsvpAsoebiInterest];
