@@ -198,7 +198,9 @@ export default function CartPage() {
             <Card className="border-none shadow-sm bg-card">
               <CardContent className="p-4">
                 <p className="text-sm font-medium text-foreground">
-                  {rsvpData.deliveryMethod === 'delivery' ? 'Delivery' : 'Pickup'}
+                  {rsvpData.deliveryMethod === 'delivery'
+                    ? `Delivery${rsvpData.deliveryProvider ? ` via ${rsvpData.deliveryProvider}` : ''}`
+                    : 'Pickup'}
                 </p>
                 {rsvpData.deliveryMethod === 'delivery' && rsvpData.deliveryAddress && (
                   <p className="text-sm text-muted-foreground mt-1">{rsvpData.deliveryAddress}</p>

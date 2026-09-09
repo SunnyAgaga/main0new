@@ -248,6 +248,7 @@ export default function DashboardMusic() {
         musicEnabled,
         playlist,
         logoUrl: settings?.logoUrl ?? '',
+        logoHeight: settings?.logoHeight ?? 32,
         heroImageUrl: settings?.heroImageUrl ?? '',
         backgroundColor: settings?.backgroundColor ?? '#fdf9f3',
         primaryColor: settings?.primaryColor ?? '#1c4d3a',

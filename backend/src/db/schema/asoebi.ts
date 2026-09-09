@@ -38,6 +38,7 @@ export interface Rsvp {
   asoebiSelections: AsoebiSelection[];
   deliveryMethod: "pickup" | "delivery" | null;
   deliveryAddress: string | null;
+  deliveryProvider: string | null;
   note: string | null;
   createdAt: Date;
 }
@@ -74,11 +75,19 @@ export interface Order {
   giftMessage: string | null;
   deliveryMethod: "pickup" | "delivery" | null;
   deliveryAddress: string | null;
+  deliveryProvider: string | null;
   totalAmount: number;
   currency: string;
   paymentMethod: string;
   status: string;
   createdAt: Date;
+}
+
+export interface DeliveryProvider {
+  id: string;
+  name: string;
+  fee: number;
+  enabled: boolean;
 }
 
 export interface DeliveryConfig {
@@ -89,6 +98,7 @@ export interface DeliveryConfig {
   webhookSecret: string;
   pickupLocation: string;
   deliveryFee: number;
+  providers: DeliveryProvider[];
   updatedAt: Date;
 }
 
@@ -115,6 +125,7 @@ export interface SiteSettings {
   musicEnabled: boolean;
   playlist: MusicTrack[];
   logoUrl: string;
+  logoHeight: number;
   heroImageUrl: string;
   backgroundColor: string;
   primaryColor: string;
@@ -126,6 +137,7 @@ export const DEFAULT_SITE_SETTINGS: Omit<SiteSettings, "id" | "updatedAt"> = {
   musicEnabled: false,
   playlist: [],
   logoUrl: "",
+  logoHeight: 32,
   heroImageUrl: "",
   backgroundColor: "#fdf9f3",
   primaryColor: "#1c4d3a",
@@ -218,6 +230,7 @@ export const insertRsvpSchema = z.object({
   asoebiSelections: z.array(asoebiSelectionSchema).default([]),
   deliveryMethod: z.enum(["pickup", "delivery"]).nullable().default(null),
   deliveryAddress: z.string().nullable().default(null),
+  deliveryProvider: z.string().nullable().default(null),
   note: z.string().nullable().optional(),
 });
 export type InsertRsvp = z.infer<typeof insertRsvpSchema>;
@@ -242,6 +255,7 @@ export const insertOrderSchema = z.object({
   giftMessage: z.string().nullable().default(null),
   deliveryMethod: z.enum(["pickup", "delivery"]).nullable().default(null),
   deliveryAddress: z.string().nullable().default(null),
+  deliveryProvider: z.string().nullable().default(null),
   totalAmount: z.number(),
   currency: z.string().default("NGN"),
   paymentMethod: z.string(),

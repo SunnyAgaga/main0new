@@ -126,6 +126,8 @@ export interface RsvpInput {
   deliveryMethod?: RsvpInputDeliveryMethod;
   /** @nullable */
   deliveryAddress?: string | null;
+  /** @nullable */
+  deliveryProvider?: string | null;
   note?: string;
 }
 
@@ -178,6 +180,8 @@ export interface RsvpResult {
   deliveryMethod?: RsvpResultDeliveryMethod;
   /** @nullable */
   deliveryAddress?: string | null;
+  /** @nullable */
+  deliveryProvider?: string | null;
 }
 
 export interface GiftCheckoutInput {
@@ -244,6 +248,27 @@ export interface PaymentConfigInput {
   bankTransfer: BankTransferDetails;
 }
 
+export interface DeliveryProvider {
+  id: string;
+  /** @minLength 1 */
+  name: string;
+  /** @minimum 0 */
+  fee: number;
+  enabled: boolean;
+}
+
+export interface PublicDeliveryProvider {
+  name: string;
+  fee: number;
+}
+
+export interface PublicDeliveryOptions {
+  deliveryEnabled: boolean;
+  pickupLocation: string;
+  deliveryFee: number;
+  providers: PublicDeliveryProvider[];
+}
+
 export interface DeliveryConfig {
   deliveryEnabled: boolean;
   providerConfigured: boolean;
@@ -252,6 +277,7 @@ export interface DeliveryConfig {
   webhookSecretConfigured: boolean;
   pickupLocation: string;
   deliveryFee: number;
+  providers: DeliveryProvider[];
 }
 
 export interface DeliveryConfigInput {
@@ -262,6 +288,7 @@ export interface DeliveryConfigInput {
   pickupLocation: string;
   /** @minimum 0 */
   deliveryFee: number;
+  providers: DeliveryProvider[];
 }
 
 export interface NotificationConfig {
@@ -296,6 +323,7 @@ export interface SiteSettings {
   musicEnabled: boolean;
   playlist: MusicTrack[];
   logoUrl: string;
+  logoHeight: number;
   heroImageUrl: string;
   backgroundColor: string;
   primaryColor: string;
@@ -306,6 +334,7 @@ export interface SiteSettingsInput {
   musicEnabled: boolean;
   playlist: MusicTrack[];
   logoUrl: string;
+  logoHeight: number;
   heroImageUrl: string;
   backgroundColor: string;
   primaryColor: string;

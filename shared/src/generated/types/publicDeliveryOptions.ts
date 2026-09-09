@@ -5,15 +5,11 @@
  * WedPlan wedding RSVP and asoebi commerce API
  * OpenAPI spec version: 0.1.0
  */
-import type { DeliveryProvider } from './deliveryProvider';
+import type { PublicDeliveryProvider } from './publicDeliveryProvider';
 
-export interface DeliveryConfigInput {
+export interface PublicDeliveryOptions {
   deliveryEnabled: boolean;
-  providerName: string;
-  apiKey: string;
-  webhookSecret: string;
   pickupLocation: string;
-  /** @minimum 0 */
   deliveryFee: number;
-  providers: DeliveryProvider[];
+  providers: PublicDeliveryProvider[];
 }

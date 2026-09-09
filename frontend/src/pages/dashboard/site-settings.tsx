@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +36,7 @@ type EventValues = z.infer<typeof eventSchema>;
 
 const themeSchema = z.object({
   logoUrl: z.string(),
+  logoHeight: z.number().min(16).max(160),
   heroImageUrl: z.string(),
   backgroundColor: z.string().min(1),
   primaryColor: z.string().min(1),
@@ -345,6 +347,7 @@ function LookAndFeelCard() {
     resolver: zodResolver(themeSchema),
     defaultValues: {
       logoUrl: '',
+      logoHeight: 32,
       heroImageUrl: '',
       backgroundColor: '#fdf9f3',
       primaryColor: '#1c4d3a',
@@ -357,6 +360,7 @@ function LookAndFeelCard() {
       initialized.current = true;
       form.reset({
         logoUrl: settings.logoUrl,
+        logoHeight: settings.logoHeight,
         heroImageUrl: settings.heroImageUrl,
         backgroundColor: settings.backgroundColor,
         primaryColor: settings.primaryColor,
@@ -404,6 +408,28 @@ function LookAndFeelCard() {
               label="Logo"
               description="Leave blank to use the default WedPlan logo."
               previewClassName="h-14 w-14 rounded object-contain border border-input bg-background p-1"
+            />
+
+            <FormField
+              control={form.control}
+              name="logoHeight"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Logo Size ({field.value}px)</FormLabel>
+                  <FormControl>
+                    <Slider
+                      min={16}
+                      max={160}
+                      step={4}
+                      value={[field.value]}
+                      onValueChange={([value]) => field.onChange(value)}
+                      className="max-w-sm"
+                    />
+                  </FormControl>
+                  <FormDescription>Height of the logo shown on the home page and dashboard.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
 
             <ImageUrlField
