@@ -6,14 +6,25 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './additionalGuestInput';
 export * from './adminOverview';
 export * from './asoebiItem';
+export * from './asoebiItemCategory';
+export * from './asoebiSelectionInput';
+export * from './authCredentials';
+export * from './authUser';
+export * from './authUserRole';
 export * from './bankTransferDetails';
 export * from './bankTransferResponse';
+export * from './cartItem';
 export * from './checkoutInput';
+export * from './checkoutItemInput';
 export * from './checkoutResponse';
+export * from './createAdminUserInput';
+export * from './createAdminUserInputRole';
 export * from './errorResponse';
 export * from './event';
+export * from './giftCheckoutInput';
 export * from './healthStatus';
 export * from './paymentConfig';
 export * from './paymentConfigInput';
@@ -23,5 +34,4 @@ export * from './rsvpInput';
 export * from './rsvpInputAsoebiInterest';
 export * from './rsvpResult';
 export * from './rsvpResultAsoebiInterest';
-export * from './rsvpResultCartItem';
 export * from './rsvpResultNextStep';

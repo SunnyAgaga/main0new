@@ -9,6 +9,41 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Log in to an admin account
+ */
+export const loginBodyPasswordMin = 8;
+
+
+
+export const LoginBody = zod.object({
+  "email": zod.string(),
+  "password": zod.string().min(loginBodyPasswordMin)
+})
+
+export const LoginResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "role": zod.enum(['admin', 'manager'])
+})
+
+
+/**
+ * @summary Log out of the current session
+ */
+export const LogoutResponse = zod.void()
+
+
+/**
+ * @summary Get the current admin session
+ */
+export const GetAuthMeResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "role": zod.enum(['admin', 'manager'])
+})
+
+
+/**
  * Returns server health status
  * @summary Health check
  */
@@ -23,8 +58,10 @@ export const HealthCheckResponse = zod.object({
 export const GetEventResponse = zod.object({
   "id": zod.string(),
   "coupleNames": zod.string(),
-  "date": zod.string(),
-  "venue": zod.string(),
+  "traditionalDate": zod.string(),
+  "traditionalVenue": zod.string(),
+  "weddingDate": zod.string(),
+  "weddingVenue": zod.string(),
   "rsvpDeadline": zod.string(),
   "welcomeMessage": zod.string()
 })
@@ -35,6 +72,7 @@ export const GetEventResponse = zod.object({
  */
 export const ListAsoebiResponseItem = zod.object({
   "id": zod.number(),
+  "category": zod.enum(['women', 'men']),
   "name": zod.string(),
   "description": zod.string(),
   "price": zod.number(),
@@ -51,7 +89,11 @@ export const ListAsoebiResponse = zod.array(ListAsoebiResponseItem)
  */
 export const createRsvpBodyGuestNameMin = 2;
 
-export const createRsvpBodyGuestCountMax = 10;
+export const createRsvpBodyGuestCountMax = 3;
+
+export const createRsvpBodyAdditionalGuestsItemNameMin = 2;
+
+
 
 
 
@@ -61,9 +103,20 @@ export const CreateRsvpBody = zod.object({
   "phone": zod.string().optional(),
   "attending": zod.boolean(),
   "guestCount": zod.number().min(1).max(createRsvpBodyGuestCountMax).optional(),
+  "additionalGuests": zod.array(zod.object({
+  "name": zod.string().min(createRsvpBodyAdditionalGuestsItemNameMin),
+  "asoebiSelections": zod.array(zod.object({
+  "itemId": zod.number(),
+  "size": zod.string(),
+  "quantity": zod.number().min(1)
+})).optional()
+})).optional(),
   "asoebiInterest": zod.enum(['yes', 'no']),
-  "asoebiItemId": zod.number().nullish(),
-  "asoebiSize": zod.string().nullish(),
+  "asoebiSelections": zod.array(zod.object({
+  "itemId": zod.number(),
+  "size": zod.string(),
+  "quantity": zod.number().min(1)
+})).optional(),
   "note": zod.string().optional()
 })
 
@@ -74,20 +127,22 @@ export const CreateRsvpResponse = zod.object({
   "attending": zod.boolean(),
   "asoebiInterest": zod.enum(['yes', 'no']),
   "nextStep": zod.enum(['complete', 'cart']),
-  "cartItem": zod.object({
-  "id": zod.number(),
+  "cartItems": zod.array(zod.object({
+  "guestName": zod.string(),
+  "asoebiItemId": zod.number(),
   "name": zod.string(),
   "price": zod.number(),
   "currency": zod.string(),
-  "size": zod.string()
-}).nullish()
+  "size": zod.string(),
+  "quantity": zod.number()
+}))
 })
 
 
 /**
  * @summary Create a Flutterwave checkout link for an RSVP
  */
-export const startFlutterwaveCheckoutBodyAmountMin = 0;
+
 
 
 
@@ -95,9 +150,12 @@ export const StartFlutterwaveCheckoutBody = zod.object({
   "rsvpId": zod.number(),
   "guestName": zod.string(),
   "email": zod.string(),
+  "items": zod.array(zod.object({
+  "guestName": zod.string(),
   "itemId": zod.number(),
   "size": zod.string(),
-  "amount": zod.number().min(startFlutterwaveCheckoutBodyAmountMin).optional()
+  "quantity": zod.number().min(1).optional()
+})).min(1)
 })
 
 export const StartFlutterwaveCheckoutResponse = zod.object({
@@ -109,7 +167,7 @@ export const StartFlutterwaveCheckoutResponse = zod.object({
 /**
  * @summary Create a bank transfer order
  */
-export const createBankTransferOrderBodyAmountMin = 0;
+
 
 
 
@@ -117,12 +175,62 @@ export const CreateBankTransferOrderBody = zod.object({
   "rsvpId": zod.number(),
   "guestName": zod.string(),
   "email": zod.string(),
+  "items": zod.array(zod.object({
+  "guestName": zod.string(),
   "itemId": zod.number(),
   "size": zod.string(),
-  "amount": zod.number().min(createBankTransferOrderBodyAmountMin).optional()
+  "quantity": zod.number().min(1).optional()
+})).min(1)
 })
 
 export const CreateBankTransferOrderResponse = zod.object({
+  "reference": zod.string(),
+  "amount": zod.number(),
+  "currency": zod.string(),
+  "bankName": zod.string(),
+  "accountName": zod.string(),
+  "accountNumber": zod.string(),
+  "instructions": zod.string()
+})
+
+
+/**
+ * @summary Create a Flutterwave checkout link for a monetary gift
+ */
+export const startGiftFlutterwaveCheckoutBodyGuestNameMin = 2;
+
+
+
+
+export const StartGiftFlutterwaveCheckoutBody = zod.object({
+  "guestName": zod.string().min(startGiftFlutterwaveCheckoutBodyGuestNameMin),
+  "email": zod.string(),
+  "amount": zod.number().min(1),
+  "message": zod.string().optional()
+})
+
+export const StartGiftFlutterwaveCheckoutResponse = zod.object({
+  "reference": zod.string(),
+  "checkoutUrl": zod.string()
+})
+
+
+/**
+ * @summary Create a bank transfer order for a monetary gift
+ */
+export const createGiftBankTransferOrderBodyGuestNameMin = 2;
+
+
+
+
+export const CreateGiftBankTransferOrderBody = zod.object({
+  "guestName": zod.string().min(createGiftBankTransferOrderBodyGuestNameMin),
+  "email": zod.string(),
+  "amount": zod.number().min(1),
+  "message": zod.string().optional()
+})
+
+export const CreateGiftBankTransferOrderResponse = zod.object({
   "reference": zod.string(),
   "amount": zod.number(),
   "currency": zod.string(),
@@ -156,6 +264,8 @@ export const GetAdminOverviewResponse = zod.object({
 export const GetPaymentConfigResponse = zod.object({
   "flutterwaveConfigured": zod.boolean(),
   "flutterwaveKeyHint": zod.string(),
+  "webhookUrl": zod.string(),
+  "webhookSecretConfigured": zod.boolean(),
   "bankTransferConfigured": zod.boolean(),
   "bankTransfer": zod.object({
   "bankName": zod.string(),
@@ -172,6 +282,7 @@ export const GetPaymentConfigResponse = zod.object({
 export const UpdatePaymentConfigBody = zod.object({
   "flutterwaveEnabled": zod.boolean(),
   "flutterwaveSecretKey": zod.string(),
+  "flutterwaveWebhookSecret": zod.string().optional(),
   "bankTransferEnabled": zod.boolean(),
   "bankTransfer": zod.object({
   "bankName": zod.string(),
@@ -184,6 +295,8 @@ export const UpdatePaymentConfigBody = zod.object({
 export const UpdatePaymentConfigResponse = zod.object({
   "flutterwaveConfigured": zod.boolean(),
   "flutterwaveKeyHint": zod.string(),
+  "webhookUrl": zod.string(),
+  "webhookSecretConfigured": zod.boolean(),
   "bankTransferConfigured": zod.boolean(),
   "bankTransfer": zod.object({
   "bankName": zod.string(),
@@ -192,5 +305,46 @@ export const UpdatePaymentConfigResponse = zod.object({
   "instructions": zod.string()
 })
 })
+
+
+/**
+ * @summary List admin users (admin role only)
+ */
+export const ListAdminUsersResponseItem = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "role": zod.enum(['admin', 'manager'])
+})
+export const ListAdminUsersResponse = zod.array(ListAdminUsersResponseItem)
+
+
+/**
+ * @summary Create a new admin user (admin role only)
+ */
+export const createAdminUserBodyPasswordMin = 8;
+
+
+
+export const CreateAdminUserBody = zod.object({
+  "email": zod.string(),
+  "password": zod.string().min(createAdminUserBodyPasswordMin),
+  "role": zod.enum(['admin', 'manager'])
+})
+
+export const CreateAdminUserResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "role": zod.enum(['admin', 'manager'])
+})
+
+
+/**
+ * @summary Remove an admin user (admin role only)
+ */
+export const DeleteAdminUserParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteAdminUserResponse = zod.void()
 
 

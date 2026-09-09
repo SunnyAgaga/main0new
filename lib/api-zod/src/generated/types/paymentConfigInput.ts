@@ -10,6 +10,7 @@ import type { BankTransferDetails } from './bankTransferDetails';
 export interface PaymentConfigInput {
   flutterwaveEnabled: boolean;
   flutterwaveSecretKey: string;
+  flutterwaveWebhookSecret?: string;
   bankTransferEnabled: boolean;
   bankTransfer: BankTransferDetails;
 }

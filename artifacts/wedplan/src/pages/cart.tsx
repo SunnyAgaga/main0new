@@ -9,13 +9,13 @@ import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Landmark, ArrowLeft } from 'lucide-react';
 
 export default function CartPage() {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [rsvpData, setRsvpData] = useState<RsvpResult | null>(null);
-  
+
   const flutterwaveMutation = useStartFlutterwaveCheckout();
   const bankTransferMutation = useCreateBankTransferOrder();
-  
+
   const [bankDetails, setBankDetails] = useState<{
     reference: string;
     amount: number;
@@ -31,7 +31,7 @@ export default function CartPage() {
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as RsvpResult;
-        if (parsed.nextStep !== 'cart' || !parsed.cartItem) {
+        if (parsed.nextStep !== 'cart' || !parsed.cartItems || parsed.cartItems.length === 0) {
           setLocation('/');
         } else {
           setRsvpData(parsed);
@@ -44,7 +44,7 @@ export default function CartPage() {
     }
   }, [setLocation]);
 
-  if (!rsvpData || !rsvpData.cartItem) {
+  if (!rsvpData || !rsvpData.cartItems || rsvpData.cartItems.length === 0) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background p-6">
         <Skeleton className="w-full max-w-md h-64 rounded-xl" />
@@ -52,15 +52,23 @@ export default function CartPage() {
     );
   }
 
+  const items = rsvpData.cartItems;
+  const currency = items[0].currency;
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const checkoutItems = items.map((item) => ({
+    guestName: item.guestName,
+    itemId: item.asoebiItemId,
+    size: item.size,
+  }));
+
   const handleFlutterwave = () => {
     flutterwaveMutation.mutate({
       data: {
         rsvpId: rsvpData.id,
         guestName: rsvpData.guestName,
         email: rsvpData.email,
-        itemId: rsvpData.cartItem!.id,
-        size: rsvpData.cartItem!.size,
-        amount: rsvpData.cartItem!.price,
+        items: checkoutItems,
       }
     }, {
       onSuccess: (res) => {
@@ -82,9 +90,7 @@ export default function CartPage() {
         rsvpId: rsvpData.id,
         guestName: rsvpData.guestName,
         email: rsvpData.email,
-        itemId: rsvpData.cartItem!.id,
-        size: rsvpData.cartItem!.size,
-        amount: rsvpData.cartItem!.price,
+        items: checkoutItems,
       }
     }, {
       onSuccess: (res) => {
@@ -146,12 +152,10 @@ export default function CartPage() {
     );
   }
 
-  const item = rsvpData.cartItem;
-
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-background py-12 px-4 sm:px-6">
       <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-start animate-in slide-in-from-bottom-8 duration-700">
-        
+
         {/* Order Summary */}
         <div className="space-y-6">
           <Button variant="ghost" className="mb-4 text-muted-foreground hover:text-foreground" onClick={() => setLocation('/')}>
@@ -160,18 +164,31 @@ export default function CartPage() {
           <h2 className="text-3xl font-serif font-bold text-foreground">Order Summary</h2>
           <Card className="border-none shadow-lg bg-card overflow-hidden">
             <CardContent className="p-0">
-              <div className="p-6 bg-muted/30 border-b border-border">
-                <h3 className="font-semibold text-lg">{item.name}</h3>
-                <p className="text-muted-foreground">Size: {item.size}</p>
+              <div className="divide-y divide-border">
+                {items.map((item, index) => (
+                  <div key={index} className="p-6 bg-muted/30">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold text-lg">{item.name}</h3>
+                        <p className="text-muted-foreground text-sm">
+                          For {item.guestName} &bull; Size: {item.size} &bull; Qty: {item.quantity}
+                        </p>
+                      </div>
+                      <span className="font-semibold text-primary whitespace-nowrap">
+                        {item.currency} {(item.price * item.quantity).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
               <div className="p-6 space-y-4">
                 <div className="flex justify-between items-center text-muted-foreground">
-                  <span>Subtotal</span>
-                  <span>{item.currency} {item.price.toLocaleString()}</span>
+                  <span>Subtotal ({items.length} {items.length === 1 ? 'item' : 'items'})</span>
+                  <span>{currency} {total.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center font-bold text-lg border-t border-border pt-4">
                   <span>Total</span>
-                  <span className="text-primary">{item.currency} {item.price.toLocaleString()}</span>
+                  <span className="text-primary">{currency} {total.toLocaleString()}</span>
                 </div>
               </div>
             </CardContent>
@@ -182,7 +199,7 @@ export default function CartPage() {
         <div className="space-y-6 md:pt-14">
           <h2 className="text-xl font-serif font-bold text-foreground">Payment Method</h2>
           <div className="space-y-4">
-            
+
             <Card className="border-border hover:border-primary/50 transition-colors cursor-pointer" onClick={handleFlutterwave}>
               <CardContent className="p-6 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-[#F5A623]/10 flex items-center justify-center shrink-0">

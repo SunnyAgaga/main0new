@@ -1,9 +1,34 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
 import { CreateRsvpBody, CreateRsvpResponse } from "@workspace/api-zod";
-import { asoebiItemsTable, db, rsvpsTable } from "@workspace/db";
+import { asoebiItemsCollection, insertRsvp, type AsoebiItem } from "@workspace/db";
 
 const router: IRouter = Router();
+
+interface ResolvedSelection {
+  item: AsoebiItem;
+  size: string;
+  quantity: number;
+}
+
+async function resolveSelections(
+  selections: { itemId: number; size: string; quantity: number }[] | undefined,
+): Promise<ResolvedSelection[] | "invalid"> {
+  if (!selections || selections.length === 0) return [];
+
+  const resolved: ResolvedSelection[] = [];
+  for (const selection of selections) {
+    if (selection.quantity < 1) return "invalid";
+
+    const item = await asoebiItemsCollection().findOne({ id: selection.itemId });
+    if (!item || !item.available || !item.sizes.includes(selection.size)) {
+      return "invalid";
+    }
+
+    resolved.push({ item, size: selection.size, quantity: selection.quantity });
+  }
+
+  return resolved;
+}
 
 router.post("/rsvps", async (req, res): Promise<void> => {
   const parsed = CreateRsvpBody.safeParse(req.body);
@@ -13,50 +38,94 @@ router.post("/rsvps", async (req, res): Promise<void> => {
   }
 
   const input = parsed.data;
-  let selectedItem: typeof asoebiItemsTable.$inferSelect | undefined;
+  const wantsAsoebi = input.asoebiInterest === "yes";
 
-  if (input.asoebiInterest === "yes") {
-    if (!input.asoebiItemId || !input.asoebiSize) {
+  let primarySelections: ResolvedSelection[] = [];
+  if (wantsAsoebi) {
+    const resolved = await resolveSelections(input.asoebiSelections);
+    if (resolved === "invalid") {
+      res.status(400).json({ error: "The selected asoebi option is unavailable." });
+      return;
+    }
+    if (resolved.length === 0) {
       res.status(400).json({
-        error: "Please select an asoebi item and size before continuing.",
+        error: "Please select at least one asoebi item before continuing.",
+      });
+      return;
+    }
+    primarySelections = resolved;
+  }
+
+  const additionalGuestsInput = input.additionalGuests ?? [];
+  const additionalGuests: { name: string; selections: ResolvedSelection[] }[] = [];
+
+  for (const guest of additionalGuestsInput) {
+    if (!wantsAsoebi) {
+      additionalGuests.push({ name: guest.name, selections: [] });
+      continue;
+    }
+
+    const resolved = await resolveSelections(guest.asoebiSelections);
+    if (resolved === "invalid") {
+      res.status(400).json({
+        error: `The selected asoebi option for ${guest.name} is unavailable.`,
       });
       return;
     }
 
-    [selectedItem] = await db
-      .select()
-      .from(asoebiItemsTable)
-      .where(eq(asoebiItemsTable.id, input.asoebiItemId));
-
-    if (
-      !selectedItem ||
-      !selectedItem.available ||
-      !selectedItem.sizes.includes(input.asoebiSize)
-    ) {
-      res.status(400).json({ error: "The selected asoebi option is unavailable." });
-      return;
-    }
+    additionalGuests.push({ name: guest.name, selections: resolved });
   }
 
-  const [rsvp] = await db
-    .insert(rsvpsTable)
-    .values({
-      guestName: input.guestName,
-      email: input.email,
-      phone: input.phone || null,
-      attending: input.attending,
-      guestCount: Math.max(1, Math.trunc(input.guestCount ?? 1)),
-      asoebiInterest: input.asoebiInterest,
-      asoebiItemId: selectedItem?.id ?? null,
-      asoebiSize: input.asoebiSize ?? null,
-      note: input.note || null,
-    })
-    .returning();
+  const rsvp = await insertRsvp({
+    guestName: input.guestName,
+    email: input.email,
+    phone: input.phone || null,
+    attending: input.attending,
+    guestCount: Math.max(1, Math.trunc(input.guestCount ?? 1)),
+    additionalGuests: additionalGuests.map((guest) => ({
+      name: guest.name,
+      asoebiSelections: guest.selections.map((selection) => ({
+        asoebiItemId: selection.item.id,
+        asoebiSize: selection.size,
+        quantity: selection.quantity,
+      })),
+    })),
+    asoebiInterest: input.asoebiInterest,
+    asoebiSelections: primarySelections.map((selection) => ({
+      asoebiItemId: selection.item.id,
+      asoebiSize: selection.size,
+      quantity: selection.quantity,
+    })),
+    note: input.note || null,
+  });
 
   req.log.info(
     { rsvpId: rsvp.id, asoebiInterest: rsvp.asoebiInterest },
     "RSVP created",
   );
+
+  const cartItems = [
+    ...primarySelections.map((selection) => ({
+      guestName: rsvp.guestName,
+      asoebiItemId: selection.item.id,
+      name: selection.item.name,
+      price: selection.item.price,
+      currency: selection.item.currency,
+      size: selection.size,
+      quantity: selection.quantity,
+    })),
+    ...additionalGuests.flatMap((guest) =>
+      guest.selections.map((selection) => ({
+        guestName: guest.name,
+        asoebiItemId: selection.item.id,
+        name: selection.item.name,
+        price: selection.item.price,
+        currency: selection.item.currency,
+        size: selection.size,
+        quantity: selection.quantity,
+      })),
+    ),
+  ];
 
   res.status(201).json(
     CreateRsvpResponse.parse({
@@ -65,16 +134,8 @@ router.post("/rsvps", async (req, res): Promise<void> => {
       email: rsvp.email,
       attending: rsvp.attending,
       asoebiInterest: rsvp.asoebiInterest,
-      nextStep: selectedItem ? "cart" : "complete",
-      cartItem: selectedItem
-        ? {
-            id: selectedItem.id,
-            name: selectedItem.name,
-            price: Number(selectedItem.price),
-            currency: selectedItem.currency,
-            size: input.asoebiSize,
-          }
-        : null,
+      nextStep: cartItems.length > 0 ? "cart" : "complete",
+      cartItems,
     }),
   );
 });

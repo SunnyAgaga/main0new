@@ -5,8 +5,8 @@
  * WedPlan wedding RSVP and asoebi commerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { CartItem } from './cartItem';
 import type { RsvpResultAsoebiInterest } from './rsvpResultAsoebiInterest';
-import type { RsvpResultCartItem } from './rsvpResultCartItem';
 import type { RsvpResultNextStep } from './rsvpResultNextStep';
 
 export interface RsvpResult {
@@ -16,6 +16,5 @@ export interface RsvpResult {
   attending: boolean;
   asoebiInterest: RsvpResultAsoebiInterest;
   nextStep: RsvpResultNextStep;
-  /** @nullable */
-  cartItem?: RsvpResultCartItem;
+  cartItems: CartItem[];
 }

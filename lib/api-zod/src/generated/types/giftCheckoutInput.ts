@@ -5,12 +5,12 @@
  * WedPlan wedding RSVP and asoebi commerce API
  * OpenAPI spec version: 0.1.0
  */
-import type { CheckoutItemInput } from './checkoutItemInput';
 
-export interface CheckoutInput {
-  rsvpId: number;
+export interface GiftCheckoutInput {
+  /** @minLength 2 */
   guestName: string;
   email: string;
-  /** @minItems 1 */
-  items: CheckoutItemInput[];
+  /** @minimum 1 */
+  amount: number;
+  message?: string;
 }
