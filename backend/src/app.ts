@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import express, { type Express } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -32,5 +35,35 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use("/api", router);
+
+// Serve the built frontend from this same process, so the whole app runs on one
+// port behind one domain. In development Vite serves the SPA instead and proxies
+// /api here, so this block is simply skipped when the build is absent.
+const serverDir = path.dirname(fileURLToPath(import.meta.url));
+const clientDist =
+  process.env.CLIENT_DIST ??
+  path.resolve(serverDir, "..", "..", "frontend", "dist", "public");
+
+if (existsSync(path.join(clientDist, "index.html"))) {
+  // Static first (this also serves index.html at "/"), then an SPA fallback for
+  // client-side routes. Note: Express 5 throws on app.get("*"), and "/*splat"
+  // does not match "/" - a plain middleware avoids both traps.
+  app.use(express.static(clientDist));
+
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api")) {
+      next();
+      return;
+    }
+
+    res.sendFile(path.join(clientDist, "index.html"), (error) => {
+      if (error) next(error);
+    });
+  });
+
+  logger.info({ clientDist }, "Serving frontend build");
+} else {
+  logger.warn({ clientDist }, "No frontend build found; serving API only");
+}
 
 export default app;

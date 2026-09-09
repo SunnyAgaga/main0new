@@ -159,7 +159,9 @@ router.post("/checkout/flutterwave", async (req, res): Promise<void> => {
 
   const reference = `WED-${randomUUID()}`;
   const origin = `${req.protocol}://${req.get("host")}`;
-  const appBasePath = process.env.WEDPLAN_BASE_PATH ?? "/wedplan";
+  // Empty for a root domain. Set WEDPLAN_BASE_PATH only when the app is served
+  // from a sub-path, and keep it in sync with the frontend's BASE_PATH.
+  const appBasePath = (process.env.WEDPLAN_BASE_PATH ?? "").replace(/\/$/, "");
   const description = validated.lines
     .map((line) => `${line.item.name} (${line.guestName})`)
     .join(", ");
@@ -280,7 +282,9 @@ router.post("/checkout/gift/flutterwave", async (req, res): Promise<void> => {
 
   const reference = `WED-GIFT-${randomUUID()}`;
   const origin = `${req.protocol}://${req.get("host")}`;
-  const appBasePath = process.env.WEDPLAN_BASE_PATH ?? "/wedplan";
+  // Empty for a root domain. Set WEDPLAN_BASE_PATH only when the app is served
+  // from a sub-path, and keep it in sync with the frontend's BASE_PATH.
+  const appBasePath = (process.env.WEDPLAN_BASE_PATH ?? "").replace(/\/$/, "");
 
   const result = await createFlutterwaveLink({
     secretKey: config.flutterwaveSecretKey,

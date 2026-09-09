@@ -62,7 +62,6 @@ Create `.env` in the repo root:
 MONGODB_URI=mongodb://localhost:27017
 MONGODB_DB=wedplan
 PORT=8080
-BASE_PATH=/
 NODE_ENV=development
 LOG_LEVEL=info
 ```
@@ -72,7 +71,7 @@ LOG_LEVEL=info
 | `MONGODB_URI` | yes | Connection string. The server exits on startup without it. |
 | `MONGODB_DB` | yes | Database name. The server refuses to start without it — note it is `MONGODB_DB`, not `MONGODB_DB_NAME`. |
 | `PORT` | yes | Port the API listens on. |
-| `BASE_PATH` | yes | Path the app is served from. `/` for a root domain. |
+| `BASE_PATH` | no | Only for sub-path hosting (`example.com/wedplan`). Defaults to `/`. |
 | `NODE_ENV` | no | `production` switches logs to JSON. |
 | `LOG_LEVEL` | no | `fatal`\|`error`\|`warn`\|`info`\|`debug`\|`trace`. Default `info`. |
 | `FRONTEND_PORT` | no | Vite dev-server port. Default `5173`. |
@@ -122,31 +121,22 @@ npm run build
 npm run start
 ```
 
-`npm run build` emits:
+`npm run build` emits `backend/dist/` and `frontend/dist/public/`.
 
-- `backend/dist/` — bundled Node server
-- `frontend/dist/public/` — static assets
-
-The API does **not** serve the frontend, so put a reverse proxy in front that routes
-`/api` to the backend and everything else to the static files. Minimal nginx:
+The backend serves the frontend build itself, so **the whole app runs on one port**
+behind one domain. Point nginx at it:
 
 ```nginx
 server {
     listen 80;
     server_name yourdomain.com;
 
-    root /var/www/wedplan/frontend/dist/public;
-
-    location /api {
+    location / {
         proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location / {
-        try_files $uri $uri/ /index.html;   # SPA fallback
     }
 }
 ```

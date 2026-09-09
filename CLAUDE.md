@@ -81,7 +81,7 @@ Root `.env`, loaded by the backend via `node --env-file-if-exists`.
 | `MONGODB_URI` | yes | throws on startup if missing |
 | `MONGODB_DB` | yes | database name; startup throws if missing. Guarded because `client.db(undefined)` silently falls back to `test` |
 | `PORT` | yes | backend port (8080 in dev) |
-| `BASE_PATH` | yes | `/` for a root domain |
+| `BASE_PATH` | no | sub-path hosting only; defaults to `/`. Keep in sync with `WEDPLAN_BASE_PATH`, which the payment redirect URLs use |
 | `NODE_ENV` | no | `production` enables JSON logs |
 | `LOG_LEVEL` | no | defaults to `info` |
 | `FRONTEND_PORT` | no | Vite dev-server port, default 5173. **Not** `PORT` — that is the backend's, and sharing one value makes them collide. |
@@ -98,10 +98,10 @@ Root `.env`, loaded by the backend via `node --env-file-if-exists`.
 
 ## Architecture
 
-**Two processes.** The API mounts everything under `/api` and does **not** serve the
-frontend build. Vite's proxy joins them in dev. In production either put a reverse proxy
-in front, or add `express.static` + an SPA fallback to `backend/src/app.ts` — a one-port
-setup existed at one point and was reverted, so pick one deliberately.
+**One port.** The backend serves `/api` *and* the built frontend from
+`frontend/dist/public`, so production is a single process behind a single domain. If the
+build is absent it logs a warning and serves the API only — which is what happens in
+development, where Vite serves the SPA and proxies `/api` to the backend.
 
 **Data.** `backend/src/db/`. Collections are created on demand; there is no migration
 step. Indexes are declared in `db/client.ts` and created at startup. Collections:
