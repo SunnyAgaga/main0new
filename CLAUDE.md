@@ -74,7 +74,11 @@ Seeded admin: **`admin@wedplan.test` / `changeme123`** (override with `SEED_ADMI
 
 ## Environment
 
-Root `.env`, loaded by the backend via `node --env-file-if-exists`.
+Root `.env`. `backend/src/lib/load-env.ts` loads it on startup, so no `--env-file` flag
+is needed however the server is launched (npm, pm2, systemd, docker). It must stay the
+first import in `index.ts` and `seed.ts` — ESM evaluates imports in order, and the db
+client reads `MONGODB_URI` at module load. Real environment variables always win, and
+`ENV_FILE` overrides the path.
 
 | Var | Required | Notes |
 |---|---|---|

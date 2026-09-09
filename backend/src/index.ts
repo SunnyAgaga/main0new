@@ -1,3 +1,4 @@
+import "./lib/load-env"; // must stay first - populates process.env before ./app loads
 import app from "./app";
 import { logger } from "./lib/logger";
 
