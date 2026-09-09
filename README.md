@@ -53,43 +53,33 @@ Target one workspace with `-w`, e.g. `npm run build -w @wedplan/backend`.
 
 ## Deploy
 
-Ubuntu VM. The backend serves the API *and* the frontend, so the whole app runs as a
-single process on one port.
-
-**Prerequisites**
-
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs git
-sudo npm i -g pm2
-```
-
-**Deploy**
-
-```bash
-git clone <repo-url> /var/www/wedplan
-cd /var/www/wedplan
 npm install
-cp .env.example .env && nano .env          # MONGODB_URI, MONGODB_DB, PORT=8080
+cp .env.example .env && nano .env     # MONGODB_URI, MONGODB_DB, PORT=8080
 npm run build
 
 SEED_ADMIN_EMAIL=you@example.com SEED_ADMIN_PASSWORD='strong-password' npm run seed
 
-pm2 start backend/dist/index.mjs --name wedplan
-pm2 save && pm2 startup                     # run the command it prints
+npm run start
 ```
 
 Verify: `curl localhost:8080/api/healthz` → `{"status":"ok"}`
 
+Keep it running with pm2:
+
+```bash
+pm2 start backend/dist/index.mjs --name wedplan
+pm2 save && pm2 startup
+```
+
 **Redeploy**
 
 ```bash
-cd /var/www/wedplan && git pull
-npm install && npm run build
+git pull
+npm install
+npm run build
 pm2 restart wedplan
 ```
-
-`pm2 status` · `pm2 logs wedplan` · `pm2 restart wedplan` (needed after editing `.env`)
 
 ## Troubleshooting
 
