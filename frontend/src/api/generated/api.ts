@@ -42,6 +42,8 @@ import type {
   PaymentConfig,
   PaymentConfigInput,
   PublicDeliveryOptions,
+  RsvpFormCopy,
+  RsvpFormCopyInput,
   RsvpInput,
   RsvpResult,
   SiteSettings,
@@ -2376,6 +2378,171 @@ export const useUpdateNotificationConfig = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getUpdateNotificationConfigMutationOptions(options));
+    }
+
+export const getGetRsvpFormCopyUrl = () => {
+
+
+
+
+  return `/api/rsvp-form-copy`
+}
+
+/**
+ * @summary Get the editable text shown on the public RSVP form
+ */
+export const getRsvpFormCopy = async ( options?: Parameters<typeof customFetch>[1]): Promise<RsvpFormCopy> => {
+
+  return customFetch<RsvpFormCopy>(getGetRsvpFormCopyUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRsvpFormCopyQueryKey = () => {
+    return [
+    `/api/rsvp-form-copy`
+    ] as const;
+    }
+
+
+export const getGetRsvpFormCopyQueryOptions = <TData = Awaited<ReturnType<typeof getRsvpFormCopy>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRsvpFormCopy>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRsvpFormCopyQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRsvpFormCopy>>> = ({ signal }) => getRsvpFormCopy({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRsvpFormCopy>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRsvpFormCopyQueryResult = NonNullable<Awaited<ReturnType<typeof getRsvpFormCopy>>>
+export type GetRsvpFormCopyQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get the editable text shown on the public RSVP form
+ */
+
+export function useGetRsvpFormCopy<TData = Awaited<ReturnType<typeof getRsvpFormCopy>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRsvpFormCopy>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRsvpFormCopyQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateRsvpFormCopyUrl = () => {
+
+
+
+
+  return `/api/admin/rsvp-form-copy`
+}
+
+/**
+ * @summary Update the text shown on the public RSVP form (admin role only)
+ */
+export const updateRsvpFormCopy = async (rsvpFormCopyInput: RsvpFormCopyInput, options?: Parameters<typeof customFetch>[1]): Promise<RsvpFormCopy> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<RsvpFormCopy>(getUpdateRsvpFormCopyUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(rsvpFormCopyInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateRsvpFormCopyMutationKey = () => ['updateRsvpFormCopy'] as const;
+
+export const getUpdateRsvpFormCopyMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRsvpFormCopy>>, TError,UpdateRsvpFormCopyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRsvpFormCopy>>, TError,UpdateRsvpFormCopyMutationVariables, TContext> => {
+
+const mutationKey = getUpdateRsvpFormCopyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRsvpFormCopy>>, UpdateRsvpFormCopyMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateRsvpFormCopy(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateRsvpFormCopyMutationResult = NonNullable<Awaited<ReturnType<typeof updateRsvpFormCopy>>>
+    export type UpdateRsvpFormCopyMutationBody = BodyType<RsvpFormCopyInput>
+    export type UpdateRsvpFormCopyMutationError = ErrorType<ErrorResponse>
+    export type UpdateRsvpFormCopyMutationVariables = {data: BodyType<RsvpFormCopyInput>}
+
+    /**
+ * @summary Update the text shown on the public RSVP form (admin role only)
+ */
+export const useUpdateRsvpFormCopy = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRsvpFormCopy>>, TError,UpdateRsvpFormCopyMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateRsvpFormCopy>>,
+        TError,
+        UpdateRsvpFormCopyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateRsvpFormCopyMutationOptions(options));
     }
 
 export const getGetSiteSettingsUrl = () => {

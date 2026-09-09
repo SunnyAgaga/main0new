@@ -13,6 +13,7 @@ import notificationsRouter from "./notifications";
 import siteSettingsRouter from "./site-settings";
 import spotifyRouter from "./spotify";
 import uploadsRouter from "./uploads";
+import rsvpFormCopyRouter from "./rsvp-form-copy";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(notificationsRouter);
 router.use(siteSettingsRouter);
 router.use(spotifyRouter);
 router.use(uploadsRouter);
+router.use(rsvpFormCopyRouter);
 
 export default router;

@@ -183,6 +183,112 @@ export interface AdminRsvp {
   createdAt: string;
 }
 
+export interface RsvpFormCopy {
+  pageTitle: string;
+  guestInfoHeading: string;
+  fullNameLabel: string;
+  emailLabel: string;
+  phoneLabel: string;
+  attendanceHeading: string;
+  attendingQuestion: string;
+  attendingYesLabel: string;
+  attendingNoLabel: string;
+  guestCountLabel: string;
+  adultsOnlyNotice: string;
+  asoebiQuestion: string;
+  asoebiYesLabel: string;
+  asoebiNoLabel: string;
+  asoebiPickerHint: string;
+  additionalGuestsHeading: string;
+  deliveryHeading: string;
+  deliveryQuestion: string;
+  pickupLabel: string;
+  deliveryLabel: string;
+  deliveryProviderQuestion: string;
+  deliveryAddressLabel: string;
+  giftHeading: string;
+  giftQuestion: string;
+  giftYesLabel: string;
+  giftNoLabel: string;
+  giftAmountLabel: string;
+  noteLabel: string;
+  submitLabel: string;
+  submitWithPaymentLabel: string;
+  completeAttendingTitle: string;
+  completeAttendingMessage: string;
+  completeDecliningTitle: string;
+  completeDecliningMessage: string;
+}
+
+export interface RsvpFormCopyInput {
+  /** @minLength 1 */
+  pageTitle: string;
+  /** @minLength 1 */
+  guestInfoHeading: string;
+  /** @minLength 1 */
+  fullNameLabel: string;
+  /** @minLength 1 */
+  emailLabel: string;
+  /** @minLength 1 */
+  phoneLabel: string;
+  /** @minLength 1 */
+  attendanceHeading: string;
+  /** @minLength 1 */
+  attendingQuestion: string;
+  /** @minLength 1 */
+  attendingYesLabel: string;
+  /** @minLength 1 */
+  attendingNoLabel: string;
+  /** @minLength 1 */
+  guestCountLabel: string;
+  adultsOnlyNotice: string;
+  /** @minLength 1 */
+  asoebiQuestion: string;
+  /** @minLength 1 */
+  asoebiYesLabel: string;
+  /** @minLength 1 */
+  asoebiNoLabel: string;
+  asoebiPickerHint: string;
+  /** @minLength 1 */
+  additionalGuestsHeading: string;
+  /** @minLength 1 */
+  deliveryHeading: string;
+  /** @minLength 1 */
+  deliveryQuestion: string;
+  /** @minLength 1 */
+  pickupLabel: string;
+  /** @minLength 1 */
+  deliveryLabel: string;
+  /** @minLength 1 */
+  deliveryProviderQuestion: string;
+  /** @minLength 1 */
+  deliveryAddressLabel: string;
+  /** @minLength 1 */
+  giftHeading: string;
+  /** @minLength 1 */
+  giftQuestion: string;
+  /** @minLength 1 */
+  giftYesLabel: string;
+  /** @minLength 1 */
+  giftNoLabel: string;
+  /** @minLength 1 */
+  giftAmountLabel: string;
+  /** @minLength 1 */
+  noteLabel: string;
+  /** @minLength 1 */
+  submitLabel: string;
+  /** @minLength 1 */
+  submitWithPaymentLabel: string;
+  /** @minLength 1 */
+  completeAttendingTitle: string;
+  /** @minLength 1 */
+  completeAttendingMessage: string;
+  /** @minLength 1 */
+  completeDecliningTitle: string;
+  /** @minLength 1 */
+  completeDecliningMessage: string;
+}
+
 export interface CartItem {
   guestName: string;
   asoebiItemId: number;
