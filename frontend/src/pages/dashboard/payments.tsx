@@ -165,7 +165,9 @@ export default function DashboardPayments() {
                       <Input type="password" placeholder={config?.flutterwaveConfigured ? "Leave blank to keep existing key" : "FLWSECK-... (live) or FLWSECK_TEST-... (test)"} {...field} />
                     </FormControl>
                     <FormDescription>
-                      Both live (production) and test secret keys are accepted. The key is saved server-side and is never returned or displayed again.
+                      From your Flutterwave dashboard under Settings &rarr; API. Both live and test secret keys work.
+                      You won't need the Public Key or Encryption Key shown on that same page &mdash; this integration
+                      only uses the Secret Key. The key is saved server-side and never displayed again.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -209,7 +211,12 @@ export default function DashboardPayments() {
                       <Input type="password" placeholder={config?.webhookSecretConfigured ? "Leave blank to keep existing secret" : "Same secret hash set in Flutterwave"} {...field} />
                     </FormControl>
                     <FormDescription>
-                      {config?.webhookSecretConfigured ? 'Webhook secret is configured.' : 'Not configured yet — payments will stay pending until this and the URL above are set.'}
+                      Not one of the three API keys &mdash; this is a value you make up yourself under Settings &rarr;
+                      Webhooks in Flutterwave (a separate page from API keys). Paste the webhook URL above into that
+                      same page, set any secret hash there, then enter that same value here.{' '}
+                      {config?.webhookSecretConfigured
+                        ? 'Currently configured.'
+                        : 'Not configured yet — payments will stay pending until this and the URL above are set.'}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
