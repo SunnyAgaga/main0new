@@ -14,6 +14,7 @@ export interface AdminOrder {
   guestName: string;
   email: string;
   totalAmount: number;
+  giftAmount: number;
   currency: string;
   paymentMethod: string;
   status: string;

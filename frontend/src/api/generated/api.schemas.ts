@@ -146,6 +146,7 @@ export interface AdminOrder {
   guestName: string;
   email: string;
   totalAmount: number;
+  giftAmount: number;
   currency: string;
   paymentMethod: string;
   status: string;
@@ -387,6 +388,9 @@ export interface CheckoutInput {
   email: string;
   /** @minItems 1 */
   items: CheckoutItemInput[];
+  /** @minimum 0 */
+  giftAmount?: number;
+  giftMessage?: string;
 }
 
 export interface CheckoutResponse {
@@ -425,6 +429,11 @@ export interface BankTransferResponse {
   accountName: string;
   accountNumber: string;
   instructions: string;
+}
+
+export interface PaymentMethods {
+  flutterwaveEnabled: boolean;
+  bankTransferEnabled: boolean;
 }
 
 export interface BankTransferDetails {

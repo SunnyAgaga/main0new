@@ -13,7 +13,8 @@ const COLUMNS: { key: keyof AdminOrder; label: string }[] = [
   { key: 'email', label: 'Email' },
   { key: 'type', label: 'Type' },
   { key: 'itemCount', label: 'Items' },
-  { key: 'totalAmount', label: 'Amount' },
+  { key: 'totalAmount', label: 'Total Amount' },
+  { key: 'giftAmount', label: 'Gift Portion' },
   { key: 'currency', label: 'Currency' },
   { key: 'paymentMethod', label: 'Payment Method' },
   { key: 'status', label: 'Status' },
@@ -138,7 +139,14 @@ export default function DashboardOrders() {
                   </TableCell>
                   <TableCell className="capitalize">{order.type}</TableCell>
                   <TableCell>{order.itemCount || '—'}</TableCell>
-                  <TableCell>{order.currency} {order.totalAmount.toLocaleString()}</TableCell>
+                  <TableCell>
+                    {order.currency} {order.totalAmount.toLocaleString()}
+                    {order.giftAmount > 0 && order.type === 'asoebi' && (
+                      <div className="text-xs text-muted-foreground">
+                        incl. {order.currency} {order.giftAmount.toLocaleString()} gift
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="capitalize">{order.paymentMethod.replace('_', ' ')}</TableCell>
                   <TableCell>{statusBadge(order.status)}</TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">

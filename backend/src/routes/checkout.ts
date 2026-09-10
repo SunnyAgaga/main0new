@@ -9,6 +9,7 @@ import {
   StartGiftFlutterwaveCheckoutBody,
   VerifyCheckoutBody,
   VerifyCheckoutResponse,
+  GetPaymentMethodsResponse,
 } from "@wedplan/shared";
 import {
   asoebiItemsCollection,
@@ -175,6 +176,16 @@ function bankTransferConfigured(config: PaymentConfig | null): config is Payment
   );
 }
 
+router.get("/payment-methods", async (_req, res): Promise<void> => {
+  const config = await paymentConfigsCollection().findOne({ id: 1 });
+  res.json(
+    GetPaymentMethodsResponse.parse({
+      flutterwaveEnabled: flutterwaveConfigured(config),
+      bankTransferEnabled: bankTransferConfigured(config),
+    }),
+  );
+});
+
 router.post("/checkout/flutterwave", async (req, res): Promise<void> => {
   const parsed = StartFlutterwaveCheckoutBody.safeParse(req.body);
   if (!parsed.success) {
@@ -194,6 +205,9 @@ router.post("/checkout/flutterwave", async (req, res): Promise<void> => {
     return;
   }
 
+  const giftAmount = Math.max(0, parsed.data.giftAmount ?? 0);
+  const combinedTotal = validated.totalAmount + giftAmount;
+
   const reference = `WED-${randomUUID()}`;
   const origin = `${req.protocol}://${req.get("host")}`;
   // Empty for a root domain. Set WEDPLAN_BASE_PATH only when the app is served
@@ -201,12 +215,13 @@ router.post("/checkout/flutterwave", async (req, res): Promise<void> => {
   const appBasePath = (process.env.WEDPLAN_BASE_PATH ?? "").replace(/\/$/, "");
   const description = validated.lines
     .map((line) => `${line.item.name} (${line.guestName})`)
+    .concat(giftAmount > 0 ? [`Gift (${validated.currency} ${giftAmount})`] : [])
     .join(", ");
 
   const result = await createFlutterwaveLink({
     secretKey: config.flutterwaveSecretKey,
     reference,
-    amount: validated.totalAmount,
+    amount: combinedTotal,
     currency: validated.currency,
     redirectUrl: `${origin}${appBasePath}/cart?payment=complete`,
     email: parsed.data.email,
@@ -234,11 +249,12 @@ router.post("/checkout/flutterwave", async (req, res): Promise<void> => {
       quantity: line.quantity,
       amount: line.item.price * line.quantity,
     })),
-    giftMessage: null,
+    giftAmount,
+    giftMessage: parsed.data.giftMessage || null,
     deliveryMethod: validated.rsvp.deliveryMethod,
     deliveryAddress: validated.rsvp.deliveryAddress,
     deliveryProvider: validated.rsvp.deliveryProvider,
-    totalAmount: validated.totalAmount,
+    totalAmount: combinedTotal,
     currency: validated.currency,
     paymentMethod: "flutterwave",
     status: "pending",
@@ -271,6 +287,9 @@ router.post("/checkout/bank-transfer", async (req, res): Promise<void> => {
     return;
   }
 
+  const giftAmount = Math.max(0, parsed.data.giftAmount ?? 0);
+  const combinedTotal = validated.totalAmount + giftAmount;
+
   const reference = `WED-BT-${randomUUID().slice(0, 8).toUpperCase()}`;
   await insertOrder({
     reference,
@@ -285,11 +304,12 @@ router.post("/checkout/bank-transfer", async (req, res): Promise<void> => {
       quantity: line.quantity,
       amount: line.item.price * line.quantity,
     })),
-    giftMessage: null,
+    giftAmount,
+    giftMessage: parsed.data.giftMessage || null,
     deliveryMethod: validated.rsvp.deliveryMethod,
     deliveryAddress: validated.rsvp.deliveryAddress,
     deliveryProvider: validated.rsvp.deliveryProvider,
-    totalAmount: validated.totalAmount,
+    totalAmount: combinedTotal,
     currency: validated.currency,
     paymentMethod: "bank_transfer",
     status: "awaiting_transfer",
@@ -298,7 +318,7 @@ router.post("/checkout/bank-transfer", async (req, res): Promise<void> => {
   res.status(201).json(
     CreateBankTransferOrderResponse.parse({
       reference,
-      amount: validated.totalAmount,
+      amount: combinedTotal,
       currency: validated.currency,
       bankName: config.bankName,
       accountName: config.accountName,
@@ -354,6 +374,7 @@ router.post("/checkout/gift/flutterwave", async (req, res): Promise<void> => {
     guestName: parsed.data.guestName,
     email: parsed.data.email,
     items: [],
+    giftAmount: parsed.data.amount,
     giftMessage: parsed.data.message || null,
     deliveryMethod: null,
     deliveryAddress: null,
@@ -393,6 +414,7 @@ router.post("/checkout/gift/bank-transfer", async (req, res): Promise<void> => {
     guestName: parsed.data.guestName,
     email: parsed.data.email,
     items: [],
+    giftAmount: parsed.data.amount,
     giftMessage: parsed.data.message || null,
     deliveryMethod: null,
     deliveryAddress: null,

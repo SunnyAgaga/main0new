@@ -258,6 +258,8 @@ export const CreateRsvpResponse = zod.object({
  */
 
 
+export const startFlutterwaveCheckoutBodyGiftAmountMin = 0;
+
 
 
 export const StartFlutterwaveCheckoutBody = zod.object({
@@ -269,7 +271,9 @@ export const StartFlutterwaveCheckoutBody = zod.object({
   "itemId": zod.number(),
   "size": zod.string(),
   "quantity": zod.number().min(1).optional()
-})).min(1)
+})).min(1),
+  "giftAmount": zod.number().min(startFlutterwaveCheckoutBodyGiftAmountMin).optional(),
+  "giftMessage": zod.string().optional()
 })
 
 export const StartFlutterwaveCheckoutResponse = zod.object({
@@ -283,6 +287,8 @@ export const StartFlutterwaveCheckoutResponse = zod.object({
  */
 
 
+export const createBankTransferOrderBodyGiftAmountMin = 0;
+
 
 
 export const CreateBankTransferOrderBody = zod.object({
@@ -294,7 +300,9 @@ export const CreateBankTransferOrderBody = zod.object({
   "itemId": zod.number(),
   "size": zod.string(),
   "quantity": zod.number().min(1).optional()
-})).min(1)
+})).min(1),
+  "giftAmount": zod.number().min(createBankTransferOrderBodyGiftAmountMin).optional(),
+  "giftMessage": zod.string().optional()
 })
 
 export const CreateBankTransferOrderResponse = zod.object({
@@ -493,6 +501,7 @@ export const ListAdminOrdersResponseItem = zod.object({
   "guestName": zod.string(),
   "email": zod.string(),
   "totalAmount": zod.number(),
+  "giftAmount": zod.number(),
   "currency": zod.string(),
   "paymentMethod": zod.string(),
   "status": zod.string(),
@@ -882,6 +891,15 @@ export const UpdateRsvpFormCopyResponse = zod.object({
   "completeAttendingMessage": zod.string(),
   "completeDecliningTitle": zod.string(),
   "completeDecliningMessage": zod.string()
+})
+
+
+/**
+ * @summary Get which payment methods guests can currently use
+ */
+export const GetPaymentMethodsResponse = zod.object({
+  "flutterwaveEnabled": zod.boolean(),
+  "bankTransferEnabled": zod.boolean()
 })
 
 

@@ -13,4 +13,7 @@ export interface CheckoutInput {
   email: string;
   /** @minItems 1 */
   items: CheckoutItemInput[];
+  /** @minimum 0 */
+  giftAmount?: number;
+  giftMessage?: string;
 }

@@ -72,6 +72,7 @@ export interface Order {
   guestName: string;
   email: string;
   items: OrderLineItem[];
+  giftAmount: number;
   giftMessage: string | null;
   deliveryMethod: "pickup" | "delivery" | null;
   deliveryAddress: string | null;
@@ -252,6 +253,7 @@ export const insertOrderSchema = z.object({
       }),
     )
     .default([]),
+  giftAmount: z.number().default(0),
   giftMessage: z.string().nullable().default(null),
   deliveryMethod: z.enum(["pickup", "delivery"]).nullable().default(null),
   deliveryAddress: z.string().nullable().default(null),

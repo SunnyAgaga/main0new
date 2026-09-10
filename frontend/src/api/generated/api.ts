@@ -43,6 +43,7 @@ import type {
   OrderStatus,
   PaymentConfig,
   PaymentConfigInput,
+  PaymentMethods,
   PublicDeliveryOptions,
   RsvpFormCopy,
   RsvpFormCopyInput,
@@ -2712,6 +2713,83 @@ export const useUpdateRsvpFormCopy = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getUpdateRsvpFormCopyMutationOptions(options));
     }
+
+export const getGetPaymentMethodsUrl = () => {
+
+
+
+
+  return `/api/payment-methods`
+}
+
+/**
+ * @summary Get which payment methods guests can currently use
+ */
+export const getPaymentMethods = async ( options?: Parameters<typeof customFetch>[1]): Promise<PaymentMethods> => {
+
+  return customFetch<PaymentMethods>(getGetPaymentMethodsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPaymentMethodsQueryKey = () => {
+    return [
+    `/api/payment-methods`
+    ] as const;
+    }
+
+
+export const getGetPaymentMethodsQueryOptions = <TData = Awaited<ReturnType<typeof getPaymentMethods>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPaymentMethods>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPaymentMethodsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPaymentMethods>>> = ({ signal }) => getPaymentMethods({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPaymentMethods>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPaymentMethodsQueryResult = NonNullable<Awaited<ReturnType<typeof getPaymentMethods>>>
+export type GetPaymentMethodsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get which payment methods guests can currently use
+ */
+
+export function useGetPaymentMethods<TData = Awaited<ReturnType<typeof getPaymentMethods>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPaymentMethods>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPaymentMethodsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetSiteSettingsUrl = () => {
 

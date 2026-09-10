@@ -46,6 +46,7 @@ export * from './orderStatus';
 export * from './orderStatusType';
 export * from './paymentConfig';
 export * from './paymentConfigInput';
+export * from './paymentMethods';
 export * from './publicDeliveryOptions';
 export * from './publicDeliveryProvider';
 export * from './recentRsvp';
