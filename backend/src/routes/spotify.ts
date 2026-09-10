@@ -13,7 +13,7 @@ import {
   siteSettingsCollection,
   type SpotifyConfig,
 } from "@/db";
-import { requireAdmin } from "../middlewares/requireAuth";
+import { requirePermission } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
@@ -77,12 +77,12 @@ async function getValidAccessToken(config: SpotifyConfig): Promise<string | null
   return data.access_token;
 }
 
-router.get("/admin/spotify-config", requireAdmin, async (req, res): Promise<void> => {
+router.get("/admin/spotify-config", requirePermission("music"), async (req, res): Promise<void> => {
   const config = await spotifyConfigsCollection().findOne({ id: 1 });
   res.json(GetSpotifyConfigResponse.parse(toSpotifyConfig(config, getRedirectUri(req))));
 });
 
-router.put("/admin/spotify-config", requireAdmin, async (req, res): Promise<void> => {
+router.put("/admin/spotify-config", requirePermission("music"), async (req, res): Promise<void> => {
   const parsed = UpdateSpotifyConfigBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -98,7 +98,7 @@ router.put("/admin/spotify-config", requireAdmin, async (req, res): Promise<void
   res.json(UpdateSpotifyConfigResponse.parse(toSpotifyConfig(config, getRedirectUri(req))));
 });
 
-router.get("/admin/spotify/connect", requireAdmin, async (req, res): Promise<void> => {
+router.get("/admin/spotify/connect", requirePermission("music"), async (req, res): Promise<void> => {
   const config = await spotifyConfigsCollection().findOne({ id: 1 });
   if (!config?.clientId) {
     res.status(400).json({ error: "Save your Spotify Client ID and Secret first." });
@@ -124,7 +124,7 @@ router.get("/admin/spotify/connect", requireAdmin, async (req, res): Promise<voi
   res.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
 });
 
-router.get("/spotify/callback", requireAdmin, async (req, res): Promise<void> => {
+router.get("/spotify/callback", requirePermission("music"), async (req, res): Promise<void> => {
   const code = typeof req.query.code === "string" ? req.query.code : null;
   const state = typeof req.query.state === "string" ? req.query.state : null;
   const expectedState = req.cookies?.[STATE_COOKIE_NAME];
@@ -177,7 +177,7 @@ router.get("/spotify/callback", requireAdmin, async (req, res): Promise<void> =>
   res.redirect("/dashboard/music?spotify=connected");
 });
 
-router.get("/admin/spotify/playlists", requireAdmin, async (req, res): Promise<void> => {
+router.get("/admin/spotify/playlists", requirePermission("music"), async (req, res): Promise<void> => {
   const config = await spotifyConfigsCollection().findOne({ id: 1 });
   if (!config) {
     res.status(503).json({ error: "Spotify is not connected." });
@@ -216,7 +216,7 @@ router.get("/admin/spotify/playlists", requireAdmin, async (req, res): Promise<v
 
 router.post(
   "/admin/spotify/import/:playlistId",
-  requireAdmin,
+  requirePermission("music"),
   async (req, res): Promise<void> => {
     const { playlistId } = req.params;
 

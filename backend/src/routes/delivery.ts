@@ -6,7 +6,7 @@ import {
   GetDeliveryOptionsResponse,
 } from "@wedplan/shared";
 import { deliveryConfigsCollection, upsertDeliveryConfig, type DeliveryConfig } from "@/db";
-import { requireAdmin } from "../middlewares/requireAuth";
+import { requirePermission } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
@@ -41,12 +41,12 @@ function webhookUrlFor(req: { protocol: string; get(name: string): string | unde
   return `${req.protocol}://${req.get("host")}/api/webhooks/delivery`;
 }
 
-router.get("/admin/delivery-config", requireAdmin, async (req, res): Promise<void> => {
+router.get("/admin/delivery-config", requirePermission("delivery"), async (req, res): Promise<void> => {
   const config = await deliveryConfigsCollection().findOne({ id: 1 });
   res.json(GetDeliveryConfigResponse.parse(safeDeliveryConfig(config, webhookUrlFor(req))));
 });
 
-router.put("/admin/delivery-config", requireAdmin, async (req, res): Promise<void> => {
+router.put("/admin/delivery-config", requirePermission("delivery"), async (req, res): Promise<void> => {
   const parsed = UpdateDeliveryConfigBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

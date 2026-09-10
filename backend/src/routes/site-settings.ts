@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { GetSiteSettingsResponse, UpdateSiteSettingsBody, UpdateSiteSettingsResponse } from "@wedplan/shared";
 import { siteSettingsCollection, upsertSiteSettings, type SiteSettings } from "@/db";
-import { requireAdmin } from "../middlewares/requireAuth";
+import { requirePermission } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
@@ -23,7 +23,7 @@ router.get("/site-settings", async (_req, res): Promise<void> => {
   res.json(GetSiteSettingsResponse.parse(toSiteSettings(config)));
 });
 
-router.put("/admin/site-settings", requireAdmin, async (req, res): Promise<void> => {
+router.put("/admin/site-settings", requirePermission("site-settings"), async (req, res): Promise<void> => {
   const parsed = UpdateSiteSettingsBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

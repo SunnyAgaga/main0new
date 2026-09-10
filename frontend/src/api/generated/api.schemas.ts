@@ -619,6 +619,7 @@ export interface AuthUser {
   id: number;
   email: string;
   role: AuthUserRole;
+  permissions: string[];
 }
 
 export type CreateAdminUserInputRole = typeof CreateAdminUserInputRole[keyof typeof CreateAdminUserInputRole];
@@ -634,5 +635,19 @@ export interface CreateAdminUserInput {
   /** @minLength 8 */
   password: string;
   role: CreateAdminUserInputRole;
+  permissions: string[];
+}
+
+export type UpdateAdminUserInputRole = typeof UpdateAdminUserInputRole[keyof typeof UpdateAdminUserInputRole];
+
+
+export const UpdateAdminUserInputRole = {
+  admin: 'admin',
+  manager: 'manager',
+} as const;
+
+export interface UpdateAdminUserInput {
+  role: UpdateAdminUserInputRole;
+  permissions: string[];
 }
 

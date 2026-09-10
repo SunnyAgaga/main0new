@@ -5,7 +5,7 @@ import {
   UpdateNotificationConfigResponse,
 } from "@wedplan/shared";
 import { notificationConfigsCollection, upsertNotificationConfig, type NotificationConfig } from "@/db";
-import { requireAdmin } from "../middlewares/requireAuth";
+import { requirePermission } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
@@ -21,12 +21,12 @@ function safeNotificationConfig(config: NotificationConfig | null | undefined) {
   };
 }
 
-router.get("/admin/notification-config", requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/notification-config", requirePermission("notifications"), async (_req, res): Promise<void> => {
   const config = await notificationConfigsCollection().findOne({ id: 1 });
   res.json(GetNotificationConfigResponse.parse(safeNotificationConfig(config)));
 });
 
-router.put("/admin/notification-config", requireAdmin, async (req, res): Promise<void> => {
+router.put("/admin/notification-config", requirePermission("notifications"), async (req, res): Promise<void> => {
   const parsed = UpdateNotificationConfigBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

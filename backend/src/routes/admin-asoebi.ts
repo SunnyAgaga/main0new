@@ -8,11 +8,11 @@ import {
   UpdateAsoebiItemResponse,
 } from "@wedplan/shared";
 import { deleteAsoebiItem, insertAsoebiItem, updateAsoebiItem } from "@/db";
-import { requireAdmin } from "../middlewares/requireAuth";
+import { requirePermission } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
-router.post("/admin/asoebi", requireAdmin, async (req, res): Promise<void> => {
+router.post("/admin/asoebi", requirePermission("asoebi"), async (req, res): Promise<void> => {
   const parsed = CreateAsoebiItemBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -34,7 +34,7 @@ router.post("/admin/asoebi", requireAdmin, async (req, res): Promise<void> => {
   res.status(201).json(CreateAsoebiItemResponse.parse(item));
 });
 
-router.put("/admin/asoebi/:id", requireAdmin, async (req, res): Promise<void> => {
+router.put("/admin/asoebi/:id", requirePermission("asoebi"), async (req, res): Promise<void> => {
   const params = UpdateAsoebiItemParams.safeParse(req.params);
   const parsed = UpdateAsoebiItemBody.safeParse(req.body);
   if (!params.success || !parsed.success) {
@@ -61,7 +61,7 @@ router.put("/admin/asoebi/:id", requireAdmin, async (req, res): Promise<void> =>
   res.json(UpdateAsoebiItemResponse.parse(item));
 });
 
-router.delete("/admin/asoebi/:id", requireAdmin, async (req, res): Promise<void> => {
+router.delete("/admin/asoebi/:id", requirePermission("asoebi"), async (req, res): Promise<void> => {
   const params = DeleteAsoebiItemParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

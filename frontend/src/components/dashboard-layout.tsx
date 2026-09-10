@@ -3,19 +3,20 @@ import { useAuth } from '@/lib/auth';
 import { LayoutDashboard, LogOut, Settings, Users, Truck, Bell, Music, ShoppingBag, Palette, ClipboardList, FileEdit, Receipt } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
 import { useGetSiteSettings } from '@/api';
+import type { PermissionKey } from '@wedplan/shared';
 
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: false },
-  { href: '/dashboard/rsvps', label: 'RSVPs', icon: ClipboardList, adminOnly: true },
-  { href: '/dashboard/rsvp-form', label: 'RSVP Form', icon: FileEdit, adminOnly: true },
-  { href: '/dashboard/orders', label: 'Orders', icon: Receipt, adminOnly: true },
-  { href: '/dashboard/site-settings', label: 'Site Settings', icon: Palette, adminOnly: true },
-  { href: '/dashboard/asoebi', label: 'Asoebi Catalog', icon: ShoppingBag, adminOnly: true },
-  { href: '/dashboard/payments', label: 'Payment Settings', icon: Settings, adminOnly: true },
-  { href: '/dashboard/delivery', label: 'Delivery Settings', icon: Truck, adminOnly: true },
-  { href: '/dashboard/notifications', label: 'Notifications', icon: Bell, adminOnly: true },
-  { href: '/dashboard/music', label: 'Music', icon: Music, adminOnly: true },
-  { href: '/dashboard/team', label: 'Team', icon: Users, adminOnly: true },
+const NAV_ITEMS: { href: string; label: string; icon: typeof LayoutDashboard; permission: PermissionKey | 'team' | null }[] = [
+  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, permission: null },
+  { href: '/dashboard/rsvps', label: 'RSVPs', icon: ClipboardList, permission: 'rsvps' },
+  { href: '/dashboard/rsvp-form', label: 'RSVP Form', icon: FileEdit, permission: 'rsvp-form' },
+  { href: '/dashboard/orders', label: 'Orders', icon: Receipt, permission: 'orders' },
+  { href: '/dashboard/site-settings', label: 'Site Settings', icon: Palette, permission: 'site-settings' },
+  { href: '/dashboard/asoebi', label: 'Asoebi Catalog', icon: ShoppingBag, permission: 'asoebi' },
+  { href: '/dashboard/payments', label: 'Payment Settings', icon: Settings, permission: 'payments' },
+  { href: '/dashboard/delivery', label: 'Delivery Settings', icon: Truck, permission: 'delivery' },
+  { href: '/dashboard/notifications', label: 'Notifications', icon: Bell, permission: 'notifications' },
+  { href: '/dashboard/music', label: 'Music', icon: Music, permission: 'music' },
+  { href: '/dashboard/team', label: 'Team', icon: Users, permission: 'team' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -36,7 +37,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </SidebarHeader>
           <SidebarContent className="p-4">
             <SidebarMenu>
-              {NAV_ITEMS.filter((item) => !item.adminOnly || user?.role === 'admin').map((item) => (
+              {NAV_ITEMS.filter((item) =>
+                item.permission === null
+                  ? true
+                  : user?.role === 'admin' ||
+                    (item.permission !== 'team' && user?.permissions?.includes(item.permission)),
+              ).map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={location === item.href} tooltip={item.label}>
                     <Link href={item.href} className="flex items-center gap-3">

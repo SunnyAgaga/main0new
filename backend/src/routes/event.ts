@@ -6,7 +6,7 @@ import {
   DEFAULT_EVENT_DETAILS,
   type EventDetails,
 } from "@/db";
-import { requireAdmin } from "../middlewares/requireAuth";
+import { requirePermission } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
@@ -29,7 +29,7 @@ router.get("/event", async (_req, res): Promise<void> => {
   res.json(GetEventResponse.parse(toEvent(details)));
 });
 
-router.put("/admin/event", requireAdmin, async (req, res): Promise<void> => {
+router.put("/admin/event", requirePermission("site-settings"), async (req, res): Promise<void> => {
   const parsed = UpdateEventBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

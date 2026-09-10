@@ -23,7 +23,8 @@ export const LoginBody = zod.object({
 export const LoginResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
-  "role": zod.enum(['admin', 'manager'])
+  "role": zod.enum(['admin', 'manager']),
+  "permissions": zod.array(zod.string())
 })
 
 
@@ -39,7 +40,8 @@ export const LogoutResponse = zod.void()
 export const GetAuthMeResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
-  "role": zod.enum(['admin', 'manager'])
+  "role": zod.enum(['admin', 'manager']),
+  "permissions": zod.array(zod.string())
 })
 
 
@@ -456,7 +458,8 @@ export const UpdatePaymentConfigResponse = zod.object({
 export const ListAdminUsersResponseItem = zod.object({
   "id": zod.number(),
   "email": zod.string(),
-  "role": zod.enum(['admin', 'manager'])
+  "role": zod.enum(['admin', 'manager']),
+  "permissions": zod.array(zod.string())
 })
 export const ListAdminUsersResponse = zod.array(ListAdminUsersResponseItem)
 
@@ -471,13 +474,35 @@ export const createAdminUserBodyPasswordMin = 8;
 export const CreateAdminUserBody = zod.object({
   "email": zod.string(),
   "password": zod.string().min(createAdminUserBodyPasswordMin),
-  "role": zod.enum(['admin', 'manager'])
+  "role": zod.enum(['admin', 'manager']),
+  "permissions": zod.array(zod.string())
 })
 
 export const CreateAdminUserResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
-  "role": zod.enum(['admin', 'manager'])
+  "role": zod.enum(['admin', 'manager']),
+  "permissions": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Update an admin user's role and menu permissions (admin role only)
+ */
+export const UpdateAdminUserParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateAdminUserBody = zod.object({
+  "role": zod.enum(['admin', 'manager']),
+  "permissions": zod.array(zod.string())
+})
+
+export const UpdateAdminUserResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "role": zod.enum(['admin', 'manager']),
+  "permissions": zod.array(zod.string())
 })
 
 

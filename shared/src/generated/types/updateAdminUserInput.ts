@@ -5,11 +5,9 @@
  * WedPlan wedding RSVP and asoebi commerce API
  * OpenAPI spec version: 0.1.0
  */
-import type { AuthUserRole } from './authUserRole';
+import type { UpdateAdminUserInputRole } from './updateAdminUserInputRole';
 
-export interface AuthUser {
-  id: number;
-  email: string;
-  role: AuthUserRole;
+export interface UpdateAdminUserInput {
+  role: UpdateAdminUserInputRole;
   permissions: string[];
 }

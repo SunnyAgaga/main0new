@@ -41,3 +41,20 @@ export async function requireAdmin(
     next();
   });
 }
+
+/**
+ * Admins always pass. Managers pass only if granted this specific menu
+ * permission - hiding a sidebar item is not access control on its own, so
+ * every admin-only route this applies to must also be gated server-side.
+ */
+export function requirePermission(key: string) {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await requireAuth(req, res, () => {
+      if (req.user?.role === "admin" || req.user?.permissions.includes(key)) {
+        next();
+        return;
+      }
+      res.status(403).json({ error: "You don't have access to this feature." });
+    });
+  };
+}
