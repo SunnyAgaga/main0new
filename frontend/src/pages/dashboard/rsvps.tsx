@@ -28,7 +28,63 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil } from 'lucide-react';
+import { Pencil, FileSpreadsheet, FileText } from 'lucide-react';
+
+const EXPORT_COLUMNS: { key: string; label: string; get: (rsvp: AdminRsvp) => string | number }[] = [
+  { key: 'guestName', label: 'Guest', get: (r) => r.guestName },
+  { key: 'email', label: 'Email', get: (r) => r.email },
+  { key: 'phone', label: 'Phone', get: (r) => r.phone ?? '' },
+  { key: 'attending', label: 'Attending', get: (r) => (r.attending ? 'Yes' : 'No') },
+  { key: 'guestCount', label: 'Guest Count', get: (r) => r.guestCount },
+  { key: 'asoebiInterest', label: 'Asoebi Interest', get: (r) => r.asoebiInterest },
+  { key: 'deliveryMethod', label: 'Delivery Method', get: (r) => r.deliveryMethod ?? '' },
+  { key: 'deliveryProvider', label: 'Delivery Provider', get: (r) => r.deliveryProvider ?? '' },
+  { key: 'deliveryAddress', label: 'Delivery Address', get: (r) => r.deliveryAddress ?? '' },
+  { key: 'note', label: 'Note', get: (r) => r.note ?? '' },
+  { key: 'createdAt', label: 'Date', get: (r) => r.createdAt },
+];
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function escapeCsvCell(value: string | number): string {
+  const str = String(value);
+  return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+}
+
+function exportRsvpsCsv(rsvps: AdminRsvp[]) {
+  const header = EXPORT_COLUMNS.map((c) => c.label).join(',');
+  const rows = rsvps.map((rsvp) => EXPORT_COLUMNS.map((c) => escapeCsvCell(c.get(rsvp))).join(','));
+  const csv = [header, ...rows].join('\n');
+  downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), `rsvps-${Date.now()}.csv`);
+}
+
+async function exportRsvpsPdf(rsvps: AdminRsvp[]) {
+  const { jsPDF } = await import('jspdf');
+  const autoTable = (await import('jspdf-autotable')).default;
+
+  const doc = new jsPDF({ orientation: 'landscape' });
+  doc.setFontSize(14);
+  doc.text('RSVPs', 14, 15);
+
+  autoTable(doc, {
+    startY: 22,
+    head: [EXPORT_COLUMNS.map((c) => c.label)],
+    body: rsvps.map((rsvp) => EXPORT_COLUMNS.map((c) => String(c.get(rsvp)))),
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [28, 77, 58] },
+  });
+
+  doc.save(`rsvps-${Date.now()}.pdf`);
+}
 
 const editRsvpSchema = z.object({
   guestName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -391,11 +447,25 @@ export default function DashboardRsvps() {
     );
   }
 
+  const rows = rsvps ?? [];
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-serif font-bold text-foreground">RSVPs</h1>
-        <p className="text-muted-foreground mt-1">View and correct guest responses.</p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-serif font-bold text-foreground">RSVPs</h1>
+          <p className="text-muted-foreground mt-1">View and correct guest responses.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" disabled={rows.length === 0} onClick={() => exportRsvpsCsv(rows)}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            Export Excel (CSV)
+          </Button>
+          <Button variant="outline" disabled={rows.length === 0} onClick={() => exportRsvpsPdf(rows)}>
+            <FileText className="w-4 h-4 mr-2" />
+            Export PDF
+          </Button>
+        </div>
       </div>
 
       <Card className="border-none shadow-sm overflow-hidden overflow-x-auto">

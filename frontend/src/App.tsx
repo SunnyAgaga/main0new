@@ -23,6 +23,7 @@ import DashboardMusic from '@/pages/dashboard/music';
 import DashboardAsoebi from '@/pages/dashboard/asoebi';
 import DashboardRsvps from '@/pages/dashboard/rsvps';
 import DashboardOrders from '@/pages/dashboard/orders';
+import DashboardCampaigns from '@/pages/dashboard/campaigns';
 import DashboardRsvpForm from '@/pages/dashboard/rsvp-form';
 import DashboardSiteSettings from '@/pages/dashboard/site-settings';
 import { SiteTheme } from '@/components/site-theme';
@@ -75,6 +76,12 @@ function Router() {
       <Route path="/dashboard/orders">
         <ProtectedDashboard adminOnly>
           <DashboardOrders />
+        </ProtectedDashboard>
+      </Route>
+
+      <Route path="/dashboard/campaigns">
+        <ProtectedDashboard adminOnly>
+          <DashboardCampaigns />
         </ProtectedDashboard>
       </Route>
 

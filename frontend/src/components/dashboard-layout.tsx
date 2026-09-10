@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
-import { LayoutDashboard, LogOut, Settings, Users, Truck, Bell, Music, ShoppingBag, Palette, ClipboardList, FileEdit, Receipt } from 'lucide-react';
+import { LayoutDashboard, LogOut, Settings, Users, Truck, Bell, Music, ShoppingBag, Palette, ClipboardList, FileEdit, Receipt, Send } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
 import { useGetSiteSettings } from '@/api';
 import type { PermissionKey } from '@wedplan/shared';
@@ -15,6 +15,7 @@ const NAV_ITEMS: { href: string; label: string; icon: typeof LayoutDashboard; pe
   { href: '/dashboard/payments', label: 'Payment Settings', icon: Settings, permission: 'payments' },
   { href: '/dashboard/delivery', label: 'Delivery Settings', icon: Truck, permission: 'delivery' },
   { href: '/dashboard/notifications', label: 'Notifications', icon: Bell, permission: 'notifications' },
+  { href: '/dashboard/campaigns', label: 'Campaigns', icon: Send, permission: 'campaigns' },
   { href: '/dashboard/music', label: 'Music', icon: Music, permission: 'music' },
   { href: '/dashboard/team', label: 'Team', icon: Users, permission: 'team' },
 ];

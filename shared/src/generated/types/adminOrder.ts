@@ -5,6 +5,8 @@
  * WedPlan wedding RSVP and asoebi commerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { AdminOrderDeliveryMethod } from './adminOrderDeliveryMethod';
+import type { AdminOrderFulfillmentStatus } from './adminOrderFulfillmentStatus';
 import type { AdminOrderType } from './adminOrderType';
 
 export interface AdminOrder {
@@ -20,4 +22,9 @@ export interface AdminOrder {
   status: string;
   itemCount: number;
   createdAt: string;
+  /** @nullable */
+  deliveryMethod: AdminOrderDeliveryMethod;
+  fulfillmentStatus: AdminOrderFulfillmentStatus;
+  /** @nullable */
+  fulfilledAt: string | null;
 }

@@ -1,11 +1,18 @@
-import { useListAdminOrders, type AdminOrder } from '@/api';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  useListAdminOrders,
+  useUpdateOrderFulfillment,
+  getListAdminOrdersQueryKey,
+  type AdminOrder,
+} from '@/api';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileSpreadsheet, FileText } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { FileSpreadsheet, FileText, PackageCheck, RotateCcw } from 'lucide-react';
 
 const COLUMNS: { key: keyof AdminOrder; label: string }[] = [
   { key: 'reference', label: 'Reference' },
@@ -18,6 +25,9 @@ const COLUMNS: { key: keyof AdminOrder; label: string }[] = [
   { key: 'currency', label: 'Currency' },
   { key: 'paymentMethod', label: 'Payment Method' },
   { key: 'status', label: 'Status' },
+  { key: 'deliveryMethod', label: 'Delivery Method' },
+  { key: 'fulfillmentStatus', label: 'Fulfillment' },
+  { key: 'fulfilledAt', label: 'Fulfilled At' },
   { key: 'createdAt', label: 'Date' },
 ];
 
@@ -29,6 +39,66 @@ function statusBadge(status: string) {
     return <Badge variant="destructive">Failed</Badge>;
   }
   return <Badge variant="secondary" className="bg-gray-100 text-gray-800 hover:bg-gray-100 border-none capitalize">{status}</Badge>;
+}
+
+function DeliveryCell({ order }: { order: AdminOrder }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const updateFulfillment = useUpdateOrderFulfillment();
+
+  if (order.type !== 'asoebi') {
+    return <span className="text-sm text-muted-foreground">—</span>;
+  }
+
+  const delivered = order.fulfillmentStatus === 'delivered';
+
+  const toggle = () => {
+    updateFulfillment.mutate({ id: order.id, data: { status: delivered ? 'pending' : 'delivered' } }, {
+      onSuccess: (updated) => {
+        queryClient.setQueryData(getListAdminOrdersQueryKey(), (old: AdminOrder[] | undefined) =>
+          old?.map((o) => (o.id === updated.id ? updated : o)),
+        );
+        toast({ title: delivered ? 'Marked as not yet delivered' : 'Marked as delivered' });
+      },
+      onError: (err) => {
+        toast({
+          variant: 'destructive',
+          title: 'Could not update',
+          description: err.data?.error || 'An error occurred.',
+        });
+      },
+    });
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="text-xs text-muted-foreground capitalize">{order.deliveryMethod ?? '—'}</div>
+      <Badge
+        variant={delivered ? 'default' : 'secondary'}
+        className={delivered ? 'bg-green-100 text-green-800 hover:bg-green-100 border-none' : 'bg-gray-100 text-gray-800 hover:bg-gray-100 border-none'}
+      >
+        {delivered ? 'Delivered' : 'Pending'}
+      </Badge>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-7 text-xs"
+        disabled={updateFulfillment.isPending}
+        onClick={toggle}
+      >
+        {delivered ? (
+          <>
+            <RotateCcw className="w-3 h-3 mr-1" /> Reset
+          </>
+        ) : (
+          <>
+            <PackageCheck className="w-3 h-3 mr-1" /> Mark Delivered
+          </>
+        )}
+      </Button>
+    </div>
+  );
 }
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -119,13 +189,14 @@ export default function DashboardOrders() {
               <TableHead>Amount</TableHead>
               <TableHead>Method</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Delivery</TableHead>
               <TableHead className="text-right">Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   No orders yet.
                 </TableCell>
               </TableRow>
@@ -149,6 +220,9 @@ export default function DashboardOrders() {
                   </TableCell>
                   <TableCell className="capitalize">{order.paymentMethod.replace('_', ' ')}</TableCell>
                   <TableCell>{statusBadge(order.status)}</TableCell>
+                  <TableCell>
+                    <DeliveryCell order={order} />
+                  </TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">
                     {new Date(order.createdAt).toLocaleDateString()}
                   </TableCell>

@@ -531,9 +531,42 @@ export const ListAdminOrdersResponseItem = zod.object({
   "paymentMethod": zod.string(),
   "status": zod.string(),
   "itemCount": zod.number(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
+  "fulfillmentStatus": zod.enum(['pending', 'delivered']),
+  "fulfilledAt": zod.string().nullable()
 })
 export const ListAdminOrdersResponse = zod.array(ListAdminOrdersResponseItem)
+
+
+/**
+ * @summary Mark an asoebi order as picked up/delivered or reset it back to pending
+ */
+export const UpdateOrderFulfillmentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateOrderFulfillmentBody = zod.object({
+  "status": zod.enum(['pending', 'delivered'])
+})
+
+export const UpdateOrderFulfillmentResponse = zod.object({
+  "id": zod.number(),
+  "reference": zod.string(),
+  "type": zod.enum(['asoebi', 'gift']),
+  "guestName": zod.string(),
+  "email": zod.string(),
+  "totalAmount": zod.number(),
+  "giftAmount": zod.number(),
+  "currency": zod.string(),
+  "paymentMethod": zod.string(),
+  "status": zod.string(),
+  "itemCount": zod.number(),
+  "createdAt": zod.string(),
+  "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
+  "fulfillmentStatus": zod.enum(['pending', 'delivered']),
+  "fulfilledAt": zod.string().nullable()
+})
 
 
 /**
@@ -724,6 +757,46 @@ export const UpdateDeliveryConfigResponse = zod.object({
   "fee": zod.number().min(updateDeliveryConfigResponseProvidersItemFeeMin),
   "enabled": zod.boolean()
 }))
+})
+
+
+/**
+ * @summary List past email campaigns (admin role only)
+ */
+export const ListCampaignsResponseItem = zod.object({
+  "id": zod.number(),
+  "subject": zod.string(),
+  "message": zod.string(),
+  "recipientCount": zod.number(),
+  "sentCount": zod.number(),
+  "failedCount": zod.number(),
+  "createdAt": zod.string()
+})
+export const ListCampaignsResponse = zod.array(ListCampaignsResponseItem)
+
+
+/**
+ * @summary Send a bulk email campaign via Mailgun (admin role only)
+ */
+
+
+
+
+export const SendCampaignBody = zod.object({
+  "subject": zod.string().min(1),
+  "message": zod.string().min(1),
+  "rsvpIds": zod.array(zod.number()),
+  "extraEmails": zod.array(zod.string())
+})
+
+export const SendCampaignResponse = zod.object({
+  "id": zod.number(),
+  "subject": zod.string(),
+  "message": zod.string(),
+  "recipientCount": zod.number(),
+  "sentCount": zod.number(),
+  "failedCount": zod.number(),
+  "createdAt": zod.string()
 })
 
 

@@ -682,6 +682,53 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/orders/{id}/fulfillment:
+    put:
+      operationId: updateOrderFulfillment
+      tags: [admin]
+      summary: Mark an asoebi order as picked up/delivered or reset it back to pending
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrderFulfillmentInput"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOrder"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /admin/rsvps:
     get:
       operationId: listAdminRsvps
@@ -822,6 +869,73 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/campaigns:
+    get:
+      operationId: listCampaigns
+      tags: [admin]
+      summary: List past email campaigns (admin role only)
+      responses:
+        "200":
+          description: Campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Campaign"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: sendCampaign
+      tags: [admin]
+      summary: Send a bulk email campaign via Mailgun (admin role only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendCampaignInput"
+      responses:
+        "201":
+          description: Campaign sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "400":
+          description: Invalid campaign request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Email is not configured
           content:
             application/json:
               schema:
@@ -1226,7 +1340,7 @@ components:
         note: { type: string }
     AdminOrder:
       type: object
-      required: [id, reference, type, guestName, email, totalAmount, giftAmount, currency, paymentMethod, status, itemCount, createdAt]
+      required: [id, reference, type, guestName, email, totalAmount, giftAmount, currency, paymentMethod, status, itemCount, createdAt, deliveryMethod, fulfillmentStatus, fulfilledAt]
       properties:
         id: { type: number }
         reference: { type: string }
@@ -1240,6 +1354,16 @@ components:
         status: { type: string }
         itemCount: { type: number }
         createdAt: { type: string }
+        deliveryMethod:
+          type: ["string", "null"]
+          enum: [pickup, delivery, null]
+        fulfillmentStatus: { type: string, enum: [pending, delivered] }
+        fulfilledAt: { type: ["string", "null"] }
+    UpdateOrderFulfillmentInput:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [pending, delivered] }
     AdminAsoebiSelection:
       type: object
       required: [asoebiItemId, asoebiSize, quantity]
@@ -1541,6 +1665,29 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DeliveryProvider"
+    Campaign:
+      type: object
+      required: [id, subject, message, recipientCount, sentCount, failedCount, createdAt]
+      properties:
+        id: { type: number }
+        subject: { type: string }
+        message: { type: string }
+        recipientCount: { type: number }
+        sentCount: { type: number }
+        failedCount: { type: number }
+        createdAt: { type: string }
+    SendCampaignInput:
+      type: object
+      required: [subject, message, rsvpIds, extraEmails]
+      properties:
+        subject: { type: string, minLength: 1 }
+        message: { type: string, minLength: 1 }
+        rsvpIds:
+          type: array
+          items: { type: number }
+        extraEmails:
+          type: array
+          items: { type: string }
     NotificationConfig:
       type: object
       required: [emailEnabled, emailConfigured, mailgunDomain, mailgunFromEmail, smsEnabled, smsConfigured, twilioFromNumber]

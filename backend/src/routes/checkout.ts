@@ -258,6 +258,8 @@ router.post("/checkout/flutterwave", async (req, res): Promise<void> => {
     currency: validated.currency,
     paymentMethod: "flutterwave",
     status: "pending",
+    fulfillmentStatus: "pending",
+    fulfilledAt: null,
   });
 
   res.json(
@@ -313,6 +315,8 @@ router.post("/checkout/bank-transfer", async (req, res): Promise<void> => {
     currency: validated.currency,
     paymentMethod: "bank_transfer",
     status: "awaiting_transfer",
+    fulfillmentStatus: "pending",
+    fulfilledAt: null,
   });
 
   res.status(201).json(
@@ -383,6 +387,8 @@ router.post("/checkout/gift/flutterwave", async (req, res): Promise<void> => {
     currency: "NGN",
     paymentMethod: "flutterwave",
     status: "pending",
+    fulfillmentStatus: "pending",
+    fulfilledAt: null,
   });
 
   res.json(
@@ -423,6 +429,8 @@ router.post("/checkout/gift/bank-transfer", async (req, res): Promise<void> => {
     currency: "NGN",
     paymentMethod: "bank_transfer",
     status: "awaiting_transfer",
+    fulfillmentStatus: "pending",
+    fulfilledAt: null,
   });
 
   res.status(201).json(

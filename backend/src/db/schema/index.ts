@@ -14,6 +14,7 @@
 
 export * from "./asoebi";
 export * from "./auth";
+export * from "./campaigns";
 export * from "./rsvp-form-copy";
 export * from "./spotify";
 export * from "./uploads";
