@@ -11,6 +11,37 @@ export function MusicPlayer() {
   const playlist = settings?.playlist ?? [];
   const musicEnabled = settings?.musicEnabled && playlist.length > 0;
 
+  // Browsers block unmuted autoplay until the visitor has interacted with the
+  // page, so try to play immediately and, if that's rejected, start on their
+  // very first tap/click/keypress anywhere on the site instead - the closest
+  // thing to real autoplay that's actually allowed.
+  useEffect(() => {
+    if (!musicEnabled) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    let disposed = false;
+    const events = ['pointerdown', 'keydown', 'touchstart'] as const;
+    const startOnInteraction = () => {
+      void audio.play().then(() => setIsPlaying(true)).catch(() => {});
+    };
+
+    audio
+      .play()
+      .then(() => {
+        if (!disposed) setIsPlaying(true);
+      })
+      .catch(() => {
+        if (disposed) return;
+        events.forEach((event) => document.addEventListener(event, startOnInteraction, { once: true }));
+      });
+
+    return () => {
+      disposed = true;
+      events.forEach((event) => document.removeEventListener(event, startOnInteraction));
+    };
+  }, [musicEnabled]);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !isPlaying) return;
