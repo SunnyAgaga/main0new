@@ -21,6 +21,17 @@ export function PaymentReturnScreen({ search }: { search: string }) {
   const transactionId = params.get('transaction_id');
   const status = params.get('status');
 
+  const checkStatus = () => {
+    if (!reference || !transactionId) {
+      setResult('error');
+      return;
+    }
+    verifyMutation.mutate({ data: { reference, transactionId } }, {
+      onSuccess: (order) => setResult(order),
+      onError: () => setResult('error'),
+    });
+  };
+
   useEffect(() => {
     if (attempted.current) return;
     attempted.current = true;
@@ -30,10 +41,7 @@ export function PaymentReturnScreen({ search }: { search: string }) {
       return;
     }
 
-    verifyMutation.mutate({ data: { reference, transactionId } }, {
-      onSuccess: (order) => setResult(order),
-      onError: () => setResult('error'),
-    });
+    checkStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -66,12 +74,13 @@ export function PaymentReturnScreen({ search }: { search: string }) {
 
   const paid = result !== 'error' && result.status === 'paid';
   const failed = result === 'error' || result.status === 'failed';
+  const pending = !paid && !failed;
 
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-background p-6">
       <div className="max-w-md w-full text-center space-y-6 animate-in fade-in zoom-in duration-500">
-        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${paid ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
-          {paid ? <CheckCircle2 className="w-10 h-10" /> : <XCircle className="w-10 h-10" />}
+        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${paid ? 'bg-primary/10 text-primary' : pending ? 'bg-muted text-muted-foreground' : 'bg-destructive/10 text-destructive'}`}>
+          {paid ? <CheckCircle2 className="w-10 h-10" /> : pending ? <Loader2 className="w-10 h-10" /> : <XCircle className="w-10 h-10" />}
         </div>
         <h1 className="text-3xl font-serif font-bold text-foreground">
           {paid ? 'Payment Successful!' : failed ? 'Payment Failed' : 'Payment Pending'}
@@ -81,12 +90,25 @@ export function PaymentReturnScreen({ search }: { search: string }) {
             ? "Thank you — your payment has been confirmed and your order is complete."
             : failed
               ? "We couldn't confirm this payment. If you were charged, please contact us with your reference."
-              : "We're still waiting for confirmation. This can take a minute — please check back shortly."}
+              : "We're still waiting for confirmation. This can take a minute — check again below if it hasn't updated."}
         </p>
         {result !== 'error' && (
           <p className="text-xs text-muted-foreground font-mono">Reference: {result.reference}</p>
         )}
-        <Button onClick={() => setLocation('/')} variant="outline" className="mt-8">Return Home</Button>
+        <div className="flex flex-col items-center gap-3 mt-8">
+          {pending && (
+            <Button onClick={checkStatus} disabled={verifyMutation.isPending}>
+              {verifyMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Checking…
+                </>
+              ) : (
+                'Check Payment Status'
+              )}
+            </Button>
+          )}
+          <Button onClick={() => setLocation('/')} variant="outline">Return Home</Button>
+        </div>
       </div>
     </div>
   );
