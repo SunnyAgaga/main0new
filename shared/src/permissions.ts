@@ -8,6 +8,7 @@ export const PERMISSION_KEYS = [
   "delivery",
   "notifications",
   "music",
+  "campaigns",
 ] as const;
 
 export type PermissionKey = (typeof PERMISSION_KEYS)[number];
@@ -22,6 +23,7 @@ export const PERMISSION_LABELS: Record<PermissionKey, string> = {
   delivery: "Delivery Settings",
   notifications: "Notifications",
   music: "Music",
+  campaigns: "Campaigns",
 };
 
 export function isPermissionKey(value: string): value is PermissionKey {

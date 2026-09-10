@@ -28,6 +28,7 @@ import type {
   AuthCredentials,
   AuthUser,
   BankTransferResponse,
+  Campaign,
   CheckoutInput,
   CheckoutResponse,
   CreateAdminUserInput,
@@ -49,6 +50,7 @@ import type {
   RsvpFormCopyInput,
   RsvpInput,
   RsvpResult,
+  SendCampaignInput,
   SiteSettings,
   SiteSettingsInput,
   SpotifyConfig,
@@ -2562,6 +2564,171 @@ export const useUpdateDeliveryConfig = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getUpdateDeliveryConfigMutationOptions(options));
+    }
+
+export const getListCampaignsUrl = () => {
+
+
+
+
+  return `/api/admin/campaigns`
+}
+
+/**
+ * @summary List past email campaigns (admin role only)
+ */
+export const listCampaigns = async ( options?: Parameters<typeof customFetch>[1]): Promise<Campaign[]> => {
+
+  return customFetch<Campaign[]>(getListCampaignsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListCampaignsQueryKey = () => {
+    return [
+    `/api/admin/campaigns`
+    ] as const;
+    }
+
+
+export const getListCampaignsQueryOptions = <TData = Awaited<ReturnType<typeof listCampaigns>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCampaigns>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCampaignsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCampaigns>>> = ({ signal }) => listCampaigns({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCampaigns>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListCampaignsQueryResult = NonNullable<Awaited<ReturnType<typeof listCampaigns>>>
+export type ListCampaignsQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary List past email campaigns (admin role only)
+ */
+
+export function useListCampaigns<TData = Awaited<ReturnType<typeof listCampaigns>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCampaigns>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListCampaignsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSendCampaignUrl = () => {
+
+
+
+
+  return `/api/admin/campaigns`
+}
+
+/**
+ * @summary Send a bulk email campaign via Mailgun (admin role only)
+ */
+export const sendCampaign = async (sendCampaignInput: SendCampaignInput, options?: Parameters<typeof customFetch>[1]): Promise<Campaign> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<Campaign>(getSendCampaignUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(sendCampaignInput)
+  }
+);}
+
+
+
+
+
+export const getSendCampaignMutationKey = () => ['sendCampaign'] as const;
+
+export const getSendCampaignMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendCampaign>>, TError,SendCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendCampaign>>, TError,SendCampaignMutationVariables, TContext> => {
+
+const mutationKey = getSendCampaignMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendCampaign>>, SendCampaignMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  sendCampaign(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendCampaignMutationResult = NonNullable<Awaited<ReturnType<typeof sendCampaign>>>
+    export type SendCampaignMutationBody = BodyType<SendCampaignInput>
+    export type SendCampaignMutationError = ErrorType<ErrorResponse>
+    export type SendCampaignMutationVariables = {data: BodyType<SendCampaignInput>}
+
+    /**
+ * @summary Send a bulk email campaign via Mailgun (admin role only)
+ */
+export const useSendCampaign = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendCampaign>>, TError,SendCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof sendCampaign>>,
+        TError,
+        SendCampaignMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSendCampaignMutationOptions(options));
     }
 
 export const getGetNotificationConfigUrl = () => {

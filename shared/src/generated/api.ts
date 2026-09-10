@@ -761,6 +761,46 @@ export const UpdateDeliveryConfigResponse = zod.object({
 
 
 /**
+ * @summary List past email campaigns (admin role only)
+ */
+export const ListCampaignsResponseItem = zod.object({
+  "id": zod.number(),
+  "subject": zod.string(),
+  "message": zod.string(),
+  "recipientCount": zod.number(),
+  "sentCount": zod.number(),
+  "failedCount": zod.number(),
+  "createdAt": zod.string()
+})
+export const ListCampaignsResponse = zod.array(ListCampaignsResponseItem)
+
+
+/**
+ * @summary Send a bulk email campaign via Mailgun (admin role only)
+ */
+
+
+
+
+export const SendCampaignBody = zod.object({
+  "subject": zod.string().min(1),
+  "message": zod.string().min(1),
+  "rsvpIds": zod.array(zod.number()),
+  "extraEmails": zod.array(zod.string())
+})
+
+export const SendCampaignResponse = zod.object({
+  "id": zod.number(),
+  "subject": zod.string(),
+  "message": zod.string(),
+  "recipientCount": zod.number(),
+  "sentCount": zod.number(),
+  "failedCount": zod.number(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Get safe notification configuration status
  */
 export const GetNotificationConfigResponse = zod.object({

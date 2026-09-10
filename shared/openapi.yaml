@@ -873,6 +873,73 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/campaigns:
+    get:
+      operationId: listCampaigns
+      tags: [admin]
+      summary: List past email campaigns (admin role only)
+      responses:
+        "200":
+          description: Campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Campaign"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: sendCampaign
+      tags: [admin]
+      summary: Send a bulk email campaign via Mailgun (admin role only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendCampaignInput"
+      responses:
+        "201":
+          description: Campaign sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "400":
+          description: Invalid campaign request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Email is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /admin/notification-config:
     get:
       operationId: getNotificationConfig
@@ -1598,6 +1665,29 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DeliveryProvider"
+    Campaign:
+      type: object
+      required: [id, subject, message, recipientCount, sentCount, failedCount, createdAt]
+      properties:
+        id: { type: number }
+        subject: { type: string }
+        message: { type: string }
+        recipientCount: { type: number }
+        sentCount: { type: number }
+        failedCount: { type: number }
+        createdAt: { type: string }
+    SendCampaignInput:
+      type: object
+      required: [subject, message, rsvpIds, extraEmails]
+      properties:
+        subject: { type: string, minLength: 1 }
+        message: { type: string, minLength: 1 }
+        rsvpIds:
+          type: array
+          items: { type: number }
+        extraEmails:
+          type: array
+          items: { type: string }
     NotificationConfig:
       type: object
       required: [emailEnabled, emailConfigured, mailgunDomain, mailgunFromEmail, smsEnabled, smsConfigured, twilioFromNumber]

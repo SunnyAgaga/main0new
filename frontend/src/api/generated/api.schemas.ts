@@ -539,6 +539,25 @@ export interface DeliveryConfigInput {
   providers: DeliveryProvider[];
 }
 
+export interface Campaign {
+  id: number;
+  subject: string;
+  message: string;
+  recipientCount: number;
+  sentCount: number;
+  failedCount: number;
+  createdAt: string;
+}
+
+export interface SendCampaignInput {
+  /** @minLength 1 */
+  subject: string;
+  /** @minLength 1 */
+  message: string;
+  rsvpIds: number[];
+  extraEmails: string[];
+}
+
 export interface NotificationConfig {
   emailEnabled: boolean;
   emailConfigured: boolean;
