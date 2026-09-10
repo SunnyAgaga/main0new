@@ -372,6 +372,29 @@ export interface CheckoutResponse {
   checkoutUrl: string;
 }
 
+export interface VerifyCheckoutInput {
+  /** @minLength 1 */
+  reference: string;
+  /** @minLength 1 */
+  transactionId: string;
+}
+
+export type OrderStatusType = typeof OrderStatusType[keyof typeof OrderStatusType];
+
+
+export const OrderStatusType = {
+  asoebi: 'asoebi',
+  gift: 'gift',
+} as const;
+
+export interface OrderStatus {
+  reference: string;
+  status: string;
+  totalAmount: number;
+  currency: string;
+  type: OrderStatusType;
+}
+
 export interface BankTransferResponse {
   reference: string;
   amount: number;

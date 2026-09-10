@@ -411,6 +411,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /checkout/verify:
+    post:
+      operationId: verifyCheckout
+      tags: [checkout]
+      summary: Verify a Flutterwave transaction directly with Flutterwave and sync the order's status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyCheckoutInput"
+      responses:
+        "200":
+          description: Order status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderStatus"
+        "400":
+          description: Invalid verification request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /admin/overview:
     get:
       operationId: getAdminOverview
@@ -1294,6 +1324,21 @@ components:
       properties:
         reference: { type: string }
         checkoutUrl: { type: string }
+    VerifyCheckoutInput:
+      type: object
+      required: [reference, transactionId]
+      properties:
+        reference: { type: string, minLength: 1 }
+        transactionId: { type: string, minLength: 1 }
+    OrderStatus:
+      type: object
+      required: [reference, status, totalAmount, currency, type]
+      properties:
+        reference: { type: string }
+        status: { type: string }
+        totalAmount: { type: number }
+        currency: { type: string }
+        type: { type: string, enum: [asoebi, gift] }
     BankTransferResponse:
       type: object
       required: [reference, amount, currency, bankName, accountName, accountNumber, instructions]

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, useSearch } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -8,6 +8,7 @@ import {
   useCreateGiftBankTransferOrder,
   useGetEvent,
 } from '@/api';
+import { PaymentReturnScreen, isPaymentReturn } from '@/components/payment-return-screen';
 
 import { Gift, CreditCard, Landmark, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ const SUGGESTED_AMOUNTS = [10000, 25000, 50000, 100000];
 
 export default function GiftPage() {
   const [, setLocation] = useLocation();
+  const search = useSearch();
   const { toast } = useToast();
   const { data: event } = useGetEvent();
 
@@ -91,6 +93,10 @@ export default function GiftPage() {
       },
     });
   });
+
+  if (isPaymentReturn(search)) {
+    return <PaymentReturnScreen search={search} />;
+  }
 
   if (bankDetails) {
     return (

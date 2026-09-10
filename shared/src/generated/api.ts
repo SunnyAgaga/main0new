@@ -356,6 +356,27 @@ export const CreateGiftBankTransferOrderResponse = zod.object({
 
 
 /**
+ * @summary Verify a Flutterwave transaction directly with Flutterwave and sync the order's status
+ */
+
+
+
+
+export const VerifyCheckoutBody = zod.object({
+  "reference": zod.string().min(1),
+  "transactionId": zod.string().min(1)
+})
+
+export const VerifyCheckoutResponse = zod.object({
+  "reference": zod.string(),
+  "status": zod.string(),
+  "totalAmount": zod.number(),
+  "currency": zod.string(),
+  "type": zod.enum(['asoebi', 'gift'])
+})
+
+
+/**
  * @summary Get dashboard summary
  */
 export const GetAdminOverviewResponse = zod.object({

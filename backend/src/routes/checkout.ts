@@ -7,13 +7,17 @@ import {
   StartFlutterwaveCheckoutBody,
   StartFlutterwaveCheckoutResponse,
   StartGiftFlutterwaveCheckoutBody,
+  VerifyCheckoutBody,
+  VerifyCheckoutResponse,
 } from "@wedplan/shared";
 import {
   asoebiItemsCollection,
   insertOrder,
+  ordersCollection,
   paymentConfigsCollection,
   rsvpsCollection,
   type AsoebiItem,
+  type Order,
   type PaymentConfig,
   type Rsvp,
 } from "@/db";
@@ -123,6 +127,39 @@ async function createFlutterwaveLink(params: {
   }
 
   return { link: payload.data.link };
+}
+
+async function verifyFlutterwaveTransaction(
+  secretKey: string,
+  transactionId: string,
+): Promise<{ status: string; amount: number; currency: string; txRef: string } | null> {
+  const response = await fetch(
+    `https://api.flutterwave.com/v3/transactions/${encodeURIComponent(transactionId)}/verify`,
+    { headers: { Authorization: `Bearer ${secretKey}` } },
+  );
+  if (!response.ok) return null;
+
+  const payload = (await response.json()) as {
+    data?: { status?: string; amount?: number; currency?: string; tx_ref?: string };
+  };
+  if (!payload.data) return null;
+
+  return {
+    status: payload.data.status ?? "",
+    amount: payload.data.amount ?? 0,
+    currency: payload.data.currency ?? "",
+    txRef: payload.data.tx_ref ?? "",
+  };
+}
+
+function toOrderStatus(order: Order) {
+  return {
+    reference: order.reference,
+    status: order.status,
+    totalAmount: order.totalAmount,
+    currency: order.currency,
+    type: order.type,
+  };
 }
 
 function flutterwaveConfigured(config: PaymentConfig | null): config is PaymentConfig {
@@ -379,6 +416,60 @@ router.post("/checkout/gift/bank-transfer", async (req, res): Promise<void> => {
         "Use your order reference as the transfer narration.",
     }),
   );
+});
+
+router.post("/checkout/verify", async (req, res): Promise<void> => {
+  const parsed = VerifyCheckoutBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const order = await ordersCollection().findOne({ reference: parsed.data.reference });
+  if (!order) {
+    res.status(404).json({ error: "Order not found." });
+    return;
+  }
+
+  // Already resolved — most likely the webhook already confirmed it. Nothing more to verify.
+  if (order.status === "paid" || order.status === "failed") {
+    res.json(VerifyCheckoutResponse.parse(toOrderStatus(order)));
+    return;
+  }
+
+  const config = await paymentConfigsCollection().findOne({ id: 1 });
+  if (flutterwaveConfigured(config)) {
+    const verified = await verifyFlutterwaveTransaction(
+      config.flutterwaveSecretKey,
+      parsed.data.transactionId,
+    );
+
+    if (
+      verified &&
+      verified.txRef === order.reference &&
+      verified.currency === order.currency &&
+      verified.amount >= order.totalAmount
+    ) {
+      if (verified.status === "successful") {
+        order.status = "paid";
+      } else if (verified.status === "failed") {
+        order.status = "failed";
+      }
+
+      if (order.status === "paid" || order.status === "failed") {
+        await ordersCollection().updateOne(
+          { reference: order.reference },
+          { $set: { status: order.status } },
+        );
+        req.log.info(
+          { reference: order.reference, status: order.status },
+          "Order status confirmed via direct Flutterwave verification",
+        );
+      }
+    }
+  }
+
+  res.json(VerifyCheckoutResponse.parse(toOrderStatus(order)));
 });
 
 export default router;
