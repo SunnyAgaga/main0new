@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
 import { saveUploadedImage, uploadedImagesCollection } from "@/db";
-import { requireAdmin } from "../middlewares/requireAuth";
+import { requirePermission } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
@@ -17,7 +17,7 @@ const upload = multer({
   },
 });
 
-router.post("/admin/uploads", requireAdmin, (req, res): void => {
+router.post("/admin/uploads", requirePermission("site-settings"), (req, res): void => {
   upload.single("file")(req, res, async (err: unknown) => {
     if (err) {
       const message = err instanceof Error ? err.message : "Upload failed";

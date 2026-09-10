@@ -10,7 +10,7 @@ import {
   DEFAULT_RSVP_FORM_COPY,
   type RsvpFormCopy,
 } from "@/db";
-import { requireAdmin } from "../middlewares/requireAuth";
+import { requirePermission } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
 
@@ -23,7 +23,7 @@ router.get("/rsvp-form-copy", async (_req, res): Promise<void> => {
   res.json(GetRsvpFormCopyResponse.parse(toRsvpFormCopy(copy)));
 });
 
-router.put("/admin/rsvp-form-copy", requireAdmin, async (req, res): Promise<void> => {
+router.put("/admin/rsvp-form-copy", requirePermission("rsvp-form"), async (req, res): Promise<void> => {
   const parsed = UpdateRsvpFormCopyBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

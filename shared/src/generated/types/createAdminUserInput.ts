@@ -12,4 +12,5 @@ export interface CreateAdminUserInput {
   /** @minLength 8 */
   password: string;
   role: CreateAdminUserInputRole;
+  permissions: string[];
 }

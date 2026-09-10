@@ -70,7 +70,7 @@ async function seedAdmin(): Promise<void> {
     return;
   }
 
-  await insertUser({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD, role: "admin" });
+  await insertUser({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD, role: "admin", permissions: [] });
   console.log(`[seed] created admin user: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
 }
 

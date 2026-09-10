@@ -11,9 +11,13 @@ import {
   UpdateAdminRsvpBody,
   UpdateAdminRsvpParams,
   UpdateAdminRsvpResponse,
+  UpdateAdminUserBody,
+  UpdateAdminUserParams,
+  UpdateAdminUserResponse,
   UpdatePaymentConfigBody,
   UpdatePaymentConfigResponse,
 } from "@wedplan/shared";
+import { isPermissionKey } from "@wedplan/shared";
 import {
   deleteUser,
   insertUser,
@@ -22,14 +26,19 @@ import {
   paymentConfigsCollection,
   rsvpsCollection,
   updateRsvp,
+  updateUserAccess,
   upsertPaymentConfig,
   usersCollection,
   type Order,
   type PaymentConfig,
   type Rsvp,
 } from "@/db";
-import { requireAdmin, requireAuth } from "../middlewares/requireAuth";
+import { requireAdmin, requireAuth, requirePermission } from "../middlewares/requireAuth";
 import { toAuthUser } from "./auth";
+
+function sanitizePermissions(permissions: string[]): string[] {
+  return permissions.filter(isPermissionKey);
+}
 
 function toAdminRsvp(rsvp: Rsvp) {
   return {
@@ -110,7 +119,7 @@ router.get("/admin/overview", requireAuth, async (_req, res): Promise<void> => {
 
 router.get(
   "/admin/payment-config",
-  requireAdmin,
+  requirePermission("payments"),
   async (req, res): Promise<void> => {
     const config = await paymentConfigsCollection().findOne({ id: 1 });
     res.json(GetPaymentConfigResponse.parse(safePaymentConfig(config, webhookUrlFor(req))));
@@ -119,7 +128,7 @@ router.get(
 
 router.put(
   "/admin/payment-config",
-  requireAdmin,
+  requirePermission("payments"),
   async (req, res): Promise<void> => {
     const parsed = UpdatePaymentConfigBody.safeParse(req.body);
     if (!parsed.success) {
@@ -187,10 +196,47 @@ router.post("/admin/users", requireAdmin, async (req, res): Promise<void> => {
     email,
     password: parsed.data.password,
     role: parsed.data.role,
+    permissions: sanitizePermissions(parsed.data.permissions),
   });
 
   req.log.info({ userId: user.id, role: user.role }, "Admin user created");
   res.status(201).json(CreateAdminUserResponse.parse(toAuthUser(user)));
+});
+
+router.put("/admin/users/:id", requireAdmin, async (req, res): Promise<void> => {
+  const paramsResult = UpdateAdminUserParams.safeParse(req.params);
+  if (!paramsResult.success) {
+    res.status(400).json({ error: paramsResult.error.message });
+    return;
+  }
+
+  if (paramsResult.data.id === req.user!.id) {
+    res.status(400).json({ error: "You cannot edit your own account." });
+    return;
+  }
+
+  const parsed = UpdateAdminUserBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const existing = await usersCollection().findOne({ id: paramsResult.data.id });
+  if (!existing) {
+    res.status(404).json({ error: "Admin user not found." });
+    return;
+  }
+
+  const updated = await updateUserAccess(paramsResult.data.id, {
+    role: parsed.data.role,
+    permissions: sanitizePermissions(parsed.data.permissions),
+  });
+
+  req.log.info(
+    { userId: paramsResult.data.id, role: parsed.data.role },
+    "Admin user access updated",
+  );
+  res.json(UpdateAdminUserResponse.parse(toAuthUser(updated!)));
 });
 
 router.delete("/admin/users/:id", requireAdmin, async (req, res): Promise<void> => {
@@ -233,17 +279,17 @@ function toAdminOrder(order: Order) {
   };
 }
 
-router.get("/admin/orders", requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/orders", requirePermission("orders"), async (_req, res): Promise<void> => {
   const orders = await ordersCollection().find({}).sort({ createdAt: -1 }).toArray();
   res.json(ListAdminOrdersResponse.parse(orders.map(toAdminOrder)));
 });
 
-router.get("/admin/rsvps", requireAdmin, async (_req, res): Promise<void> => {
+router.get("/admin/rsvps", requirePermission("rsvps"), async (_req, res): Promise<void> => {
   const rsvps = await rsvpsCollection().find({}).sort({ createdAt: -1 }).toArray();
   res.json(ListAdminRsvpsResponse.parse(rsvps.map(toAdminRsvp)));
 });
 
-router.put("/admin/rsvps/:id", requireAdmin, async (req, res): Promise<void> => {
+router.put("/admin/rsvps/:id", requirePermission("rsvps"), async (req, res): Promise<void> => {
   const paramsResult = UpdateAdminRsvpParams.safeParse(req.params);
   if (!paramsResult.success) {
     res.status(400).json({ error: paramsResult.error.message });

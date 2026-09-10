@@ -23,7 +23,7 @@ function setSessionCookie(res: Response, token: string): void {
 }
 
 export function toAuthUser(user: User): AuthUser {
-  return { id: user.id, email: user.email, role: user.role };
+  return { id: user.id, email: user.email, role: user.role, permissions: user.permissions ?? [] };
 }
 
 router.post("/auth/login", async (req, res): Promise<void> => {

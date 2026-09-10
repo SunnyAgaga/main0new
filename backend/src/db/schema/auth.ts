@@ -10,6 +10,7 @@ export interface User {
   email: string;
   passwordHash: string;
   role: UserRole;
+  permissions: string[];
   createdAt: Date;
 }
 
@@ -48,16 +49,34 @@ export async function insertUser(input: {
   email: string;
   password: string;
   role: UserRole;
+  permissions: string[];
 }): Promise<User> {
   const doc: User = {
     id: await nextSequence("users"),
     email: input.email,
     passwordHash: await hashPassword(input.password),
     role: input.role,
+    permissions: input.role === "admin" ? [] : input.permissions,
     createdAt: new Date(),
   };
   await usersCollection().insertOne(doc);
   return doc;
+}
+
+export async function updateUserAccess(
+  id: number,
+  input: { role: UserRole; permissions: string[] },
+): Promise<User | null> {
+  return usersCollection().findOneAndUpdate(
+    { id },
+    {
+      $set: {
+        role: input.role,
+        permissions: input.role === "admin" ? [] : input.permissions,
+      },
+    },
+    { returnDocument: "after" },
+  );
 }
 
 export async function authenticateUser(
