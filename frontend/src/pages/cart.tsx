@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import { Link, useLocation, useSearch } from 'wouter';
 import { useStartFlutterwaveCheckout, useCreateBankTransferOrder, type RsvpResult } from '@/api';
+import { PaymentReturnScreen, isPaymentReturn } from '@/components/payment-return-screen';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -10,6 +11,7 @@ import { CreditCard, Landmark, ArrowLeft, Gift } from 'lucide-react';
 
 export default function CartPage() {
   const [, setLocation] = useLocation();
+  const search = useSearch();
   const { toast } = useToast();
   const [rsvpData, setRsvpData] = useState<RsvpResult | null>(null);
   const [hasGiftPending, setHasGiftPending] = useState(false);
@@ -27,7 +29,10 @@ export default function CartPage() {
     instructions: string;
   } | null>(null);
 
+  const paymentReturn = isPaymentReturn(search);
+
   useEffect(() => {
+    if (paymentReturn) return;
     const stored = sessionStorage.getItem('wedplan_rsvp');
     if (stored) {
       try {
@@ -46,6 +51,10 @@ export default function CartPage() {
 
     setHasGiftPending(Boolean(sessionStorage.getItem('wedplan_gift_prefill')));
   }, [setLocation]);
+
+  if (paymentReturn) {
+    return <PaymentReturnScreen search={search} />;
+  }
 
   if (!rsvpData || !rsvpData.cartItems || rsvpData.cartItems.length === 0) {
     return (

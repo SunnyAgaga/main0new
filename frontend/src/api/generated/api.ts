@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminOrder,
   AdminOverview,
   AdminRsvp,
   AsoebiItem,
@@ -39,6 +40,7 @@ import type {
   HealthStatus,
   NotificationConfig,
   NotificationConfigInput,
+  OrderStatus,
   PaymentConfig,
   PaymentConfigInput,
   PublicDeliveryOptions,
@@ -50,7 +52,8 @@ import type {
   SiteSettingsInput,
   SpotifyConfig,
   SpotifyConfigInput,
-  SpotifyPlaylist
+  SpotifyPlaylist,
+  VerifyCheckoutInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1326,6 +1329,94 @@ export const useCreateGiftBankTransferOrder = <TError = ErrorType<ErrorResponse>
       return useMutation(getCreateGiftBankTransferOrderMutationOptions(options));
     }
 
+export const getVerifyCheckoutUrl = () => {
+
+
+
+
+  return `/api/checkout/verify`
+}
+
+/**
+ * @summary Verify a Flutterwave transaction directly with Flutterwave and sync the order's status
+ */
+export const verifyCheckout = async (verifyCheckoutInput: VerifyCheckoutInput, options?: Parameters<typeof customFetch>[1]): Promise<OrderStatus> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<OrderStatus>(getVerifyCheckoutUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(verifyCheckoutInput)
+  }
+);}
+
+
+
+
+
+export const getVerifyCheckoutMutationKey = () => ['verifyCheckout'] as const;
+
+export const getVerifyCheckoutMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCheckout>>, TError,VerifyCheckoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyCheckout>>, TError,VerifyCheckoutMutationVariables, TContext> => {
+
+const mutationKey = getVerifyCheckoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyCheckout>>, VerifyCheckoutMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  verifyCheckout(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof verifyCheckout>>>
+    export type VerifyCheckoutMutationBody = BodyType<VerifyCheckoutInput>
+    export type VerifyCheckoutMutationError = ErrorType<ErrorResponse>
+    export type VerifyCheckoutMutationVariables = {data: BodyType<VerifyCheckoutInput>}
+
+    /**
+ * @summary Verify a Flutterwave transaction directly with Flutterwave and sync the order's status
+ */
+export const useVerifyCheckout = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCheckout>>, TError,VerifyCheckoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifyCheckout>>,
+        TError,
+        VerifyCheckoutMutationVariables,
+        TContext
+      > => {
+      return useMutation(getVerifyCheckoutMutationOptions(options));
+    }
+
 export const getGetAdminOverviewUrl = () => {
 
 
@@ -1806,6 +1897,83 @@ export const useDeleteAdminUser = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getDeleteAdminUserMutationOptions(options));
     }
+
+export const getListAdminOrdersUrl = () => {
+
+
+
+
+  return `/api/admin/orders`
+}
+
+/**
+ * @summary List all orders/transactions (admin role only)
+ */
+export const listAdminOrders = async ( options?: Parameters<typeof customFetch>[1]): Promise<AdminOrder[]> => {
+
+  return customFetch<AdminOrder[]>(getListAdminOrdersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminOrdersQueryKey = () => {
+    return [
+    `/api/admin/orders`
+    ] as const;
+    }
+
+
+export const getListAdminOrdersQueryOptions = <TData = Awaited<ReturnType<typeof listAdminOrders>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminOrders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminOrdersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminOrders>>> = ({ signal }) => listAdminOrders({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminOrders>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminOrdersQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminOrders>>>
+export type ListAdminOrdersQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary List all orders/transactions (admin role only)
+ */
+
+export function useListAdminOrders<TData = Awaited<ReturnType<typeof listAdminOrders>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminOrders>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminOrdersQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListAdminRsvpsUrl = () => {
 

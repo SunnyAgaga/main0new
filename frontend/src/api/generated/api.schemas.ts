@@ -131,6 +131,28 @@ export interface RsvpInput {
   note?: string;
 }
 
+export type AdminOrderType = typeof AdminOrderType[keyof typeof AdminOrderType];
+
+
+export const AdminOrderType = {
+  asoebi: 'asoebi',
+  gift: 'gift',
+} as const;
+
+export interface AdminOrder {
+  id: number;
+  reference: string;
+  type: AdminOrderType;
+  guestName: string;
+  email: string;
+  totalAmount: number;
+  currency: string;
+  paymentMethod: string;
+  status: string;
+  itemCount: number;
+  createdAt: string;
+}
+
 export interface AdminAsoebiSelection {
   asoebiItemId: number;
   asoebiSize: string;
@@ -370,6 +392,29 @@ export interface CheckoutInput {
 export interface CheckoutResponse {
   reference: string;
   checkoutUrl: string;
+}
+
+export interface VerifyCheckoutInput {
+  /** @minLength 1 */
+  reference: string;
+  /** @minLength 1 */
+  transactionId: string;
+}
+
+export type OrderStatusType = typeof OrderStatusType[keyof typeof OrderStatusType];
+
+
+export const OrderStatusType = {
+  asoebi: 'asoebi',
+  gift: 'gift',
+} as const;
+
+export interface OrderStatus {
+  reference: string;
+  status: string;
+  totalAmount: number;
+  currency: string;
+  type: OrderStatusType;
 }
 
 export interface BankTransferResponse {

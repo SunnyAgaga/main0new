@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
-import { LayoutDashboard, LogOut, Settings, Users, Truck, Bell, Music, ShoppingBag, Palette, ClipboardList, FileEdit } from 'lucide-react';
+import { LayoutDashboard, LogOut, Settings, Users, Truck, Bell, Music, ShoppingBag, Palette, ClipboardList, FileEdit, Receipt } from 'lucide-react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarFooter, SidebarTrigger } from '@/components/ui/sidebar';
 import { useGetSiteSettings } from '@/api';
 
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard, adminOnly: false },
   { href: '/dashboard/rsvps', label: 'RSVPs', icon: ClipboardList, adminOnly: true },
   { href: '/dashboard/rsvp-form', label: 'RSVP Form', icon: FileEdit, adminOnly: true },
+  { href: '/dashboard/orders', label: 'Orders', icon: Receipt, adminOnly: true },
   { href: '/dashboard/site-settings', label: 'Site Settings', icon: Palette, adminOnly: true },
   { href: '/dashboard/asoebi', label: 'Asoebi Catalog', icon: ShoppingBag, adminOnly: true },
   { href: '/dashboard/payments', label: 'Payment Settings', icon: Settings, adminOnly: true },

@@ -356,6 +356,27 @@ export const CreateGiftBankTransferOrderResponse = zod.object({
 
 
 /**
+ * @summary Verify a Flutterwave transaction directly with Flutterwave and sync the order's status
+ */
+
+
+
+
+export const VerifyCheckoutBody = zod.object({
+  "reference": zod.string().min(1),
+  "transactionId": zod.string().min(1)
+})
+
+export const VerifyCheckoutResponse = zod.object({
+  "reference": zod.string(),
+  "status": zod.string(),
+  "totalAmount": zod.number(),
+  "currency": zod.string(),
+  "type": zod.enum(['asoebi', 'gift'])
+})
+
+
+/**
  * @summary Get dashboard summary
  */
 export const GetAdminOverviewResponse = zod.object({
@@ -460,6 +481,25 @@ export const DeleteAdminUserParams = zod.object({
 })
 
 export const DeleteAdminUserResponse = zod.void()
+
+
+/**
+ * @summary List all orders/transactions (admin role only)
+ */
+export const ListAdminOrdersResponseItem = zod.object({
+  "id": zod.number(),
+  "reference": zod.string(),
+  "type": zod.enum(['asoebi', 'gift']),
+  "guestName": zod.string(),
+  "email": zod.string(),
+  "totalAmount": zod.number(),
+  "currency": zod.string(),
+  "paymentMethod": zod.string(),
+  "status": zod.string(),
+  "itemCount": zod.number(),
+  "createdAt": zod.string()
+})
+export const ListAdminOrdersResponse = zod.array(ListAdminOrdersResponseItem)
 
 
 /**
