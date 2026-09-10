@@ -224,6 +224,7 @@ function toAdminOrder(order: Order) {
     guestName: order.guestName,
     email: order.email,
     totalAmount: order.totalAmount,
+    giftAmount: order.giftAmount,
     currency: order.currency,
     paymentMethod: order.paymentMethod,
     status: order.status,

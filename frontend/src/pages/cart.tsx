@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useSearch } from 'wouter';
-import { useStartFlutterwaveCheckout, useCreateBankTransferOrder, type RsvpResult } from '@/api';
+import { useLocation, useSearch } from 'wouter';
+import { useStartFlutterwaveCheckout, useCreateBankTransferOrder, useGetPaymentMethods, type RsvpResult } from '@/api';
 import { PaymentReturnScreen, isPaymentReturn } from '@/components/payment-return-screen';
 
 import { Button } from '@/components/ui/button';
@@ -9,15 +9,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Landmark, ArrowLeft, Gift } from 'lucide-react';
 
+interface GiftPrefill {
+  guestName: string;
+  email: string;
+  amount: number;
+}
+
 export default function CartPage() {
   const [, setLocation] = useLocation();
   const search = useSearch();
   const { toast } = useToast();
   const [rsvpData, setRsvpData] = useState<RsvpResult | null>(null);
-  const [hasGiftPending, setHasGiftPending] = useState(false);
+  const [giftPrefill, setGiftPrefill] = useState<GiftPrefill | null>(null);
 
   const flutterwaveMutation = useStartFlutterwaveCheckout();
   const bankTransferMutation = useCreateBankTransferOrder();
+  const { data: paymentMethods } = useGetPaymentMethods();
 
   const [bankDetails, setBankDetails] = useState<{
     reference: string;
@@ -49,7 +56,14 @@ export default function CartPage() {
       setLocation('/');
     }
 
-    setHasGiftPending(Boolean(sessionStorage.getItem('wedplan_gift_prefill')));
+    const rawGift = sessionStorage.getItem('wedplan_gift_prefill');
+    if (rawGift) {
+      try {
+        setGiftPrefill(JSON.parse(rawGift) as GiftPrefill);
+      } catch {
+        // ignore malformed prefill data
+      }
+    }
   }, [setLocation]);
 
   if (paymentReturn) {
@@ -66,7 +80,9 @@ export default function CartPage() {
 
   const items = rsvpData.cartItems;
   const currency = items[0].currency;
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const giftAmount = giftPrefill?.amount ?? 0;
+  const total = subtotal + giftAmount;
 
   const checkoutItems = items.map((item) => ({
     guestName: item.guestName,
@@ -81,9 +97,11 @@ export default function CartPage() {
         guestName: rsvpData.guestName,
         email: rsvpData.email,
         items: checkoutItems,
+        giftAmount: giftAmount || undefined,
       }
     }, {
       onSuccess: (res) => {
+        sessionStorage.removeItem('wedplan_gift_prefill');
         window.location.href = res.checkoutUrl;
       },
       onError: (err) => {
@@ -103,9 +121,11 @@ export default function CartPage() {
         guestName: rsvpData.guestName,
         email: rsvpData.email,
         items: checkoutItems,
+        giftAmount: giftAmount || undefined,
       }
     }, {
       onSuccess: (res) => {
+        sessionStorage.removeItem('wedplan_gift_prefill');
         setBankDetails(res);
       },
       onError: (err) => {
@@ -196,8 +216,14 @@ export default function CartPage() {
               <div className="p-6 space-y-4">
                 <div className="flex justify-between items-center text-muted-foreground">
                   <span>Subtotal ({items.length} {items.length === 1 ? 'item' : 'items'})</span>
-                  <span>{currency} {total.toLocaleString()}</span>
+                  <span>{currency} {subtotal.toLocaleString()}</span>
                 </div>
+                {giftAmount > 0 && (
+                  <div className="flex justify-between items-center text-muted-foreground">
+                    <span className="flex items-center gap-1.5"><Gift className="w-3.5 h-3.5" /> Gift</span>
+                    <span>{currency} {giftAmount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center font-bold text-lg border-t border-border pt-4">
                   <span>Total</span>
                   <span className="text-primary">{currency} {total.toLocaleString()}</span>
@@ -221,19 +247,6 @@ export default function CartPage() {
             </Card>
           )}
 
-          {hasGiftPending && (
-            <Card className="border-none shadow-sm bg-card">
-              <CardContent className="p-4 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-sm text-foreground">
-                  <Gift className="w-4 h-4 text-primary" />
-                  You also wanted to send a gift.
-                </div>
-                <Link href="/gift" className="text-sm font-medium text-primary hover:underline underline-offset-4 whitespace-nowrap">
-                  Complete it →
-                </Link>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         {/* Payment Options */}
@@ -241,41 +254,53 @@ export default function CartPage() {
           <h2 className="text-xl font-serif font-bold text-foreground">Payment Method</h2>
           <div className="space-y-4">
 
-            <Card className="border-border hover:border-primary/50 transition-colors cursor-pointer" onClick={handleFlutterwave}>
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-[#F5A623]/10 flex items-center justify-center shrink-0">
-                  <CreditCard className="w-6 h-6 text-[#F5A623]" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-foreground">Pay online (Flutterwave)</h4>
-                  <p className="text-sm text-muted-foreground">Instant confirmation via Card, USSD, or Bank Transfer</p>
-                </div>
-                {flutterwaveMutation.isPending ? (
-                  <span className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                ) : null}
-              </CardContent>
-            </Card>
+            {paymentMethods?.flutterwaveEnabled && (
+              <Card className="border-border hover:border-primary/50 transition-colors cursor-pointer" onClick={handleFlutterwave}>
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-[#F5A623]/10 flex items-center justify-center shrink-0">
+                    <CreditCard className="w-6 h-6 text-[#F5A623]" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground">Pay online (Flutterwave)</h4>
+                    <p className="text-sm text-muted-foreground">Instant confirmation via Card, USSD, or Bank Transfer</p>
+                  </div>
+                  {flutterwaveMutation.isPending ? (
+                    <span className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  ) : null}
+                </CardContent>
+              </Card>
+            )}
 
-            <div className="relative flex py-2 items-center">
-              <div className="flex-grow border-t border-border"></div>
-              <span className="flex-shrink-0 mx-4 text-muted-foreground text-sm font-medium">OR</span>
-              <div className="flex-grow border-t border-border"></div>
-            </div>
+            {paymentMethods?.flutterwaveEnabled && paymentMethods?.bankTransferEnabled && (
+              <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-border"></div>
+                <span className="flex-shrink-0 mx-4 text-muted-foreground text-sm font-medium">OR</span>
+                <div className="flex-grow border-t border-border"></div>
+              </div>
+            )}
 
-            <Card className="border-border hover:border-primary/50 transition-colors cursor-pointer" onClick={handleBankTransfer}>
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Landmark className="w-6 h-6 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold text-foreground">Manual Bank Transfer</h4>
-                  <p className="text-sm text-muted-foreground">We will verify your payment manually</p>
-                </div>
-                {bankTransferMutation.isPending ? (
-                  <span className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                ) : null}
-              </CardContent>
-            </Card>
+            {paymentMethods?.bankTransferEnabled && (
+              <Card className="border-border hover:border-primary/50 transition-colors cursor-pointer" onClick={handleBankTransfer}>
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Landmark className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground">Manual Bank Transfer</h4>
+                    <p className="text-sm text-muted-foreground">We will verify your payment manually</p>
+                  </div>
+                  {bankTransferMutation.isPending ? (
+                    <span className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  ) : null}
+                </CardContent>
+              </Card>
+            )}
+
+            {paymentMethods && !paymentMethods.flutterwaveEnabled && !paymentMethods.bankTransferEnabled && (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                No payment method is available right now. Please contact the couple directly.
+              </p>
+            )}
 
           </div>
         </div>

@@ -7,6 +7,7 @@ import {
   useStartGiftFlutterwaveCheckout,
   useCreateGiftBankTransferOrder,
   useGetEvent,
+  useGetPaymentMethods,
 } from '@/api';
 import { PaymentReturnScreen, isPaymentReturn } from '@/components/payment-return-screen';
 
@@ -37,6 +38,7 @@ export default function GiftPage() {
 
   const flutterwaveMutation = useStartGiftFlutterwaveCheckout();
   const bankTransferMutation = useCreateGiftBankTransferOrder();
+  const { data: paymentMethods } = useGetPaymentMethods();
 
   const [bankDetails, setBankDetails] = useState<{
     reference: string;
@@ -242,27 +244,36 @@ export default function GiftPage() {
                 />
 
                 <div className="space-y-3 pt-2">
-                  <Button
-                    type="button"
-                    size="lg"
-                    className="w-full h-14 text-lg rounded-xl"
-                    disabled={flutterwaveMutation.isPending}
-                    onClick={handleFlutterwave}
-                  >
-                    <CreditCard className="w-5 h-5 mr-2" />
-                    {flutterwaveMutation.isPending ? 'Redirecting…' : 'Pay Online (Flutterwave)'}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="lg"
-                    variant="outline"
-                    className="w-full h-14 text-lg rounded-xl"
-                    disabled={bankTransferMutation.isPending}
-                    onClick={handleBankTransfer}
-                  >
-                    <Landmark className="w-5 h-5 mr-2" />
-                    {bankTransferMutation.isPending ? 'Generating…' : 'Pay by Bank Transfer'}
-                  </Button>
+                  {paymentMethods?.flutterwaveEnabled && (
+                    <Button
+                      type="button"
+                      size="lg"
+                      className="w-full h-14 text-lg rounded-xl"
+                      disabled={flutterwaveMutation.isPending}
+                      onClick={handleFlutterwave}
+                    >
+                      <CreditCard className="w-5 h-5 mr-2" />
+                      {flutterwaveMutation.isPending ? 'Redirecting…' : 'Pay Online (Flutterwave)'}
+                    </Button>
+                  )}
+                  {paymentMethods?.bankTransferEnabled && (
+                    <Button
+                      type="button"
+                      size="lg"
+                      variant="outline"
+                      className="w-full h-14 text-lg rounded-xl"
+                      disabled={bankTransferMutation.isPending}
+                      onClick={handleBankTransfer}
+                    >
+                      <Landmark className="w-5 h-5 mr-2" />
+                      {bankTransferMutation.isPending ? 'Generating…' : 'Pay by Bank Transfer'}
+                    </Button>
+                  )}
+                  {paymentMethods && !paymentMethods.flutterwaveEnabled && !paymentMethods.bankTransferEnabled && (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      No payment method is available right now. Please contact the couple directly.
+                    </p>
+                  )}
                 </div>
               </form>
             </Form>

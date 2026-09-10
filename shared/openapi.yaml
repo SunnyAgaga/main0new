@@ -887,6 +887,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /payment-methods:
+    get:
+      operationId: getPaymentMethods
+      tags: [event]
+      summary: Get which payment methods guests can currently use
+      responses:
+        "200":
+          description: Available payment methods
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentMethods"
   /site-settings:
     get:
       operationId: getSiteSettings
@@ -1168,7 +1180,7 @@ components:
         note: { type: string }
     AdminOrder:
       type: object
-      required: [id, reference, type, guestName, email, totalAmount, currency, paymentMethod, status, itemCount, createdAt]
+      required: [id, reference, type, guestName, email, totalAmount, giftAmount, currency, paymentMethod, status, itemCount, createdAt]
       properties:
         id: { type: number }
         reference: { type: string }
@@ -1176,6 +1188,7 @@ components:
         guestName: { type: string }
         email: { type: string }
         totalAmount: { type: number }
+        giftAmount: { type: number }
         currency: { type: string }
         paymentMethod: { type: string }
         status: { type: string }
@@ -1359,6 +1372,8 @@ components:
           minItems: 1
           items:
             $ref: "#/components/schemas/CheckoutItemInput"
+        giftAmount: { type: number, minimum: 0 }
+        giftMessage: { type: string }
     CheckoutResponse:
       type: object
       required: [reference, checkoutUrl]
@@ -1391,6 +1406,12 @@ components:
         accountName: { type: string }
         accountNumber: { type: string }
         instructions: { type: string }
+    PaymentMethods:
+      type: object
+      required: [flutterwaveEnabled, bankTransferEnabled]
+      properties:
+        flutterwaveEnabled: { type: boolean }
+        bankTransferEnabled: { type: boolean }
     PaymentConfig:
       type: object
       required: [flutterwaveConfigured, bankTransferConfigured, flutterwaveKeyHint, webhookUrl, webhookSecretConfigured, bankTransfer]
