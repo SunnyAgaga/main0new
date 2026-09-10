@@ -25,8 +25,16 @@ function getRedirectUri(req: Request): string {
   // proxying /api to the backend. Spotify must redirect the browser to the
   // Vite origin so the round trip goes back through that proxy. In production
   // the backend serves the frontend itself, so req's own host is correct.
+  //
+  // Spotify no longer accepts "localhost" as a redirect URI (April 2025 policy):
+  // loopback addresses must be the explicit IPv4/IPv6 literal. Use 127.0.0.1
+  // rather than req.hostname, since Vite's dev proxy (changeOrigin: true)
+  // rewrites the Host header the backend sees to its own proxy target anyway.
+  // The dashboard must be opened via http://127.0.0.1:<port>, not localhost,
+  // so the session/state cookies set during connect are also sent back on the
+  // callback that Spotify redirects to.
   if (process.env.NODE_ENV !== "production" && process.env.FRONTEND_PORT) {
-    return `${req.protocol}://${req.hostname}:${process.env.FRONTEND_PORT}/api/spotify/callback`;
+    return `${req.protocol}://127.0.0.1:${process.env.FRONTEND_PORT}/api/spotify/callback`;
   }
   return `${req.protocol}://${req.get("host")}/api/spotify/callback`;
 }

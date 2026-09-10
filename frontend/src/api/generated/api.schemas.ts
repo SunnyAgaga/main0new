@@ -579,6 +579,14 @@ export interface NotificationConfigInput {
   twilioFromNumber: string;
 }
 
+export interface TestEmailInput {
+  to: string;
+}
+
+export interface TestEmailResponse {
+  delivered: boolean;
+}
+
 export interface MusicTrack {
   /** @minLength 1 */
   title: string;

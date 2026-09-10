@@ -166,6 +166,11 @@ function SpotifyCard() {
               <p className="text-[0.8rem] text-muted-foreground">
                 Paste this into your Spotify Developer Dashboard app's Redirect URIs before connecting.
               </p>
+              {import.meta.env.DEV && (
+                <p className="text-[0.8rem] text-amber-600">
+                  In local development, open this dashboard at http://127.0.0.1:{window.location.port} (not localhost) before clicking Connect — Spotify no longer accepts "localhost" and the sign-in cookie needs to match the address Spotify redirects back to.
+                </p>
+              )}
             </div>
 
             <Button type="submit" disabled={updateConfig.isPending}>

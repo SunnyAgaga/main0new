@@ -999,6 +999,48 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/notification-config/test-email:
+    post:
+      operationId: sendTestEmail
+      tags: [admin]
+      summary: Send a test email using the saved Mailgun configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestEmailInput"
+      responses:
+        "200":
+          description: Test email delivery result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TestEmailResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Email is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /rsvp-form-copy:
     get:
       operationId: getRsvpFormCopy
@@ -1711,6 +1753,16 @@ components:
         twilioAccountSid: { type: string }
         twilioAuthToken: { type: string }
         twilioFromNumber: { type: string }
+    TestEmailInput:
+      type: object
+      required: [to]
+      properties:
+        to: { type: string }
+    TestEmailResponse:
+      type: object
+      required: [delivered]
+      properties:
+        delivered: { type: boolean }
     MusicTrack:
       type: object
       required: [title, url]
