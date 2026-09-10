@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
-import { saveUploadedImage, uploadedImagesCollection } from "@/db";
+import { ObjectId } from "mongodb";
+import { saveUploadedImage, uploadedImagesCollection, audioBucket } from "@/db";
 import { requirePermission } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -17,12 +18,11 @@ const upload = multer({
   },
 });
 
-// Stored the same way as images (base64 in Mongo) for consistency, but capped
-// smaller: a raw file this size base64-encodes to ~13.3MB, staying safely
-// under MongoDB's 16MB per-document BSON limit alongside the rest of the doc.
+const AUDIO_MAX_BYTES = 20 * 1024 * 1024;
+
 const audioUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: AUDIO_MAX_BYTES },
   fileFilter: (_req, file, cb) => {
     if (!file.mimetype.startsWith("audio/")) {
       cb(new Error("Only audio files are allowed"));
@@ -51,11 +51,11 @@ router.post("/admin/uploads", requirePermission("site-settings"), (req, res): vo
 });
 
 router.post("/admin/uploads/audio", requirePermission("music"), (req, res): void => {
-  audioUpload.single("file")(req, res, async (err: unknown) => {
+  audioUpload.single("file")(req, res, (err: unknown) => {
     if (err) {
       const message =
         err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
-          ? "Audio file is too large (10MB max)."
+          ? "Audio file is too large (20MB max)."
           : err instanceof Error
             ? err.message
             : "Upload failed";
@@ -67,9 +67,18 @@ router.post("/admin/uploads/audio", requirePermission("music"), (req, res): void
       return;
     }
 
-    const audio = await saveUploadedImage(req.file.mimetype, req.file.buffer.toString("base64"));
-    req.log.info({ id: audio.id, size: req.file.size }, "Audio track uploaded");
-    res.status(201).json({ url: `/api/uploads/${audio.id}` });
+    const uploadStream = audioBucket().openUploadStream(req.file.originalname, {
+      contentType: req.file.mimetype,
+    });
+    uploadStream.on("error", (streamErr) => {
+      req.log.error({ err: streamErr }, "Audio upload to GridFS failed");
+      if (!res.headersSent) res.status(500).json({ error: "Upload failed" });
+    });
+    uploadStream.on("finish", () => {
+      req.log.info({ id: uploadStream.id.toString(), size: req.file?.size }, "Audio track uploaded");
+      res.status(201).json({ url: `/api/uploads/audio/${uploadStream.id.toString()}` });
+    });
+    uploadStream.end(req.file.buffer);
   });
 });
 
@@ -83,6 +92,32 @@ router.get("/uploads/:id", async (req, res): Promise<void> => {
   res.set("Content-Type", image.contentType);
   res.set("Cache-Control", "public, max-age=31536000, immutable");
   res.send(Buffer.from(image.base64, "base64"));
+});
+
+router.get("/uploads/audio/:id", async (req, res): Promise<void> => {
+  let objectId: ObjectId;
+  try {
+    objectId = new ObjectId(req.params.id);
+  } catch {
+    res.status(404).end();
+    return;
+  }
+
+  const bucket = audioBucket();
+  const [file] = await bucket.find({ _id: objectId }).toArray();
+  if (!file) {
+    res.status(404).end();
+    return;
+  }
+
+  res.set("Content-Type", file.contentType || "audio/mpeg");
+  res.set("Cache-Control", "public, max-age=31536000, immutable");
+  bucket
+    .openDownloadStream(objectId)
+    .on("error", () => {
+      if (!res.headersSent) res.status(404).end();
+    })
+    .pipe(res);
 });
 
 export default router;
