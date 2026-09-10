@@ -69,6 +69,8 @@ export * from './siteSettingsInput';
 export * from './spotifyConfig';
 export * from './spotifyConfigInput';
 export * from './spotifyPlaylist';
+export * from './testEmailInput';
+export * from './testEmailResponse';
 export * from './updateAdminUserInput';
 export * from './updateAdminUserInputRole';
 export * from './updateOrderFulfillmentInput';

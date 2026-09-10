@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -6,8 +6,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   useGetNotificationConfig,
   useUpdateNotificationConfig,
+  useSendTestEmail,
   getGetNotificationConfigQueryKey,
 } from '@/api';
+import { useAuth } from '@/lib/auth';
 
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -16,7 +18,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle2, Lock } from 'lucide-react';
+import { CheckCircle2, Lock, Send } from 'lucide-react';
 
 const notificationConfigSchema = z.object({
   emailEnabled: z.boolean(),
@@ -34,9 +36,12 @@ type NotificationConfigValues = z.infer<typeof notificationConfigSchema>;
 export default function DashboardNotifications() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { data: config, isLoading } = useGetNotificationConfig();
   const updateConfig = useUpdateNotificationConfig();
+  const sendTestEmail = useSendTestEmail();
   const initialized = useRef(false);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
 
   const form = useForm<NotificationConfigValues>({
     resolver: zodResolver(notificationConfigSchema),
@@ -67,6 +72,34 @@ export default function DashboardNotifications() {
       });
     }
   }, [config, form]);
+
+  useEffect(() => {
+    if (user?.email && !testEmailAddress) setTestEmailAddress(user.email);
+  }, [user, testEmailAddress]);
+
+  const handleSendTestEmail = () => {
+    const to = testEmailAddress.trim();
+    if (!to) {
+      toast({ variant: 'destructive', title: 'Enter an email address to send the test to' });
+      return;
+    }
+    sendTestEmail.mutate({ data: { to } }, {
+      onSuccess: (result) => {
+        toast(
+          result.delivered
+            ? { title: 'Test email sent', description: `Delivered to ${to}.` }
+            : { variant: 'destructive', title: 'Test email failed', description: 'Mailgun rejected the request — check your API key and domain.' },
+        );
+      },
+      onError: (err) => {
+        toast({
+          variant: 'destructive',
+          title: 'Could not send test email',
+          description: err.data?.error || 'An error occurred.',
+        });
+      },
+    });
+  };
 
   const onSubmit = (values: NotificationConfigValues) => {
     updateConfig.mutate({
@@ -193,6 +226,34 @@ export default function DashboardNotifications() {
                   </FormItem>
                 )}
               />
+
+              {config?.emailConfigured && (
+                <div className="pt-2 border-t border-border space-y-2">
+                  <label className="text-sm font-medium leading-none">Send a Test Email</label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      type="email"
+                      placeholder="you@example.com"
+                      value={testEmailAddress}
+                      onChange={(e) => setTestEmailAddress(e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={sendTestEmail.isPending || !config.emailEnabled}
+                      onClick={handleSendTestEmail}
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      {sendTestEmail.isPending ? 'Sending…' : 'Send Test Email'}
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {config.emailEnabled
+                      ? 'Confirms your saved Mailgun configuration can actually deliver mail.'
+                      : 'Turn on email above and save to enable test sending.'}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

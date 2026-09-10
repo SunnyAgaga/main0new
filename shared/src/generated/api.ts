@@ -840,6 +840,18 @@ export const UpdateNotificationConfigResponse = zod.object({
 
 
 /**
+ * @summary Send a test email using the saved Mailgun configuration
+ */
+export const SendTestEmailBody = zod.object({
+  "to": zod.string()
+})
+
+export const SendTestEmailResponse = zod.object({
+  "delivered": zod.boolean()
+})
+
+
+/**
  * @summary Get the editable text shown on the public RSVP form
  */
 export const GetRsvpFormCopyResponse = zod.object({
