@@ -457,7 +457,7 @@ export default function DashboardMusic() {
                     onClick={() => audioInputRef.current?.click()}
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    {uploading ? 'Uploading…' : 'Upload an Audio File (max 10MB)'}
+                    {uploading ? 'Uploading…' : 'Upload an Audio File (max 20MB)'}
                   </Button>
                   <Button type="submit" className="w-full" disabled={updateSettings.isPending}>
                     {updateSettings.isPending ? 'Adding…' : 'Add Track'}
