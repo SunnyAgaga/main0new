@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -14,6 +14,7 @@ import {
   getListSpotifyPlaylistsQueryKey,
   useImportSpotifyPlaylist,
 } from '@/api';
+import { customFetch, ApiError } from '@/api/custom-fetch';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,11 +31,47 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Music, Plus, Trash2, Copy, CheckCircle2, Download } from 'lucide-react';
+import { Music, Plus, Trash2, Copy, CheckCircle2, Download, Upload } from 'lucide-react';
+
+function useAudioUpload() {
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
+
+  const upload = async (file: File): Promise<string | null> => {
+    setUploading(true);
+    try {
+      const result = await customFetch<{ url: string }>('/api/admin/uploads/audio', {
+        method: 'POST',
+        body: (() => {
+          const formData = new FormData();
+          formData.append('file', file);
+          return formData;
+        })(),
+      });
+      return result.url;
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Upload failed',
+        description: err instanceof ApiError ? (err.data as { error?: string } | null)?.error || err.message : 'An error occurred.',
+      });
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return { upload, uploading };
+}
 
 const trackSchema = z.object({
   title: z.string().min(1, 'Title is required'),
-  url: z.string().min(1, 'URL is required').url('Must be a valid URL'),
+  url: z
+    .string()
+    .min(1, 'URL is required')
+    // Accepts both a pasted absolute URL and the relative /api/uploads/:id
+    // path returned by the audio upload button below.
+    .refine((v) => v.startsWith('/') || /^https?:\/\//.test(v), 'Must be a valid URL'),
 });
 
 type TrackValues = z.infer<typeof trackSchema>;
@@ -238,6 +275,8 @@ export default function DashboardMusic() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { upload, uploading } = useAudioUpload();
+  const audioInputRef = useRef<HTMLInputElement>(null);
 
   const { data: settings, isLoading } = useGetSiteSettings();
   const updateSettings = useUpdateSiteSettings();
@@ -246,6 +285,16 @@ export default function DashboardMusic() {
     resolver: zodResolver(trackSchema),
     defaultValues: { title: '', url: '' },
   });
+
+  const handleAudioFileSelected = async (file: File) => {
+    const url = await upload(file);
+    if (!url) return;
+    form.setValue('url', url, { shouldValidate: true });
+    if (!form.getValues('title')) {
+      form.setValue('title', file.name.replace(/\.[^./]+$/, ''));
+    }
+    toast({ title: 'Audio file uploaded' });
+  };
 
   const save = (playlist: { title: string; url: string }[], musicEnabled: boolean, successMessage: string) => {
     updateSettings.mutate({
@@ -384,6 +433,32 @@ export default function DashboardMusic() {
                       </FormItem>
                     )}
                   />
+                  <div className="flex items-center gap-2">
+                    <div className="h-px flex-1 bg-border" />
+                    <span className="text-xs text-muted-foreground">or</span>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+                  <input
+                    ref={audioInputRef}
+                    type="file"
+                    accept="audio/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = '';
+                      if (file) void handleAudioFileSelected(file);
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    disabled={uploading}
+                    onClick={() => audioInputRef.current?.click()}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {uploading ? 'Uploading…' : 'Upload an Audio File (max 10MB)'}
+                  </Button>
                   <Button type="submit" className="w-full" disabled={updateSettings.isPending}>
                     {updateSettings.isPending ? 'Adding…' : 'Add Track'}
                   </Button>
