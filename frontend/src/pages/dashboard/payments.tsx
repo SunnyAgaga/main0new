@@ -22,11 +22,20 @@ const paymentConfigSchema = z.object({
   flutterwaveWebhookSecret: z.string().optional(),
   bankTransferEnabled: z.boolean(),
   bankTransfer: z.object({
-    bankName: z.string().min(2, "Bank name required"),
-    accountName: z.string().min(2, "Account name required"),
-    accountNumber: z.string().min(5, "Account number required"),
+    bankName: z.string(),
+    accountName: z.string(),
+    accountNumber: z.string(),
     instructions: z.string()
   })
+}).refine(data => !data.bankTransferEnabled || data.bankTransfer.bankName.trim().length >= 2, {
+  message: "Bank name required",
+  path: ["bankTransfer", "bankName"],
+}).refine(data => !data.bankTransferEnabled || data.bankTransfer.accountName.trim().length >= 2, {
+  message: "Account name required",
+  path: ["bankTransfer", "accountName"],
+}).refine(data => !data.bankTransferEnabled || data.bankTransfer.accountNumber.trim().length >= 5, {
+  message: "Account number required",
+  path: ["bankTransfer", "accountNumber"],
 });
 
 type PaymentConfigValues = z.infer<typeof paymentConfigSchema>;
@@ -121,7 +130,16 @@ export default function DashboardPayments() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-3xl">
+        <form
+          onSubmit={form.handleSubmit(onSubmit, () => {
+            toast({
+              variant: 'destructive',
+              title: 'Could not save',
+              description: 'Please check the highlighted fields and try again.',
+            });
+          })}
+          className="space-y-8 max-w-3xl"
+        >
           
           {/* Flutterwave Card */}
           <Card className="border-none shadow-sm bg-card">
