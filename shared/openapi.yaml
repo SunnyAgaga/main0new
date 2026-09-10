@@ -682,6 +682,53 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/orders/{id}/fulfillment:
+    put:
+      operationId: updateOrderFulfillment
+      tags: [admin]
+      summary: Mark an asoebi order as picked up/delivered or reset it back to pending
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrderFulfillmentInput"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOrder"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /admin/rsvps:
     get:
       operationId: listAdminRsvps
@@ -1226,7 +1273,7 @@ components:
         note: { type: string }
     AdminOrder:
       type: object
-      required: [id, reference, type, guestName, email, totalAmount, giftAmount, currency, paymentMethod, status, itemCount, createdAt]
+      required: [id, reference, type, guestName, email, totalAmount, giftAmount, currency, paymentMethod, status, itemCount, createdAt, deliveryMethod, fulfillmentStatus, fulfilledAt]
       properties:
         id: { type: number }
         reference: { type: string }
@@ -1240,6 +1287,16 @@ components:
         status: { type: string }
         itemCount: { type: number }
         createdAt: { type: string }
+        deliveryMethod:
+          type: ["string", "null"]
+          enum: [pickup, delivery, null]
+        fulfillmentStatus: { type: string, enum: [pending, delivered] }
+        fulfilledAt: { type: ["string", "null"] }
+    UpdateOrderFulfillmentInput:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [pending, delivered] }
     AdminAsoebiSelection:
       type: object
       required: [asoebiItemId, asoebiSize, quantity]

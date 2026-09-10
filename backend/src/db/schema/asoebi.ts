@@ -81,6 +81,8 @@ export interface Order {
   currency: string;
   paymentMethod: string;
   status: string;
+  fulfillmentStatus: "pending" | "delivered";
+  fulfilledAt: Date | null;
   createdAt: Date;
 }
 
@@ -262,6 +264,8 @@ export const insertOrderSchema = z.object({
   currency: z.string().default("NGN"),
   paymentMethod: z.string(),
   status: z.string().default("pending"),
+  fulfillmentStatus: z.enum(["pending", "delivered"]).default("pending"),
+  fulfilledAt: z.date().nullable().default(null),
 });
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
@@ -335,6 +339,26 @@ export async function insertOrder(input: InsertOrder): Promise<Order> {
   };
   await ordersCollection().insertOne(doc);
   return doc;
+}
+
+export async function updateOrderFulfillment(
+  id: number,
+  status: "pending" | "delivered",
+): Promise<Order | null> {
+  return ordersCollection().findOneAndUpdate(
+    { id },
+    { $set: { fulfillmentStatus: status, fulfilledAt: status === "delivered" ? new Date() : null } },
+    { returnDocument: "after" },
+  );
+}
+
+/** Marks an order delivered by its payment reference, e.g. from a courier webhook. */
+export async function markOrderDeliveredByReference(reference: string): Promise<Order | null> {
+  return ordersCollection().findOneAndUpdate(
+    { reference },
+    { $set: { fulfillmentStatus: "delivered", fulfilledAt: new Date() } },
+    { returnDocument: "after" },
+  );
 }
 
 export async function upsertPaymentConfig(

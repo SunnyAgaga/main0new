@@ -14,6 +14,9 @@ import {
   UpdateAdminUserBody,
   UpdateAdminUserParams,
   UpdateAdminUserResponse,
+  UpdateOrderFulfillmentBody,
+  UpdateOrderFulfillmentParams,
+  UpdateOrderFulfillmentResponse,
   UpdatePaymentConfigBody,
   UpdatePaymentConfigResponse,
 } from "@wedplan/shared";
@@ -25,6 +28,7 @@ import {
   ordersCollection,
   paymentConfigsCollection,
   rsvpsCollection,
+  updateOrderFulfillment,
   updateRsvp,
   updateUserAccess,
   upsertPaymentConfig,
@@ -276,6 +280,9 @@ function toAdminOrder(order: Order) {
     status: order.status,
     itemCount: order.items.length,
     createdAt: order.createdAt.toISOString(),
+    deliveryMethod: order.deliveryMethod ?? null,
+    fulfillmentStatus: order.fulfillmentStatus ?? "pending",
+    fulfilledAt: order.fulfilledAt ? order.fulfilledAt.toISOString() : null,
   };
 }
 
@@ -283,6 +290,36 @@ router.get("/admin/orders", requirePermission("orders"), async (_req, res): Prom
   const orders = await ordersCollection().find({}).sort({ createdAt: -1 }).toArray();
   res.json(ListAdminOrdersResponse.parse(orders.map(toAdminOrder)));
 });
+
+router.put(
+  "/admin/orders/:id/fulfillment",
+  requirePermission("orders"),
+  async (req, res): Promise<void> => {
+    const paramsResult = UpdateOrderFulfillmentParams.safeParse(req.params);
+    if (!paramsResult.success) {
+      res.status(400).json({ error: paramsResult.error.message });
+      return;
+    }
+
+    const parsed = UpdateOrderFulfillmentBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.message });
+      return;
+    }
+
+    const updated = await updateOrderFulfillment(paramsResult.data.id, parsed.data.status);
+    if (!updated) {
+      res.status(404).json({ error: "Order not found." });
+      return;
+    }
+
+    req.log.info(
+      { orderId: paramsResult.data.id, status: parsed.data.status },
+      "Order fulfillment status updated",
+    );
+    res.json(UpdateOrderFulfillmentResponse.parse(toAdminOrder(updated)));
+  },
+);
 
 router.get("/admin/rsvps", requirePermission("rsvps"), async (_req, res): Promise<void> => {
   const rsvps = await rsvpsCollection().find({}).sort({ createdAt: -1 }).toArray();

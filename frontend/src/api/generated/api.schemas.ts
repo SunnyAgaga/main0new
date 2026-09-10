@@ -139,6 +139,25 @@ export const AdminOrderType = {
   gift: 'gift',
 } as const;
 
+/**
+ * @nullable
+ */
+export type AdminOrderDeliveryMethod = typeof AdminOrderDeliveryMethod[keyof typeof AdminOrderDeliveryMethod] | null;
+
+
+export const AdminOrderDeliveryMethod = {
+  pickup: 'pickup',
+  delivery: 'delivery',
+} as const;
+
+export type AdminOrderFulfillmentStatus = typeof AdminOrderFulfillmentStatus[keyof typeof AdminOrderFulfillmentStatus];
+
+
+export const AdminOrderFulfillmentStatus = {
+  pending: 'pending',
+  delivered: 'delivered',
+} as const;
+
 export interface AdminOrder {
   id: number;
   reference: string;
@@ -152,6 +171,23 @@ export interface AdminOrder {
   status: string;
   itemCount: number;
   createdAt: string;
+  /** @nullable */
+  deliveryMethod: AdminOrderDeliveryMethod;
+  fulfillmentStatus: AdminOrderFulfillmentStatus;
+  /** @nullable */
+  fulfilledAt: string | null;
+}
+
+export type UpdateOrderFulfillmentInputStatus = typeof UpdateOrderFulfillmentInputStatus[keyof typeof UpdateOrderFulfillmentInputStatus];
+
+
+export const UpdateOrderFulfillmentInputStatus = {
+  pending: 'pending',
+  delivered: 'delivered',
+} as const;
+
+export interface UpdateOrderFulfillmentInput {
+  status: UpdateOrderFulfillmentInputStatus;
 }
 
 export interface AdminAsoebiSelection {
