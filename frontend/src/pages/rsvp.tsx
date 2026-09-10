@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useListAsoebi, useCreateRsvp, useGetEvent, useGetDeliveryOptions, useGetRsvpFormCopy, type AsoebiItem } from '@/api';
 
-import { Check, Heart, Info, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, Check, Heart, Info, Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -346,6 +346,9 @@ export default function RsvpPage() {
   return (
     <div className="min-h-[100dvh] bg-background py-12 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        <Button variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={() => setLocation('/')}>
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back Home
+        </Button>
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-serif font-bold text-foreground">{copy?.pageTitle ?? 'RSVP'}</h1>
           {event && <p className="text-muted-foreground">{event.coupleNames} • {new Date(event.weddingDate).toLocaleDateString()}</p>}

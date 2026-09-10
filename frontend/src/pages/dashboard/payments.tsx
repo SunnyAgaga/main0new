@@ -22,11 +22,20 @@ const paymentConfigSchema = z.object({
   flutterwaveWebhookSecret: z.string().optional(),
   bankTransferEnabled: z.boolean(),
   bankTransfer: z.object({
-    bankName: z.string().min(2, "Bank name required"),
-    accountName: z.string().min(2, "Account name required"),
-    accountNumber: z.string().min(5, "Account number required"),
+    bankName: z.string(),
+    accountName: z.string(),
+    accountNumber: z.string(),
     instructions: z.string()
   })
+}).refine(data => !data.bankTransferEnabled || data.bankTransfer.bankName.trim().length >= 2, {
+  message: "Bank name required",
+  path: ["bankTransfer", "bankName"],
+}).refine(data => !data.bankTransferEnabled || data.bankTransfer.accountName.trim().length >= 2, {
+  message: "Account name required",
+  path: ["bankTransfer", "accountName"],
+}).refine(data => !data.bankTransferEnabled || data.bankTransfer.accountNumber.trim().length >= 5, {
+  message: "Account number required",
+  path: ["bankTransfer", "accountNumber"],
 });
 
 type PaymentConfigValues = z.infer<typeof paymentConfigSchema>;
@@ -121,7 +130,16 @@ export default function DashboardPayments() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-3xl">
+        <form
+          onSubmit={form.handleSubmit(onSubmit, () => {
+            toast({
+              variant: 'destructive',
+              title: 'Could not save',
+              description: 'Please check the highlighted fields and try again.',
+            });
+          })}
+          className="space-y-8 max-w-3xl"
+        >
           
           {/* Flutterwave Card */}
           <Card className="border-none shadow-sm bg-card">
@@ -165,7 +183,9 @@ export default function DashboardPayments() {
                       <Input type="password" placeholder={config?.flutterwaveConfigured ? "Leave blank to keep existing key" : "FLWSECK-... (live) or FLWSECK_TEST-... (test)"} {...field} />
                     </FormControl>
                     <FormDescription>
-                      Both live (production) and test secret keys are accepted. The key is saved server-side and is never returned or displayed again.
+                      From your Flutterwave dashboard under Settings &rarr; API. Both live and test secret keys work.
+                      You won't need the Public Key or Encryption Key shown on that same page &mdash; this integration
+                      only uses the Secret Key. The key is saved server-side and never displayed again.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -209,7 +229,12 @@ export default function DashboardPayments() {
                       <Input type="password" placeholder={config?.webhookSecretConfigured ? "Leave blank to keep existing secret" : "Same secret hash set in Flutterwave"} {...field} />
                     </FormControl>
                     <FormDescription>
-                      {config?.webhookSecretConfigured ? 'Webhook secret is configured.' : 'Not configured yet — payments will stay pending until this and the URL above are set.'}
+                      Not one of the three API keys &mdash; this is a value you make up yourself under Settings &rarr;
+                      Webhooks in Flutterwave (a separate page from API keys). Paste the webhook URL above into that
+                      same page, set any secret hash there, then enter that same value here.{' '}
+                      {config?.webhookSecretConfigured
+                        ? 'Currently configured.'
+                        : 'Not configured yet — payments will stay pending until this and the URL above are set.'}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
