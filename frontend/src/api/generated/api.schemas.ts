@@ -131,6 +131,28 @@ export interface RsvpInput {
   note?: string;
 }
 
+export type AdminOrderType = typeof AdminOrderType[keyof typeof AdminOrderType];
+
+
+export const AdminOrderType = {
+  asoebi: 'asoebi',
+  gift: 'gift',
+} as const;
+
+export interface AdminOrder {
+  id: number;
+  reference: string;
+  type: AdminOrderType;
+  guestName: string;
+  email: string;
+  totalAmount: number;
+  currency: string;
+  paymentMethod: string;
+  status: string;
+  itemCount: number;
+  createdAt: string;
+}
+
 export interface AdminAsoebiSelection {
   asoebiItemId: number;
   asoebiSize: string;

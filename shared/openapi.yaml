@@ -610,6 +610,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/orders:
+    get:
+      operationId: listAdminOrders
+      tags: [admin]
+      summary: List all orders/transactions (admin role only)
+      responses:
+        "200":
+          description: Orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminOrder"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /admin/rsvps:
     get:
       operationId: listAdminRsvps
@@ -1140,6 +1166,21 @@ components:
         deliveryAddress: { type: ["string", "null"] }
         deliveryProvider: { type: ["string", "null"] }
         note: { type: string }
+    AdminOrder:
+      type: object
+      required: [id, reference, type, guestName, email, totalAmount, currency, paymentMethod, status, itemCount, createdAt]
+      properties:
+        id: { type: number }
+        reference: { type: string }
+        type: { type: string, enum: [asoebi, gift] }
+        guestName: { type: string }
+        email: { type: string }
+        totalAmount: { type: number }
+        currency: { type: string }
+        paymentMethod: { type: string }
+        status: { type: string }
+        itemCount: { type: number }
+        createdAt: { type: string }
     AdminAsoebiSelection:
       type: object
       required: [asoebiItemId, asoebiSize, quantity]

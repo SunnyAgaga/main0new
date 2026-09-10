@@ -71,5 +71,8 @@
     "wouter": "^3.3.5",
     "zod": "^3.25.76"
   },
-  "dependencies": {}
+  "dependencies": {
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8"
+  }
 }

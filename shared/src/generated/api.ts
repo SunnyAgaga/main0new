@@ -484,6 +484,25 @@ export const DeleteAdminUserResponse = zod.void()
 
 
 /**
+ * @summary List all orders/transactions (admin role only)
+ */
+export const ListAdminOrdersResponseItem = zod.object({
+  "id": zod.number(),
+  "reference": zod.string(),
+  "type": zod.enum(['asoebi', 'gift']),
+  "guestName": zod.string(),
+  "email": zod.string(),
+  "totalAmount": zod.number(),
+  "currency": zod.string(),
+  "paymentMethod": zod.string(),
+  "status": zod.string(),
+  "itemCount": zod.number(),
+  "createdAt": zod.string()
+})
+export const ListAdminOrdersResponse = zod.array(ListAdminOrdersResponseItem)
+
+
+/**
  * @summary List all RSVPs (admin role only)
  */
 export const ListAdminRsvpsResponseItem = zod.object({

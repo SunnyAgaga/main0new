@@ -7,6 +7,7 @@ import {
   GetPaymentConfigResponse,
   ListAdminUsersResponse,
   ListAdminRsvpsResponse,
+  ListAdminOrdersResponse,
   UpdateAdminRsvpBody,
   UpdateAdminRsvpParams,
   UpdateAdminRsvpResponse,
@@ -23,6 +24,7 @@ import {
   updateRsvp,
   upsertPaymentConfig,
   usersCollection,
+  type Order,
   type PaymentConfig,
   type Rsvp,
 } from "@/db";
@@ -212,6 +214,27 @@ router.delete("/admin/users/:id", requireAdmin, async (req, res): Promise<void> 
   await deleteUser(parsed.data.id);
   req.log.info({ userId: parsed.data.id }, "Admin user removed");
   res.status(204).end();
+});
+
+function toAdminOrder(order: Order) {
+  return {
+    id: order.id,
+    reference: order.reference,
+    type: order.type,
+    guestName: order.guestName,
+    email: order.email,
+    totalAmount: order.totalAmount,
+    currency: order.currency,
+    paymentMethod: order.paymentMethod,
+    status: order.status,
+    itemCount: order.items.length,
+    createdAt: order.createdAt.toISOString(),
+  };
+}
+
+router.get("/admin/orders", requireAdmin, async (_req, res): Promise<void> => {
+  const orders = await ordersCollection().find({}).sort({ createdAt: -1 }).toArray();
+  res.json(ListAdminOrdersResponse.parse(orders.map(toAdminOrder)));
 });
 
 router.get("/admin/rsvps", requireAdmin, async (_req, res): Promise<void> => {
