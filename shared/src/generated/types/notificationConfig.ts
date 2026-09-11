@@ -9,8 +9,10 @@
 export interface NotificationConfig {
   emailEnabled: boolean;
   emailConfigured: boolean;
-  mailgunDomain: string;
-  mailgunFromEmail: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUsername: string;
+  smtpFromEmail: string;
   smsEnabled: boolean;
   smsConfigured: boolean;
   twilioFromNumber: string;

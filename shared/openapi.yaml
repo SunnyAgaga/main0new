@@ -1054,7 +1054,7 @@ paths:
     post:
       operationId: sendCampaign
       tags: [admin]
-      summary: Send a bulk email campaign via Mailgun (admin role only)
+      summary: Send a bulk email campaign via SMTP (admin role only)
       requestBody:
         required: true
         content:
@@ -1155,7 +1155,7 @@ paths:
     post:
       operationId: sendTestEmail
       tags: [admin]
-      summary: Send a test email using the saved Mailgun configuration
+      summary: Send a test email using the saved SMTP configuration
       requestBody:
         required: true
         content:
@@ -1917,23 +1917,27 @@ components:
           items: { type: string }
     NotificationConfig:
       type: object
-      required: [emailEnabled, emailConfigured, mailgunDomain, mailgunFromEmail, smsEnabled, smsConfigured, twilioFromNumber]
+      required: [emailEnabled, emailConfigured, smtpHost, smtpPort, smtpUsername, smtpFromEmail, smsEnabled, smsConfigured, twilioFromNumber]
       properties:
         emailEnabled: { type: boolean }
         emailConfigured: { type: boolean }
-        mailgunDomain: { type: string }
-        mailgunFromEmail: { type: string }
+        smtpHost: { type: string }
+        smtpPort: { type: number }
+        smtpUsername: { type: string }
+        smtpFromEmail: { type: string }
         smsEnabled: { type: boolean }
         smsConfigured: { type: boolean }
         twilioFromNumber: { type: string }
     NotificationConfigInput:
       type: object
-      required: [emailEnabled, mailgunApiKey, mailgunDomain, mailgunFromEmail, smsEnabled, twilioAccountSid, twilioAuthToken, twilioFromNumber]
+      required: [emailEnabled, smtpHost, smtpPort, smtpUsername, smtpPassword, smtpFromEmail, smsEnabled, twilioAccountSid, twilioAuthToken, twilioFromNumber]
       properties:
         emailEnabled: { type: boolean }
-        mailgunApiKey: { type: string }
-        mailgunDomain: { type: string }
-        mailgunFromEmail: { type: string }
+        smtpHost: { type: string }
+        smtpPort: { type: number }
+        smtpUsername: { type: string }
+        smtpPassword: { type: string }
+        smtpFromEmail: { type: string }
         smsEnabled: { type: boolean }
         twilioAccountSid: { type: string }
         twilioAuthToken: { type: string }

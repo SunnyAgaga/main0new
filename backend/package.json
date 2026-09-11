@@ -17,6 +17,7 @@
     "express": "^5.2.1",
     "mongodb": "^6.20.0",
     "multer": "^2.3.0",
+    "nodemailer": "^10.0.8",
     "pino": "^9.14.0",
     "pino-http": "^10.5.0",
     "zod": "^3.25.76"
@@ -27,6 +28,7 @@
     "@types/express": "^5.0.6",
     "@types/multer": "^2.2.0",
     "@types/node": "^25.3.3",
+    "@types/nodemailer": "^8.0.1",
     "esbuild": "^0.25.8",
     "esbuild-plugin-pino": "^2.3.3",
     "pino-pretty": "^13.1.3",

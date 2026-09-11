@@ -8,16 +8,18 @@ import {
 } from "@wedplan/shared";
 import { notificationConfigsCollection, upsertNotificationConfig, type NotificationConfig } from "@/db";
 import { requirePermission } from "../middlewares/requireAuth";
-import { sendMailgunEmail } from "@/lib/mailgun";
+import { sendSmtpEmail } from "@/lib/email";
 
 const router: IRouter = Router();
 
 function safeNotificationConfig(config: NotificationConfig | null | undefined) {
   return {
     emailEnabled: Boolean(config?.emailEnabled),
-    emailConfigured: Boolean(config?.mailgunApiKey && config.mailgunDomain),
-    mailgunDomain: config?.mailgunDomain ?? "",
-    mailgunFromEmail: config?.mailgunFromEmail ?? "",
+    emailConfigured: Boolean(config?.smtpHost && config.smtpUsername && config.smtpPassword),
+    smtpHost: config?.smtpHost ?? "",
+    smtpPort: config?.smtpPort ?? 587,
+    smtpUsername: config?.smtpUsername ?? "",
+    smtpFromEmail: config?.smtpFromEmail ?? "",
     smsEnabled: Boolean(config?.smsEnabled),
     smsConfigured: Boolean(config?.twilioAccountSid && config.twilioAuthToken),
     twilioFromNumber: config?.twilioFromNumber ?? "",
@@ -37,15 +39,17 @@ router.put("/admin/notification-config", requirePermission("notifications"), asy
   }
 
   const existing = await notificationConfigsCollection().findOne({ id: 1 });
-  const mailgunApiKey = parsed.data.mailgunApiKey.trim() || existing?.mailgunApiKey || "";
+  const smtpPassword = parsed.data.smtpPassword.trim() || existing?.smtpPassword || "";
   const twilioAccountSid = parsed.data.twilioAccountSid.trim() || existing?.twilioAccountSid || "";
   const twilioAuthToken = parsed.data.twilioAuthToken.trim() || existing?.twilioAuthToken || "";
 
   const config = await upsertNotificationConfig({
     emailEnabled: parsed.data.emailEnabled,
-    mailgunApiKey,
-    mailgunDomain: parsed.data.mailgunDomain.trim(),
-    mailgunFromEmail: parsed.data.mailgunFromEmail.trim(),
+    smtpHost: parsed.data.smtpHost.trim(),
+    smtpPort: parsed.data.smtpPort,
+    smtpUsername: parsed.data.smtpUsername.trim(),
+    smtpPassword,
+    smtpFromEmail: parsed.data.smtpFromEmail.trim(),
     smsEnabled: parsed.data.smsEnabled,
     twilioAccountSid,
     twilioAuthToken,
@@ -64,18 +68,20 @@ router.post("/admin/notification-config/test-email", requirePermission("notifica
   }
 
   const config = await notificationConfigsCollection().findOne({ id: 1 });
-  if (!config?.emailEnabled || !config.mailgunApiKey || !config.mailgunDomain || !config.mailgunFromEmail) {
+  if (!config?.emailEnabled || !config.smtpHost || !config.smtpUsername || !config.smtpPassword || !config.smtpFromEmail) {
     res.status(503).json({ error: "Email has not been configured yet." });
     return;
   }
 
-  const delivered = await sendMailgunEmail({
-    apiKey: config.mailgunApiKey,
-    domain: config.mailgunDomain,
-    from: config.mailgunFromEmail,
+  const delivered = await sendSmtpEmail({
+    host: config.smtpHost,
+    port: config.smtpPort,
+    username: config.smtpUsername,
+    password: config.smtpPassword,
+    from: config.smtpFromEmail,
     to: parsed.data.to.trim(),
     subject: "WedPlan test email",
-    text: "This is a test email from your WedPlan dashboard. If you received this, your Mailgun configuration is working.",
+    text: "This is a test email from your WedPlan dashboard. If you received this, your SMTP configuration is working.",
   });
 
   req.log.info({ to: parsed.data.to, delivered }, "Test email sent");

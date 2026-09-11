@@ -1,6 +1,6 @@
 import type { Request } from "express";
 import { notificationConfigsCollection, type NotificationConfig, type Rsvp } from "@/db";
-import { sendMailgunEmail } from "./mailgun";
+import { sendSmtpEmail } from "./email";
 
 // Mirrors the dev/prod origin split used for Spotify's OAuth redirect: in dev,
 // Vite serves the SPA on its own port and proxies /api here, so a link meant
@@ -14,7 +14,7 @@ function guestOrigin(req: Request): string {
 
 async function getEmailConfig(): Promise<NotificationConfig | null> {
   const config = await notificationConfigsCollection().findOne({ id: 1 });
-  if (!config?.emailEnabled || !config.mailgunApiKey || !config.mailgunDomain || !config.mailgunFromEmail) {
+  if (!config?.emailEnabled || !config.smtpHost || !config.smtpUsername || !config.smtpPassword || !config.smtpFromEmail) {
     return null;
   }
   return config;
@@ -37,10 +37,12 @@ export async function sendRegistrationReceivedEmail(req: Request, rsvp: Rsvp): P
   ].join("\n");
 
   try {
-    await sendMailgunEmail({
-      apiKey: config.mailgunApiKey,
-      domain: config.mailgunDomain,
-      from: config.mailgunFromEmail,
+    await sendSmtpEmail({
+      host: config.smtpHost,
+      port: config.smtpPort,
+      username: config.smtpUsername,
+      password: config.smtpPassword,
+      from: config.smtpFromEmail,
       to: rsvp.email,
       subject: "We've received your RSVP",
       text,
@@ -75,10 +77,12 @@ export async function sendGatePassEmail(req: Request, rsvp: Rsvp): Promise<void>
   ].join("\n");
 
   try {
-    await sendMailgunEmail({
-      apiKey: config.mailgunApiKey,
-      domain: config.mailgunDomain,
-      from: config.mailgunFromEmail,
+    await sendSmtpEmail({
+      host: config.smtpHost,
+      port: config.smtpPort,
+      username: config.smtpUsername,
+      password: config.smtpPassword,
+      from: config.smtpFromEmail,
       to: rsvp.email,
       subject: "Your wedding gate passes",
       text,

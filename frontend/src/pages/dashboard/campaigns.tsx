@@ -123,13 +123,13 @@ export default function DashboardCampaigns() {
     <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl">
       <div>
         <h1 className="text-3xl font-serif font-bold text-foreground">Campaigns</h1>
-        <p className="text-muted-foreground mt-1">Send a bulk email update to your guests via Mailgun.</p>
+        <p className="text-muted-foreground mt-1">Send a bulk email update to your guests via your connected email provider.</p>
       </div>
 
       {!emailReady && (
         <Card className="border-none shadow-sm bg-card">
           <CardContent className="p-4 text-sm text-muted-foreground">
-            Email isn't configured yet. Go to <strong>Notifications</strong> to connect Mailgun and enable email before sending a campaign.
+            Email isn't configured yet. Go to <strong>Notifications</strong> to connect SMTP and enable email before sending a campaign.
           </CardContent>
         </Card>
       )}

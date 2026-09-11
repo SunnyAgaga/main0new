@@ -8,7 +8,7 @@ import {
   type NotificationConfig,
 } from "@/db";
 import { requirePermission } from "../middlewares/requireAuth";
-import { sendMailgunEmail } from "@/lib/mailgun";
+import { sendSmtpEmail } from "@/lib/email";
 
 const router: IRouter = Router();
 
@@ -17,9 +17,10 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function emailConfigured(config: NotificationConfig | null): config is NotificationConfig {
   return Boolean(
     config?.emailEnabled &&
-      config.mailgunApiKey &&
-      config.mailgunDomain &&
-      config.mailgunFromEmail,
+      config.smtpHost &&
+      config.smtpUsername &&
+      config.smtpPassword &&
+      config.smtpFromEmail,
   );
 }
 
@@ -87,10 +88,12 @@ router.post("/admin/campaigns", requirePermission("campaigns"), async (req, res)
   }
 
   const { sent, failed } = await sendInBatches(Array.from(recipients), (to) =>
-    sendMailgunEmail({
-      apiKey: config.mailgunApiKey,
-      domain: config.mailgunDomain,
-      from: config.mailgunFromEmail,
+    sendSmtpEmail({
+      host: config.smtpHost,
+      port: config.smtpPort,
+      username: config.smtpUsername,
+      password: config.smtpPassword,
+      from: config.smtpFromEmail,
       to,
       subject: parsed.data.subject,
       text: parsed.data.message,

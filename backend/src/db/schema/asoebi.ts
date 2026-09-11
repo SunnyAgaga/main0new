@@ -116,9 +116,11 @@ export interface DeliveryConfig {
 export interface NotificationConfig {
   id: 1;
   emailEnabled: boolean;
-  mailgunApiKey: string;
-  mailgunDomain: string;
-  mailgunFromEmail: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUsername: string;
+  smtpPassword: string;
+  smtpFromEmail: string;
   smsEnabled: boolean;
   twilioAccountSid: string;
   twilioAuthToken: string;
