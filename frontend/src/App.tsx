@@ -12,6 +12,7 @@ import Home from '@/pages/home';
 import RsvpPage from '@/pages/rsvp';
 import CartPage from '@/pages/cart';
 import GiftPage from '@/pages/gift';
+import PassPage from '@/pages/pass';
 import SignInPage from '@/pages/auth/sign-in';
 import DashboardLayout from '@/components/dashboard-layout';
 import DashboardIndex from '@/pages/dashboard/index';
@@ -24,6 +25,7 @@ import DashboardAsoebi from '@/pages/dashboard/asoebi';
 import DashboardRsvps from '@/pages/dashboard/rsvps';
 import DashboardOrders from '@/pages/dashboard/orders';
 import DashboardCampaigns from '@/pages/dashboard/campaigns';
+import DashboardCheckIn from '@/pages/dashboard/check-in';
 import DashboardRsvpForm from '@/pages/dashboard/rsvp-form';
 import DashboardSiteSettings from '@/pages/dashboard/site-settings';
 import { SiteTheme } from '@/components/site-theme';
@@ -59,6 +61,7 @@ function Router() {
       <Route path="/rsvp" component={RsvpPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/gift" component={GiftPage} />
+      <Route path="/pass/:token">{(params) => <PassPage token={params.token} />}</Route>
       <Route path="/sign-in" component={SignInPage} />
 
       <Route path="/dashboard">
@@ -88,6 +91,12 @@ function Router() {
       <Route path="/dashboard/campaigns">
         <ProtectedDashboard permission="campaigns">
           <DashboardCampaigns />
+        </ProtectedDashboard>
+      </Route>
+
+      <Route path="/dashboard/check-in">
+        <ProtectedDashboard permission="check-in">
+          <DashboardCheckIn />
         </ProtectedDashboard>
       </Route>
 

@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { z } from "zod/v4";
 import { db } from "../client";
 import { nextSequence } from "../counters";
@@ -40,8 +41,15 @@ export interface Rsvp {
   deliveryAddress: string | null;
   deliveryProvider: string | null;
   note: string | null;
+  confirmationStatus: "pending" | "approved" | "rejected";
+  traditionalPassToken: string | null;
+  traditionalCheckedInAt: Date | null;
+  weddingPassToken: string | null;
+  weddingCheckedInAt: Date | null;
   createdAt: Date;
 }
+
+export type CheckInEvent = "traditional" | "wedding";
 
 export interface PaymentConfig {
   id: 1;
@@ -307,10 +315,106 @@ export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
       asoebiSelections: guest.asoebiSelections,
     })),
     id: await nextSequence("rsvps"),
+    // Gate passes aren't issued until an admin reviews and approves the RSVP -
+    // see approveRsvp() - so no pass tokens are generated here.
+    confirmationStatus: "pending",
+    traditionalPassToken: null,
+    traditionalCheckedInAt: null,
+    weddingPassToken: null,
+    weddingCheckedInAt: null,
     createdAt: new Date(),
   };
   await rsvpsCollection().insertOne(doc);
   return doc;
+}
+
+/**
+ * Approves an attending guest's RSVP, generating their two gate-pass tokens
+ * if they don't already have them (idempotent, so re-approving never
+ * invalidates a pass already emailed out).
+ */
+export async function approveRsvp(rsvpId: number): Promise<Rsvp | null> {
+  const existing = await rsvpsCollection().findOne({ id: rsvpId });
+  if (!existing || !existing.attending) return null;
+
+  return rsvpsCollection().findOneAndUpdate(
+    { id: rsvpId },
+    {
+      $set: {
+        confirmationStatus: "approved",
+        traditionalPassToken: existing.traditionalPassToken ?? randomBytes(12).toString("hex"),
+        weddingPassToken: existing.weddingPassToken ?? randomBytes(12).toString("hex"),
+      },
+    },
+    { returnDocument: "after" },
+  );
+}
+
+/**
+ * Rejects an RSVP and revokes any gate passes already issued - a previously
+ * emailed QR code stops working immediately, since check-in looks guests up
+ * by these same token fields.
+ */
+export async function rejectRsvp(rsvpId: number): Promise<Rsvp | null> {
+  return rsvpsCollection().findOneAndUpdate(
+    { id: rsvpId },
+    {
+      $set: {
+        confirmationStatus: "rejected",
+        traditionalPassToken: null,
+        traditionalCheckedInAt: null,
+        weddingPassToken: null,
+        weddingCheckedInAt: null,
+      },
+    },
+    { returnDocument: "after" },
+  );
+}
+
+/** Looks up an RSVP by either of its two per-event pass tokens. */
+export async function findRsvpByPassToken(
+  token: string,
+): Promise<{ rsvp: Rsvp; event: CheckInEvent } | null> {
+  const rsvp = await rsvpsCollection().findOne({
+    $or: [{ traditionalPassToken: token }, { weddingPassToken: token }],
+  });
+  if (!rsvp) return null;
+  const event: CheckInEvent = rsvp.traditionalPassToken === token ? "traditional" : "wedding";
+  return { rsvp, event };
+}
+
+/** Marks a guest checked in for an event, unless they already were. */
+export async function checkInRsvp(
+  rsvpId: number,
+  event: CheckInEvent,
+): Promise<{ rsvp: Rsvp; alreadyCheckedIn: boolean }> {
+  const field = event === "traditional" ? "traditionalCheckedInAt" : "weddingCheckedInAt";
+  const existing = await rsvpsCollection().findOne({ id: rsvpId });
+  const alreadyCheckedIn = Boolean(existing?.[field]);
+
+  const updated = alreadyCheckedIn
+    ? existing!
+    : (await rsvpsCollection().findOneAndUpdate(
+        { id: rsvpId },
+        { $set: { [field]: new Date() } },
+        { returnDocument: "after" },
+      ))!;
+
+  return { rsvp: updated, alreadyCheckedIn };
+}
+
+/** Manual override for when scanning isn't possible. */
+export async function setRsvpCheckIn(
+  rsvpId: number,
+  event: CheckInEvent,
+  checkedIn: boolean,
+): Promise<Rsvp | null> {
+  const field = event === "traditional" ? "traditionalCheckedInAt" : "weddingCheckedInAt";
+  return rsvpsCollection().findOneAndUpdate(
+    { id: rsvpId },
+    { $set: { [field]: checkedIn ? new Date() : null } },
+    { returnDocument: "after" },
+  );
 }
 
 export async function updateRsvp(id: number, input: InsertRsvp): Promise<Rsvp | null> {

@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { CreateRsvpBody, CreateRsvpResponse } from "@wedplan/shared";
 import { asoebiItemsCollection, insertRsvp, type AsoebiItem } from "@/db";
+import { sendRegistrationReceivedEmail } from "@/lib/rsvp-emails";
 
 const router: IRouter = Router();
 
@@ -125,6 +126,8 @@ router.post("/rsvps", async (req, res): Promise<void> => {
     { rsvpId: rsvp.id, asoebiInterest: rsvp.asoebiInterest },
     "RSVP created",
   );
+
+  await sendRegistrationReceivedEmail(req, rsvp);
 
   const cartItems = [
     ...primarySelections.map((selection) => ({
