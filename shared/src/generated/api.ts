@@ -599,7 +599,8 @@ export const ListAdminRsvpsResponseItem = zod.object({
   "note": zod.string().nullable(),
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
-  "weddingCheckedInAt": zod.string().nullable()
+  "weddingCheckedInAt": zod.string().nullable(),
+  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected'])
 })
 export const ListAdminRsvpsResponse = zod.array(ListAdminRsvpsResponseItem)
 
@@ -674,7 +675,8 @@ export const UpdateAdminRsvpResponse = zod.object({
   "note": zod.string().nullable(),
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
-  "weddingCheckedInAt": zod.string().nullable()
+  "weddingCheckedInAt": zod.string().nullable(),
+  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected'])
 })
 
 
@@ -717,7 +719,51 @@ export const UpdateRsvpCheckInResponse = zod.object({
   "note": zod.string().nullable(),
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
-  "weddingCheckedInAt": zod.string().nullable()
+  "weddingCheckedInAt": zod.string().nullable(),
+  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected'])
+})
+
+
+/**
+ * @summary Approve or reject an attending guest's RSVP; approving generates and emails their gate passes
+ */
+export const UpdateRsvpConfirmationParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateRsvpConfirmationBody = zod.object({
+  "status": zod.enum(['approved', 'rejected'])
+})
+
+export const UpdateRsvpConfirmationResponse = zod.object({
+  "id": zod.number(),
+  "guestName": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullable(),
+  "attending": zod.boolean(),
+  "guestCount": zod.number(),
+  "additionalGuests": zod.array(zod.object({
+  "name": zod.string(),
+  "asoebiSelections": zod.array(zod.object({
+  "asoebiItemId": zod.number(),
+  "asoebiSize": zod.string(),
+  "quantity": zod.number()
+}))
+})),
+  "asoebiInterest": zod.enum(['yes', 'no']),
+  "asoebiSelections": zod.array(zod.object({
+  "asoebiItemId": zod.number(),
+  "asoebiSize": zod.string(),
+  "quantity": zod.number()
+})),
+  "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
+  "deliveryAddress": zod.string().nullable(),
+  "deliveryProvider": zod.string().nullable(),
+  "note": zod.string().nullable(),
+  "createdAt": zod.string(),
+  "traditionalCheckedInAt": zod.string().nullable(),
+  "weddingCheckedInAt": zod.string().nullable(),
+  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected'])
 })
 
 

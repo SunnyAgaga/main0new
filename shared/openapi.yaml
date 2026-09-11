@@ -849,6 +849,53 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/rsvps/{id}/confirmation:
+    put:
+      operationId: updateRsvpConfirmation
+      tags: [admin]
+      summary: Approve or reject an attending guest's RSVP; approving generates and emails their gate passes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRsvpConfirmationInput"
+      responses:
+        "200":
+          description: Updated RSVP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminRsvp"
+        "400":
+          description: Invalid input, or the RSVP isn't marked attending
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: RSVP not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /rsvp-pass/{token}:
     get:
       operationId: getRsvpPass
@@ -1529,7 +1576,7 @@ components:
             $ref: "#/components/schemas/AdminAsoebiSelection"
     AdminRsvp:
       type: object
-      required: [id, guestName, email, phone, attending, guestCount, additionalGuests, asoebiInterest, asoebiSelections, deliveryMethod, deliveryAddress, deliveryProvider, note, createdAt, traditionalCheckedInAt, weddingCheckedInAt]
+      required: [id, guestName, email, phone, attending, guestCount, additionalGuests, asoebiInterest, asoebiSelections, deliveryMethod, deliveryAddress, deliveryProvider, note, createdAt, traditionalCheckedInAt, weddingCheckedInAt, confirmationStatus]
       properties:
         id: { type: number }
         guestName: { type: string }
@@ -1557,6 +1604,16 @@ components:
         createdAt: { type: string }
         traditionalCheckedInAt: { type: ["string", "null"] }
         weddingCheckedInAt: { type: ["string", "null"] }
+        confirmationStatus:
+          type: string
+          enum: [pending, approved, rejected]
+    UpdateRsvpConfirmationInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [approved, rejected]
     RsvpPass:
       type: object
       required: [guestName, guestCount, event, eventDate, eventVenue, checkedInAt, alreadyCheckedIn]

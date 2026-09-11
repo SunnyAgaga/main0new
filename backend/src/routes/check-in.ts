@@ -3,17 +3,21 @@ import {
   GetRsvpPassResponse,
   ScanCheckInResponse,
   UpdateRsvpCheckInBody,
+  UpdateRsvpConfirmationBody,
   UpdateAdminRsvpResponse,
 } from "@wedplan/shared";
 import {
+  approveRsvp,
   checkInRsvp,
   eventDetailsCollection,
   findRsvpByPassToken,
+  rejectRsvp,
   setRsvpCheckIn,
   type CheckInEvent,
   type Rsvp,
 } from "@/db";
 import { requirePermission } from "../middlewares/requireAuth";
+import { sendGatePassEmail } from "@/lib/rsvp-emails";
 import { toAdminRsvp } from "./admin";
 
 const router: IRouter = Router();
@@ -90,6 +94,36 @@ router.put("/admin/rsvps/:id/check-in", requirePermission("check-in"), async (re
     return;
   }
 
+  res.json(UpdateAdminRsvpResponse.parse(toAdminRsvp(updated)));
+});
+
+router.put("/admin/rsvps/:id/confirmation", requirePermission("rsvps"), async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  const parsed = UpdateRsvpConfirmationBody.safeParse(req.body);
+  if (!Number.isFinite(id) || !parsed.success) {
+    res.status(400).json({ error: parsed.error?.message ?? "Invalid request." });
+    return;
+  }
+
+  if (parsed.data.status === "rejected") {
+    const updated = await rejectRsvp(id);
+    if (!updated) {
+      res.status(404).json({ error: "RSVP not found." });
+      return;
+    }
+    req.log.info({ rsvpId: id }, "RSVP rejected");
+    res.json(UpdateAdminRsvpResponse.parse(toAdminRsvp(updated)));
+    return;
+  }
+
+  const updated = await approveRsvp(id);
+  if (!updated) {
+    res.status(400).json({ error: "This RSVP isn't marked attending, or wasn't found." });
+    return;
+  }
+
+  await sendGatePassEmail(req, updated);
+  req.log.info({ rsvpId: id }, "RSVP approved, gate passes issued");
   res.json(UpdateAdminRsvpResponse.parse(toAdminRsvp(updated)));
 });
 

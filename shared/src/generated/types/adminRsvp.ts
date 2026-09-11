@@ -8,6 +8,7 @@
 import type { AdminAdditionalGuest } from './adminAdditionalGuest';
 import type { AdminAsoebiSelection } from './adminAsoebiSelection';
 import type { AdminRsvpAsoebiInterest } from './adminRsvpAsoebiInterest';
+import type { AdminRsvpConfirmationStatus } from './adminRsvpConfirmationStatus';
 import type { AdminRsvpDeliveryMethod } from './adminRsvpDeliveryMethod';
 
 export interface AdminRsvp {
@@ -34,4 +35,5 @@ export interface AdminRsvp {
   traditionalCheckedInAt: string | null;
   /** @nullable */
   weddingCheckedInAt: string | null;
+  confirmationStatus: AdminRsvpConfirmationStatus;
 }

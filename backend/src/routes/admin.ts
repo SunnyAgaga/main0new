@@ -62,6 +62,10 @@ export function toAdminRsvp(rsvp: Rsvp) {
     createdAt: rsvp.createdAt.toISOString(),
     traditionalCheckedInAt: rsvp.traditionalCheckedInAt?.toISOString() ?? null,
     weddingCheckedInAt: rsvp.weddingCheckedInAt?.toISOString() ?? null,
+    // Older RSVPs created before admin approval existed already got a pass
+    // token, so treat "has a token but no status" as approved rather than
+    // pending - it already went out.
+    confirmationStatus: rsvp.confirmationStatus ?? (rsvp.traditionalPassToken ? "approved" : "pending"),
   };
 }
 

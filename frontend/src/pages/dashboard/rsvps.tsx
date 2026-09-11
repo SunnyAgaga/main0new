@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   useListAdminRsvps,
   useUpdateAdminRsvp,
+  useUpdateRsvpConfirmation,
   getListAdminRsvpsQueryKey,
   useListAsoebi,
   type AdminRsvp,
@@ -28,13 +29,83 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, FileSpreadsheet, FileText } from 'lucide-react';
+import { Pencil, FileSpreadsheet, FileText, Check, X } from 'lucide-react';
+
+function ConfirmationCell({ rsvp }: { rsvp: AdminRsvp }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const updateConfirmation = useUpdateRsvpConfirmation();
+
+  if (!rsvp.attending) {
+    return <span className="text-sm text-muted-foreground">—</span>;
+  }
+
+  const setStatus = (status: 'approved' | 'rejected') => {
+    updateConfirmation.mutate({ id: rsvp.id, data: { status } }, {
+      onSuccess: (updated) => {
+        queryClient.setQueryData(getListAdminRsvpsQueryKey(), (old: AdminRsvp[] | undefined) =>
+          old?.map((r) => (r.id === updated.id ? updated : r)),
+        );
+        toast({
+          title: status === 'approved' ? 'RSVP approved' : 'RSVP rejected',
+          description: status === 'approved' ? 'Gate passes have been emailed to the guest.' : 'Any existing gate passes were revoked.',
+        });
+      },
+      onError: (err) => {
+        toast({
+          variant: 'destructive',
+          title: 'Could not update',
+          description: err.data?.error || 'An error occurred.',
+        });
+      },
+    });
+  };
+
+  const statusBadge = {
+    pending: <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-none">Pending</Badge>,
+    approved: <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100 border-none">Approved</Badge>,
+    rejected: <Badge variant="secondary" className="bg-red-100 text-red-800 hover:bg-red-100 border-none">Rejected</Badge>,
+  }[rsvp.confirmationStatus];
+
+  return (
+    <div className="space-y-1.5">
+      {statusBadge}
+      <div className="flex gap-1">
+        {rsvp.confirmationStatus !== 'approved' && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            disabled={updateConfirmation.isPending}
+            onClick={() => setStatus('approved')}
+          >
+            <Check className="w-3 h-3 mr-1" /> Approve
+          </Button>
+        )}
+        {rsvp.confirmationStatus !== 'rejected' && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            disabled={updateConfirmation.isPending}
+            onClick={() => setStatus('rejected')}
+          >
+            <X className="w-3 h-3 mr-1" /> Reject
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const EXPORT_COLUMNS: { key: string; label: string; get: (rsvp: AdminRsvp) => string | number }[] = [
   { key: 'guestName', label: 'Guest', get: (r) => r.guestName },
   { key: 'email', label: 'Email', get: (r) => r.email },
   { key: 'phone', label: 'Phone', get: (r) => r.phone ?? '' },
   { key: 'attending', label: 'Attending', get: (r) => (r.attending ? 'Yes' : 'No') },
+  { key: 'confirmationStatus', label: 'Confirmation', get: (r) => (r.attending ? r.confirmationStatus : '') },
   { key: 'guestCount', label: 'Guest Count', get: (r) => r.guestCount },
   { key: 'asoebiInterest', label: 'Asoebi Interest', get: (r) => r.asoebiInterest },
   { key: 'deliveryMethod', label: 'Delivery Method', get: (r) => r.deliveryMethod ?? '' },
@@ -475,6 +546,7 @@ export default function DashboardRsvps() {
               <TableHead>Guest</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Confirmation</TableHead>
               <TableHead>Asoebi</TableHead>
               <TableHead>Delivery</TableHead>
               <TableHead className="text-right">Date</TableHead>
@@ -484,7 +556,7 @@ export default function DashboardRsvps() {
           <TableBody>
             {(rsvps ?? []).length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No RSVPs yet.
                 </TableCell>
               </TableRow>
@@ -502,6 +574,9 @@ export default function DashboardRsvps() {
                     ) : (
                       <Badge variant="secondary" className="bg-gray-100 text-gray-800 hover:bg-gray-100 border-none">Declined</Badge>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <ConfirmationCell rsvp={rsvp} />
                   </TableCell>
                   <TableCell>
                     {rsvp.asoebiInterest === 'yes' ? (

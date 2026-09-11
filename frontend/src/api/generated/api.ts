@@ -62,6 +62,7 @@ import type {
   UpdateAdminUserInput,
   UpdateOrderFulfillmentInput,
   UpdateRsvpCheckInInput,
+  UpdateRsvpConfirmationInput,
   VerifyCheckoutInput
 } from './api.schemas';
 
@@ -2415,6 +2416,95 @@ export const useUpdateRsvpCheckIn = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getUpdateRsvpCheckInMutationOptions(options));
+    }
+
+export const getUpdateRsvpConfirmationUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/rsvps/${id}/confirmation`
+}
+
+/**
+ * @summary Approve or reject an attending guest's RSVP; approving generates and emails their gate passes
+ */
+export const updateRsvpConfirmation = async (id: number,
+    updateRsvpConfirmationInput: UpdateRsvpConfirmationInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminRsvp> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminRsvp>(getUpdateRsvpConfirmationUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateRsvpConfirmationInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateRsvpConfirmationMutationKey = () => ['updateRsvpConfirmation'] as const;
+
+export const getUpdateRsvpConfirmationMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRsvpConfirmation>>, TError,UpdateRsvpConfirmationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRsvpConfirmation>>, TError,UpdateRsvpConfirmationMutationVariables, TContext> => {
+
+const mutationKey = getUpdateRsvpConfirmationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRsvpConfirmation>>, UpdateRsvpConfirmationMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateRsvpConfirmation(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateRsvpConfirmationMutationResult = NonNullable<Awaited<ReturnType<typeof updateRsvpConfirmation>>>
+    export type UpdateRsvpConfirmationMutationBody = BodyType<UpdateRsvpConfirmationInput>
+    export type UpdateRsvpConfirmationMutationError = ErrorType<ErrorResponse>
+    export type UpdateRsvpConfirmationMutationVariables = {id: number;data: BodyType<UpdateRsvpConfirmationInput>}
+
+    /**
+ * @summary Approve or reject an attending guest's RSVP; approving generates and emails their gate passes
+ */
+export const useUpdateRsvpConfirmation = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRsvpConfirmation>>, TError,UpdateRsvpConfirmationMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateRsvpConfirmation>>,
+        TError,
+        UpdateRsvpConfirmationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateRsvpConfirmationMutationOptions(options));
     }
 
 export const getGetRsvpPassUrl = (token: string,) => {

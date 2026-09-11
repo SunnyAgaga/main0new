@@ -41,6 +41,7 @@ export interface Rsvp {
   deliveryAddress: string | null;
   deliveryProvider: string | null;
   note: string | null;
+  confirmationStatus: "pending" | "approved" | "rejected";
   traditionalPassToken: string | null;
   traditionalCheckedInAt: Date | null;
   weddingPassToken: string | null;
@@ -314,15 +315,60 @@ export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
       asoebiSelections: guest.asoebiSelections,
     })),
     id: await nextSequence("rsvps"),
-    // Only guests who said they're attending need a gate pass.
-    traditionalPassToken: input.attending ? randomBytes(12).toString("hex") : null,
+    // Gate passes aren't issued until an admin reviews and approves the RSVP -
+    // see approveRsvp() - so no pass tokens are generated here.
+    confirmationStatus: "pending",
+    traditionalPassToken: null,
     traditionalCheckedInAt: null,
-    weddingPassToken: input.attending ? randomBytes(12).toString("hex") : null,
+    weddingPassToken: null,
     weddingCheckedInAt: null,
     createdAt: new Date(),
   };
   await rsvpsCollection().insertOne(doc);
   return doc;
+}
+
+/**
+ * Approves an attending guest's RSVP, generating their two gate-pass tokens
+ * if they don't already have them (idempotent, so re-approving never
+ * invalidates a pass already emailed out).
+ */
+export async function approveRsvp(rsvpId: number): Promise<Rsvp | null> {
+  const existing = await rsvpsCollection().findOne({ id: rsvpId });
+  if (!existing || !existing.attending) return null;
+
+  return rsvpsCollection().findOneAndUpdate(
+    { id: rsvpId },
+    {
+      $set: {
+        confirmationStatus: "approved",
+        traditionalPassToken: existing.traditionalPassToken ?? randomBytes(12).toString("hex"),
+        weddingPassToken: existing.weddingPassToken ?? randomBytes(12).toString("hex"),
+      },
+    },
+    { returnDocument: "after" },
+  );
+}
+
+/**
+ * Rejects an RSVP and revokes any gate passes already issued - a previously
+ * emailed QR code stops working immediately, since check-in looks guests up
+ * by these same token fields.
+ */
+export async function rejectRsvp(rsvpId: number): Promise<Rsvp | null> {
+  return rsvpsCollection().findOneAndUpdate(
+    { id: rsvpId },
+    {
+      $set: {
+        confirmationStatus: "rejected",
+        traditionalPassToken: null,
+        traditionalCheckedInAt: null,
+        weddingPassToken: null,
+        weddingCheckedInAt: null,
+      },
+    },
+    { returnDocument: "after" },
+  );
 }
 
 /** Looks up an RSVP by either of its two per-event pass tokens. */

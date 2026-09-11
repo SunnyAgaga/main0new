@@ -220,6 +220,15 @@ export const AdminRsvpDeliveryMethod = {
   delivery: 'delivery',
 } as const;
 
+export type AdminRsvpConfirmationStatus = typeof AdminRsvpConfirmationStatus[keyof typeof AdminRsvpConfirmationStatus];
+
+
+export const AdminRsvpConfirmationStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
 export interface AdminRsvp {
   id: number;
   guestName: string;
@@ -244,6 +253,19 @@ export interface AdminRsvp {
   traditionalCheckedInAt: string | null;
   /** @nullable */
   weddingCheckedInAt: string | null;
+  confirmationStatus: AdminRsvpConfirmationStatus;
+}
+
+export type UpdateRsvpConfirmationInputStatus = typeof UpdateRsvpConfirmationInputStatus[keyof typeof UpdateRsvpConfirmationInputStatus];
+
+
+export const UpdateRsvpConfirmationInputStatus = {
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface UpdateRsvpConfirmationInput {
+  status: UpdateRsvpConfirmationInputStatus;
 }
 
 export type RsvpPassEvent = typeof RsvpPassEvent[keyof typeof RsvpPassEvent];
