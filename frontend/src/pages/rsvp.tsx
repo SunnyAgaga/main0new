@@ -182,7 +182,11 @@ function AsoebiCard({
       <div className="aspect-[4/3] bg-muted relative">
         {item.imageUrl ? (
           <img
-            src={`${import.meta.env.BASE_URL}${item.imageUrl.replace(/^\//, '')}`}
+            src={
+              /^https?:\/\//.test(item.imageUrl) || item.imageUrl.startsWith('/')
+                ? item.imageUrl
+                : `${import.meta.env.BASE_URL}${item.imageUrl}`
+            }
             alt={item.name}
             className="w-full h-full object-cover"
           />

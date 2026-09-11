@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,6 +11,7 @@ import {
   getListAsoebiQueryKey,
   type AsoebiItem,
 } from '@/api';
+import { customFetch, ApiError } from '@/api/custom-fetch';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -30,7 +31,38 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { ImagePlus, Loader2, Pencil, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+
+function useImageUpload() {
+  const { toast } = useToast();
+  const [uploading, setUploading] = useState(false);
+
+  const upload = async (file: File): Promise<string | null> => {
+    setUploading(true);
+    try {
+      const result = await customFetch<{ url: string }>('/api/admin/uploads', {
+        method: 'POST',
+        body: (() => {
+          const formData = new FormData();
+          formData.append('file', file);
+          return formData;
+        })(),
+      });
+      return result.url;
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Upload failed',
+        description: err instanceof ApiError ? (err.data as { error?: string } | null)?.error || err.message : 'An error occurred.',
+      });
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return { upload, uploading };
+}
 
 const itemSchema = z.object({
   category: z.enum(['women', 'men'], { required_error: 'Select a category' }),
@@ -57,6 +89,8 @@ export default function DashboardAsoebi() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<AsoebiItem | null>(null);
+  const { upload, uploading } = useImageUpload();
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const { data: items, isLoading } = useListAsoebi();
   const createItem = useCreateAsoebiItem();
@@ -228,10 +262,44 @@ export default function DashboardAsoebi() {
                   name="imageUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Image URL (Optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com/fabric.jpg" {...field} />
-                      </FormControl>
+                      <FormLabel>Image (Optional)</FormLabel>
+                      <div className="flex items-start gap-3">
+                        {field.value ? (
+                          <img src={field.value} alt="" className="w-16 h-16 rounded-md object-cover border border-border" />
+                        ) : null}
+                        <div className="flex-1 space-y-2">
+                          <FormControl>
+                            <Input placeholder="https://example.com/fabric.jpg" {...field} />
+                          </FormControl>
+                          <input
+                            ref={imageInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              e.target.value = '';
+                              if (!file) return;
+                              const url = await upload(file);
+                              if (url) field.onChange(url);
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={uploading}
+                            onClick={() => imageInputRef.current?.click()}
+                          >
+                            {uploading ? (
+                              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                            ) : (
+                              <ImagePlus className="w-4 h-4 mr-1" />
+                            )}
+                            {uploading ? 'Uploading...' : 'Upload Image'}
+                          </Button>
+                        </div>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -284,8 +352,15 @@ export default function DashboardAsoebi() {
                 items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">
-                      <div>{item.name}</div>
-                      <div className="text-xs text-muted-foreground line-clamp-1">{item.description}</div>
+                      <div className="flex items-center gap-3">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt="" className="w-10 h-10 rounded-md object-cover border border-border shrink-0" />
+                        ) : null}
+                        <div className="min-w-0">
+                          <div>{item.name}</div>
+                          <div className="text-xs text-muted-foreground line-clamp-1">{item.description}</div>
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell className="capitalize">{item.category}</TableCell>
                     <TableCell>{item.currency} {item.price.toLocaleString()}</TableCell>

@@ -43,14 +43,15 @@ export async function requireAdmin(
 }
 
 /**
- * Admins always pass. Managers pass only if granted this specific menu
- * permission - hiding a sidebar item is not access control on its own, so
- * every admin-only route this applies to must also be gated server-side.
+ * Admins always pass. Managers pass only if granted at least one of the given
+ * menu permissions - hiding a sidebar item is not access control on its own,
+ * so every admin-only route this applies to must also be gated server-side.
  */
-export function requirePermission(key: string) {
+export function requirePermission(key: string | string[]) {
+  const keys = Array.isArray(key) ? key : [key];
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     await requireAuth(req, res, () => {
-      if (req.user?.role === "admin" || req.user?.permissions.includes(key)) {
+      if (req.user?.role === "admin" || keys.some((k) => req.user?.permissions.includes(k))) {
         next();
         return;
       }

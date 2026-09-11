@@ -32,7 +32,7 @@ const audioUpload = multer({
   },
 });
 
-router.post("/admin/uploads", requirePermission("site-settings"), (req, res): void => {
+router.post("/admin/uploads", requirePermission(["site-settings", "asoebi"]), (req, res): void => {
   upload.single("file")(req, res, async (err: unknown) => {
     if (err) {
       const message = err instanceof Error ? err.message : "Upload failed";
