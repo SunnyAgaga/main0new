@@ -2986,7 +2986,7 @@ export const getSendCampaignUrl = () => {
 }
 
 /**
- * @summary Send a bulk email campaign via Mailgun (admin role only)
+ * @summary Send a bulk email campaign via SMTP (admin role only)
  */
 export const sendCampaign = async (sendCampaignInput: SendCampaignInput, options?: Parameters<typeof customFetch>[1]): Promise<Campaign> => {
 
@@ -3052,7 +3052,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SendCampaignMutationVariables = {data: BodyType<SendCampaignInput>}
 
     /**
- * @summary Send a bulk email campaign via Mailgun (admin role only)
+ * @summary Send a bulk email campaign via SMTP (admin role only)
  */
 export const useSendCampaign = <TError = ErrorType<ErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendCampaign>>, TError,SendCampaignMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -3239,7 +3239,7 @@ export const getSendTestEmailUrl = () => {
 }
 
 /**
- * @summary Send a test email using the saved Mailgun configuration
+ * @summary Send a test email using the saved SMTP configuration
  */
 export const sendTestEmail = async (testEmailInput: TestEmailInput, options?: Parameters<typeof customFetch>[1]): Promise<TestEmailResponse> => {
 
@@ -3305,7 +3305,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type SendTestEmailMutationVariables = {data: BodyType<TestEmailInput>}
 
     /**
- * @summary Send a test email using the saved Mailgun configuration
+ * @summary Send a test email using the saved SMTP configuration
  */
 export const useSendTestEmail = <TError = ErrorType<ErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendTestEmail>>, TError,SendTestEmailMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}

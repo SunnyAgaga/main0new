@@ -905,7 +905,7 @@ export const ListCampaignsResponse = zod.array(ListCampaignsResponseItem)
 
 
 /**
- * @summary Send a bulk email campaign via Mailgun (admin role only)
+ * @summary Send a bulk email campaign via SMTP (admin role only)
  */
 
 
@@ -935,8 +935,10 @@ export const SendCampaignResponse = zod.object({
 export const GetNotificationConfigResponse = zod.object({
   "emailEnabled": zod.boolean(),
   "emailConfigured": zod.boolean(),
-  "mailgunDomain": zod.string(),
-  "mailgunFromEmail": zod.string(),
+  "smtpHost": zod.string(),
+  "smtpPort": zod.number(),
+  "smtpUsername": zod.string(),
+  "smtpFromEmail": zod.string(),
   "smsEnabled": zod.boolean(),
   "smsConfigured": zod.boolean(),
   "twilioFromNumber": zod.string()
@@ -948,9 +950,11 @@ export const GetNotificationConfigResponse = zod.object({
  */
 export const UpdateNotificationConfigBody = zod.object({
   "emailEnabled": zod.boolean(),
-  "mailgunApiKey": zod.string(),
-  "mailgunDomain": zod.string(),
-  "mailgunFromEmail": zod.string(),
+  "smtpHost": zod.string(),
+  "smtpPort": zod.number(),
+  "smtpUsername": zod.string(),
+  "smtpPassword": zod.string(),
+  "smtpFromEmail": zod.string(),
   "smsEnabled": zod.boolean(),
   "twilioAccountSid": zod.string(),
   "twilioAuthToken": zod.string(),
@@ -960,8 +964,10 @@ export const UpdateNotificationConfigBody = zod.object({
 export const UpdateNotificationConfigResponse = zod.object({
   "emailEnabled": zod.boolean(),
   "emailConfigured": zod.boolean(),
-  "mailgunDomain": zod.string(),
-  "mailgunFromEmail": zod.string(),
+  "smtpHost": zod.string(),
+  "smtpPort": zod.number(),
+  "smtpUsername": zod.string(),
+  "smtpFromEmail": zod.string(),
   "smsEnabled": zod.boolean(),
   "smsConfigured": zod.boolean(),
   "twilioFromNumber": zod.string()
@@ -969,7 +975,7 @@ export const UpdateNotificationConfigResponse = zod.object({
 
 
 /**
- * @summary Send a test email using the saved Mailgun configuration
+ * @summary Send a test email using the saved SMTP configuration
  */
 export const SendTestEmailBody = zod.object({
   "to": zod.string()

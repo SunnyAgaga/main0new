@@ -22,9 +22,11 @@ import { CheckCircle2, Lock, Send } from 'lucide-react';
 
 const notificationConfigSchema = z.object({
   emailEnabled: z.boolean(),
-  mailgunApiKey: z.string().optional(),
-  mailgunDomain: z.string(),
-  mailgunFromEmail: z.string(),
+  smtpHost: z.string(),
+  smtpPort: z.coerce.number().int().min(1).max(65535),
+  smtpUsername: z.string(),
+  smtpPassword: z.string().optional(),
+  smtpFromEmail: z.string(),
   smsEnabled: z.boolean(),
   twilioAccountSid: z.string().optional(),
   twilioAuthToken: z.string().optional(),
@@ -47,9 +49,11 @@ export default function DashboardNotifications() {
     resolver: zodResolver(notificationConfigSchema),
     defaultValues: {
       emailEnabled: false,
-      mailgunApiKey: '',
-      mailgunDomain: '',
-      mailgunFromEmail: '',
+      smtpHost: '',
+      smtpPort: 587,
+      smtpUsername: '',
+      smtpPassword: '',
+      smtpFromEmail: '',
       smsEnabled: false,
       twilioAccountSid: '',
       twilioAuthToken: '',
@@ -62,9 +66,11 @@ export default function DashboardNotifications() {
       initialized.current = true;
       form.reset({
         emailEnabled: config.emailEnabled,
-        mailgunApiKey: '',
-        mailgunDomain: config.mailgunDomain,
-        mailgunFromEmail: config.mailgunFromEmail,
+        smtpHost: config.smtpHost,
+        smtpPort: config.smtpPort,
+        smtpUsername: config.smtpUsername,
+        smtpPassword: '',
+        smtpFromEmail: config.smtpFromEmail,
         smsEnabled: config.smsEnabled,
         twilioAccountSid: '',
         twilioAuthToken: '',
@@ -88,7 +94,7 @@ export default function DashboardNotifications() {
         toast(
           result.delivered
             ? { title: 'Test email sent', description: `Delivered to ${to}.` }
-            : { variant: 'destructive', title: 'Test email failed', description: 'Mailgun rejected the request — check your API key and domain.' },
+            : { variant: 'destructive', title: 'Test email failed', description: 'The SMTP server rejected the request — check your host, port, username, and password.' },
         );
       },
       onError: (err) => {
@@ -105,9 +111,11 @@ export default function DashboardNotifications() {
     updateConfig.mutate({
       data: {
         emailEnabled: values.emailEnabled,
-        mailgunApiKey: values.mailgunApiKey || '',
-        mailgunDomain: values.mailgunDomain,
-        mailgunFromEmail: values.mailgunFromEmail,
+        smtpHost: values.smtpHost,
+        smtpPort: values.smtpPort,
+        smtpUsername: values.smtpUsername,
+        smtpPassword: values.smtpPassword || '',
+        smtpFromEmail: values.smtpFromEmail,
         smsEnabled: values.smsEnabled,
         twilioAccountSid: values.twilioAccountSid || '',
         twilioAuthToken: values.twilioAuthToken || '',
@@ -117,7 +125,7 @@ export default function DashboardNotifications() {
       onSuccess: (updated) => {
         toast({ title: 'Notification Settings Saved' });
         queryClient.setQueryData(getGetNotificationConfigQueryKey(), updated);
-        form.setValue('mailgunApiKey', '');
+        form.setValue('smtpPassword', '');
         form.setValue('twilioAccountSid', '');
         form.setValue('twilioAuthToken', '');
       },
@@ -151,13 +159,13 @@ export default function DashboardNotifications() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-3xl">
-          {/* Email (Mailgun) */}
+          {/* Email (SMTP) */}
           <Card className="border-none shadow-sm bg-card">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <CardTitle className="text-xl font-serif text-primary">Email (Mailgun)</CardTitle>
-                  <CardDescription>Send email notifications via Mailgun.</CardDescription>
+                  <CardTitle className="text-xl font-serif text-primary">Email (SMTP)</CardTitle>
+                  <CardDescription>Send email notifications via any SMTP provider, including Mailgun's SMTP relay.</CardDescription>
                 </div>
                 <FormField
                   control={form.control}
@@ -176,18 +184,18 @@ export default function DashboardNotifications() {
               {config?.emailConfigured && (
                 <div className="bg-green-50 text-green-700 p-3 rounded-md flex items-center gap-2 text-sm">
                   <CheckCircle2 className="w-4 h-4" />
-                  Mailgun is configured.
+                  SMTP is configured.
                 </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
-                  name="mailgunDomain"
+                  name="smtpHost"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Domain</FormLabel>
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>SMTP Host</FormLabel>
                       <FormControl>
-                        <Input placeholder="mg.yourdomain.com" {...field} />
+                        <Input placeholder="smtp.mailgun.org" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -195,7 +203,35 @@ export default function DashboardNotifications() {
                 />
                 <FormField
                   control={form.control}
-                  name="mailgunFromEmail"
+                  name="smtpPort"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Port</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="587" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="smtpUsername"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SMTP Username</FormLabel>
+                      <FormControl>
+                        <Input placeholder="postmaster@yourdomain.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="smtpFromEmail"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>From Address</FormLabel>
@@ -209,18 +245,18 @@ export default function DashboardNotifications() {
               </div>
               <FormField
                 control={form.control}
-                name="mailgunApiKey"
+                name="smtpPassword"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      API Key
+                      SMTP Password
                       <Lock className="w-3 h-3 text-muted-foreground" />
                     </FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder={config?.emailConfigured ? 'Leave blank to keep existing key' : 'key-...'} {...field} />
+                      <Input type="password" placeholder={config?.emailConfigured ? 'Leave blank to keep existing password' : 'Your SMTP password'} {...field} />
                     </FormControl>
                     <FormDescription>
-                      Stored server-side, never returned or displayed again.
+                      Stored server-side, never returned or displayed again. In Mailgun, this is under Sending &gt; Domain settings &gt; SMTP credentials — not your API key.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -249,7 +285,7 @@ export default function DashboardNotifications() {
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {config.emailEnabled
-                      ? 'Confirms your saved Mailgun configuration can actually deliver mail.'
+                      ? 'Confirms your saved SMTP configuration can actually deliver mail.'
                       : 'Turn on email above and save to enable test sending.'}
                   </p>
                 </div>

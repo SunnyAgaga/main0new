@@ -619,8 +619,10 @@ export interface SendCampaignInput {
 export interface NotificationConfig {
   emailEnabled: boolean;
   emailConfigured: boolean;
-  mailgunDomain: string;
-  mailgunFromEmail: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUsername: string;
+  smtpFromEmail: string;
   smsEnabled: boolean;
   smsConfigured: boolean;
   twilioFromNumber: string;
@@ -628,9 +630,11 @@ export interface NotificationConfig {
 
 export interface NotificationConfigInput {
   emailEnabled: boolean;
-  mailgunApiKey: string;
-  mailgunDomain: string;
-  mailgunFromEmail: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUsername: string;
+  smtpPassword: string;
+  smtpFromEmail: string;
   smsEnabled: boolean;
   twilioAccountSid: string;
   twilioAuthToken: string;
