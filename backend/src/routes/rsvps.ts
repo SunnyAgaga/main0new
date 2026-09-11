@@ -1,8 +1,58 @@
-import { Router, type IRouter } from "express";
+import { Router, type IRouter, type Request } from "express";
 import { CreateRsvpBody, CreateRsvpResponse } from "@wedplan/shared";
-import { asoebiItemsCollection, insertRsvp, type AsoebiItem } from "@/db";
+import { asoebiItemsCollection, insertRsvp, notificationConfigsCollection, type AsoebiItem, type Rsvp } from "@/db";
+import { sendMailgunEmail } from "@/lib/mailgun";
 
 const router: IRouter = Router();
+
+// Mirrors the dev/prod origin split used for Spotify's OAuth redirect: in dev,
+// Vite serves the SPA on its own port and proxies /api here, so a link meant
+// for the guest's browser has to point at that port, not this API's own.
+function guestOrigin(req: Request): string {
+  if (process.env.NODE_ENV !== "production" && process.env.FRONTEND_PORT) {
+    return `${req.protocol}://${req.hostname}:${process.env.FRONTEND_PORT}`;
+  }
+  return `${req.protocol}://${req.get("host")}`;
+}
+
+async function sendGatePassEmail(req: Request, rsvp: Rsvp): Promise<void> {
+  if (!rsvp.attending || !rsvp.traditionalPassToken || !rsvp.weddingPassToken) return;
+
+  const config = await notificationConfigsCollection().findOne({ id: 1 });
+  if (!config?.emailEnabled || !config.mailgunApiKey || !config.mailgunDomain || !config.mailgunFromEmail) {
+    return;
+  }
+
+  const basePath = (process.env.WEDPLAN_BASE_PATH ?? "").replace(/\/$/, "");
+  const origin = guestOrigin(req);
+  const traditionalUrl = `${origin}${basePath}/pass/${rsvp.traditionalPassToken}`;
+  const weddingUrl = `${origin}${basePath}/pass/${rsvp.weddingPassToken}`;
+
+  const text = [
+    `Hi ${rsvp.guestName},`,
+    ``,
+    `Thank you for confirming you'll be joining us! Here are your gate passes for the day —`,
+    `show the QR code on either page at the entrance.`,
+    ``,
+    `Traditional Wedding pass: ${traditionalUrl}`,
+    `White Wedding pass: ${weddingUrl}`,
+    ``,
+    `See you there!`,
+  ].join("\n");
+
+  try {
+    await sendMailgunEmail({
+      apiKey: config.mailgunApiKey,
+      domain: config.mailgunDomain,
+      from: config.mailgunFromEmail,
+      to: rsvp.email,
+      subject: "Your wedding gate passes",
+      text,
+    });
+  } catch (err) {
+    req.log.warn({ err, rsvpId: rsvp.id }, "Failed to send gate pass email");
+  }
+}
 
 interface ResolvedSelection {
   item: AsoebiItem;
@@ -125,6 +175,8 @@ router.post("/rsvps", async (req, res): Promise<void> => {
     { rsvpId: rsvp.id, asoebiInterest: rsvp.asoebiInterest },
     "RSVP created",
   );
+
+  await sendGatePassEmail(req, rsvp);
 
   const cartItems = [
     ...primarySelections.map((selection) => ({

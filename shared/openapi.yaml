@@ -802,6 +802,111 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/rsvps/{id}/check-in:
+    put:
+      operationId: updateRsvpCheckIn
+      tags: [admin]
+      summary: Manually set a guest's check-in status for an event (fallback for scan failures)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRsvpCheckInInput"
+      responses:
+        "200":
+          description: Updated RSVP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminRsvp"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: RSVP not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /rsvp-pass/{token}:
+    get:
+      operationId: getRsvpPass
+      tags: [rsvp]
+      summary: Look up a guest's gate pass by their pass token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Pass details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RsvpPass"
+        "404":
+          description: Pass not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/check-in/{token}:
+    post:
+      operationId: scanCheckIn
+      tags: [admin]
+      summary: Check a guest in by scanning their pass token at the gate
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Check-in result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RsvpPass"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Pass not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /delivery-options:
     get:
       operationId: getDeliveryOptions
@@ -1424,7 +1529,7 @@ components:
             $ref: "#/components/schemas/AdminAsoebiSelection"
     AdminRsvp:
       type: object
-      required: [id, guestName, email, phone, attending, guestCount, additionalGuests, asoebiInterest, asoebiSelections, deliveryMethod, deliveryAddress, deliveryProvider, note, createdAt]
+      required: [id, guestName, email, phone, attending, guestCount, additionalGuests, asoebiInterest, asoebiSelections, deliveryMethod, deliveryAddress, deliveryProvider, note, createdAt, traditionalCheckedInAt, weddingCheckedInAt]
       properties:
         id: { type: number }
         guestName: { type: string }
@@ -1450,6 +1555,29 @@ components:
         deliveryProvider: { type: ["string", "null"] }
         note: { type: ["string", "null"] }
         createdAt: { type: string }
+        traditionalCheckedInAt: { type: ["string", "null"] }
+        weddingCheckedInAt: { type: ["string", "null"] }
+    RsvpPass:
+      type: object
+      required: [guestName, guestCount, event, eventDate, eventVenue, checkedInAt, alreadyCheckedIn]
+      properties:
+        guestName: { type: string }
+        guestCount: { type: number }
+        event:
+          type: string
+          enum: [traditional, wedding]
+        eventDate: { type: string }
+        eventVenue: { type: string }
+        checkedInAt: { type: ["string", "null"] }
+        alreadyCheckedIn: { type: boolean }
+    UpdateRsvpCheckInInput:
+      type: object
+      required: [event, checkedIn]
+      properties:
+        event:
+          type: string
+          enum: [traditional, wedding]
+        checkedIn: { type: boolean }
     RsvpFormCopy:
       type: object
       required: [pageTitle, guestInfoHeading, fullNameLabel, emailLabel, phoneLabel, attendanceHeading, attendingQuestion, attendingYesLabel, attendingNoLabel, guestCountLabel, adultsOnlyNotice, asoebiQuestion, asoebiYesLabel, asoebiNoLabel, asoebiPickerHint, additionalGuestsHeading, deliveryHeading, deliveryQuestion, pickupLabel, deliveryLabel, deliveryProviderQuestion, deliveryAddressLabel, giftHeading, giftQuestion, giftYesLabel, giftNoLabel, giftAmountLabel, noteLabel, submitLabel, submitWithPaymentLabel, completeAttendingTitle, completeAttendingMessage, completeDecliningTitle, completeDecliningMessage]

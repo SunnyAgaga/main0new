@@ -44,7 +44,7 @@ function sanitizePermissions(permissions: string[]): string[] {
   return permissions.filter(isPermissionKey);
 }
 
-function toAdminRsvp(rsvp: Rsvp) {
+export function toAdminRsvp(rsvp: Rsvp) {
   return {
     id: rsvp.id,
     guestName: rsvp.guestName,
@@ -60,6 +60,8 @@ function toAdminRsvp(rsvp: Rsvp) {
     deliveryProvider: rsvp.deliveryProvider ?? null,
     note: rsvp.note ?? null,
     createdAt: rsvp.createdAt.toISOString(),
+    traditionalCheckedInAt: rsvp.traditionalCheckedInAt?.toISOString() ?? null,
+    weddingCheckedInAt: rsvp.weddingCheckedInAt?.toISOString() ?? null,
   };
 }
 

@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { z } from "zod/v4";
 import { db } from "../client";
 import { nextSequence } from "../counters";
@@ -40,8 +41,14 @@ export interface Rsvp {
   deliveryAddress: string | null;
   deliveryProvider: string | null;
   note: string | null;
+  traditionalPassToken: string | null;
+  traditionalCheckedInAt: Date | null;
+  weddingPassToken: string | null;
+  weddingCheckedInAt: Date | null;
   createdAt: Date;
 }
+
+export type CheckInEvent = "traditional" | "wedding";
 
 export interface PaymentConfig {
   id: 1;
@@ -307,10 +314,61 @@ export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
       asoebiSelections: guest.asoebiSelections,
     })),
     id: await nextSequence("rsvps"),
+    // Only guests who said they're attending need a gate pass.
+    traditionalPassToken: input.attending ? randomBytes(12).toString("hex") : null,
+    traditionalCheckedInAt: null,
+    weddingPassToken: input.attending ? randomBytes(12).toString("hex") : null,
+    weddingCheckedInAt: null,
     createdAt: new Date(),
   };
   await rsvpsCollection().insertOne(doc);
   return doc;
+}
+
+/** Looks up an RSVP by either of its two per-event pass tokens. */
+export async function findRsvpByPassToken(
+  token: string,
+): Promise<{ rsvp: Rsvp; event: CheckInEvent } | null> {
+  const rsvp = await rsvpsCollection().findOne({
+    $or: [{ traditionalPassToken: token }, { weddingPassToken: token }],
+  });
+  if (!rsvp) return null;
+  const event: CheckInEvent = rsvp.traditionalPassToken === token ? "traditional" : "wedding";
+  return { rsvp, event };
+}
+
+/** Marks a guest checked in for an event, unless they already were. */
+export async function checkInRsvp(
+  rsvpId: number,
+  event: CheckInEvent,
+): Promise<{ rsvp: Rsvp; alreadyCheckedIn: boolean }> {
+  const field = event === "traditional" ? "traditionalCheckedInAt" : "weddingCheckedInAt";
+  const existing = await rsvpsCollection().findOne({ id: rsvpId });
+  const alreadyCheckedIn = Boolean(existing?.[field]);
+
+  const updated = alreadyCheckedIn
+    ? existing!
+    : (await rsvpsCollection().findOneAndUpdate(
+        { id: rsvpId },
+        { $set: { [field]: new Date() } },
+        { returnDocument: "after" },
+      ))!;
+
+  return { rsvp: updated, alreadyCheckedIn };
+}
+
+/** Manual override for when scanning isn't possible. */
+export async function setRsvpCheckIn(
+  rsvpId: number,
+  event: CheckInEvent,
+  checkedIn: boolean,
+): Promise<Rsvp | null> {
+  const field = event === "traditional" ? "traditionalCheckedInAt" : "weddingCheckedInAt";
+  return rsvpsCollection().findOneAndUpdate(
+    { id: rsvpId },
+    { $set: { [field]: checkedIn ? new Date() : null } },
+    { returnDocument: "after" },
+  );
 }
 
 export async function updateRsvp(id: number, input: InsertRsvp): Promise<Rsvp | null> {

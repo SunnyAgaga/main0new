@@ -30,4 +30,8 @@ export interface AdminRsvp {
   /** @nullable */
   note: string | null;
   createdAt: string;
+  /** @nullable */
+  traditionalCheckedInAt: string | null;
+  /** @nullable */
+  weddingCheckedInAt: string | null;
 }

@@ -49,6 +49,7 @@ import type {
   RsvpFormCopy,
   RsvpFormCopyInput,
   RsvpInput,
+  RsvpPass,
   RsvpResult,
   SendCampaignInput,
   SiteSettings,
@@ -60,6 +61,7 @@ import type {
   TestEmailResponse,
   UpdateAdminUserInput,
   UpdateOrderFulfillmentInput,
+  UpdateRsvpCheckInInput,
   VerifyCheckoutInput
 } from './api.schemas';
 
@@ -2324,6 +2326,246 @@ export const useUpdateAdminRsvp = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getUpdateAdminRsvpMutationOptions(options));
+    }
+
+export const getUpdateRsvpCheckInUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/rsvps/${id}/check-in`
+}
+
+/**
+ * @summary Manually set a guest's check-in status for an event (fallback for scan failures)
+ */
+export const updateRsvpCheckIn = async (id: number,
+    updateRsvpCheckInInput: UpdateRsvpCheckInInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminRsvp> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminRsvp>(getUpdateRsvpCheckInUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(updateRsvpCheckInInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateRsvpCheckInMutationKey = () => ['updateRsvpCheckIn'] as const;
+
+export const getUpdateRsvpCheckInMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRsvpCheckIn>>, TError,UpdateRsvpCheckInMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateRsvpCheckIn>>, TError,UpdateRsvpCheckInMutationVariables, TContext> => {
+
+const mutationKey = getUpdateRsvpCheckInMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateRsvpCheckIn>>, UpdateRsvpCheckInMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateRsvpCheckIn(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateRsvpCheckInMutationResult = NonNullable<Awaited<ReturnType<typeof updateRsvpCheckIn>>>
+    export type UpdateRsvpCheckInMutationBody = BodyType<UpdateRsvpCheckInInput>
+    export type UpdateRsvpCheckInMutationError = ErrorType<ErrorResponse>
+    export type UpdateRsvpCheckInMutationVariables = {id: number;data: BodyType<UpdateRsvpCheckInInput>}
+
+    /**
+ * @summary Manually set a guest's check-in status for an event (fallback for scan failures)
+ */
+export const useUpdateRsvpCheckIn = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRsvpCheckIn>>, TError,UpdateRsvpCheckInMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateRsvpCheckIn>>,
+        TError,
+        UpdateRsvpCheckInMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateRsvpCheckInMutationOptions(options));
+    }
+
+export const getGetRsvpPassUrl = (token: string,) => {
+
+
+
+
+  return `/api/rsvp-pass/${token}`
+}
+
+/**
+ * @summary Look up a guest's gate pass by their pass token
+ */
+export const getRsvpPass = async (token: string, options?: Parameters<typeof customFetch>[1]): Promise<RsvpPass> => {
+
+  return customFetch<RsvpPass>(getGetRsvpPassUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRsvpPassQueryKey = (token: string,) => {
+    return [
+    `/api/rsvp-pass/${token}`
+    ] as const;
+    }
+
+
+export const getGetRsvpPassQueryOptions = <TData = Awaited<ReturnType<typeof getRsvpPass>>, TError = ErrorType<ErrorResponse>>(token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRsvpPass>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRsvpPassQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRsvpPass>>> = ({ signal }) => getRsvpPass(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRsvpPass>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRsvpPassQueryResult = NonNullable<Awaited<ReturnType<typeof getRsvpPass>>>
+export type GetRsvpPassQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Look up a guest's gate pass by their pass token
+ */
+
+export function useGetRsvpPass<TData = Awaited<ReturnType<typeof getRsvpPass>>, TError = ErrorType<ErrorResponse>>(
+ token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRsvpPass>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRsvpPassQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getScanCheckInUrl = (token: string,) => {
+
+
+
+
+  return `/api/admin/check-in/${token}`
+}
+
+/**
+ * @summary Check a guest in by scanning their pass token at the gate
+ */
+export const scanCheckIn = async (token: string, options?: Parameters<typeof customFetch>[1]): Promise<RsvpPass> => {
+
+  return customFetch<RsvpPass>(getScanCheckInUrl(token),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getScanCheckInMutationKey = () => ['scanCheckIn'] as const;
+
+export const getScanCheckInMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof scanCheckIn>>, TError,ScanCheckInMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof scanCheckIn>>, TError,ScanCheckInMutationVariables, TContext> => {
+
+const mutationKey = getScanCheckInMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof scanCheckIn>>, ScanCheckInMutationVariables> = (props) => {
+          const {token} = props ?? {};
+
+          return  scanCheckIn(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ScanCheckInMutationResult = NonNullable<Awaited<ReturnType<typeof scanCheckIn>>>
+
+    export type ScanCheckInMutationError = ErrorType<ErrorResponse>
+    export type ScanCheckInMutationVariables = {token: string}
+
+    /**
+ * @summary Check a guest in by scanning their pass token at the gate
+ */
+export const useScanCheckIn = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof scanCheckIn>>, TError,ScanCheckInMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof scanCheckIn>>,
+        TError,
+        ScanCheckInMutationVariables,
+        TContext
+      > => {
+      return useMutation(getScanCheckInMutationOptions(options));
     }
 
 export const getGetDeliveryOptionsUrl = () => {

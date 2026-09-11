@@ -240,6 +240,42 @@ export interface AdminRsvp {
   /** @nullable */
   note: string | null;
   createdAt: string;
+  /** @nullable */
+  traditionalCheckedInAt: string | null;
+  /** @nullable */
+  weddingCheckedInAt: string | null;
+}
+
+export type RsvpPassEvent = typeof RsvpPassEvent[keyof typeof RsvpPassEvent];
+
+
+export const RsvpPassEvent = {
+  traditional: 'traditional',
+  wedding: 'wedding',
+} as const;
+
+export interface RsvpPass {
+  guestName: string;
+  guestCount: number;
+  event: RsvpPassEvent;
+  eventDate: string;
+  eventVenue: string;
+  /** @nullable */
+  checkedInAt: string | null;
+  alreadyCheckedIn: boolean;
+}
+
+export type UpdateRsvpCheckInInputEvent = typeof UpdateRsvpCheckInInputEvent[keyof typeof UpdateRsvpCheckInInputEvent];
+
+
+export const UpdateRsvpCheckInInputEvent = {
+  traditional: 'traditional',
+  wedding: 'wedding',
+} as const;
+
+export interface UpdateRsvpCheckInInput {
+  event: UpdateRsvpCheckInInputEvent;
+  checkedIn: boolean;
 }
 
 export interface RsvpFormCopy {

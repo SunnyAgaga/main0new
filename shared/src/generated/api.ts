@@ -597,7 +597,9 @@ export const ListAdminRsvpsResponseItem = zod.object({
   "deliveryAddress": zod.string().nullable(),
   "deliveryProvider": zod.string().nullable(),
   "note": zod.string().nullable(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "traditionalCheckedInAt": zod.string().nullable(),
+  "weddingCheckedInAt": zod.string().nullable()
 })
 export const ListAdminRsvpsResponse = zod.array(ListAdminRsvpsResponseItem)
 
@@ -670,7 +672,88 @@ export const UpdateAdminRsvpResponse = zod.object({
   "deliveryAddress": zod.string().nullable(),
   "deliveryProvider": zod.string().nullable(),
   "note": zod.string().nullable(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "traditionalCheckedInAt": zod.string().nullable(),
+  "weddingCheckedInAt": zod.string().nullable()
+})
+
+
+/**
+ * @summary Manually set a guest's check-in status for an event (fallback for scan failures)
+ */
+export const UpdateRsvpCheckInParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateRsvpCheckInBody = zod.object({
+  "event": zod.enum(['traditional', 'wedding']),
+  "checkedIn": zod.boolean()
+})
+
+export const UpdateRsvpCheckInResponse = zod.object({
+  "id": zod.number(),
+  "guestName": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullable(),
+  "attending": zod.boolean(),
+  "guestCount": zod.number(),
+  "additionalGuests": zod.array(zod.object({
+  "name": zod.string(),
+  "asoebiSelections": zod.array(zod.object({
+  "asoebiItemId": zod.number(),
+  "asoebiSize": zod.string(),
+  "quantity": zod.number()
+}))
+})),
+  "asoebiInterest": zod.enum(['yes', 'no']),
+  "asoebiSelections": zod.array(zod.object({
+  "asoebiItemId": zod.number(),
+  "asoebiSize": zod.string(),
+  "quantity": zod.number()
+})),
+  "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
+  "deliveryAddress": zod.string().nullable(),
+  "deliveryProvider": zod.string().nullable(),
+  "note": zod.string().nullable(),
+  "createdAt": zod.string(),
+  "traditionalCheckedInAt": zod.string().nullable(),
+  "weddingCheckedInAt": zod.string().nullable()
+})
+
+
+/**
+ * @summary Look up a guest's gate pass by their pass token
+ */
+export const GetRsvpPassParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const GetRsvpPassResponse = zod.object({
+  "guestName": zod.string(),
+  "guestCount": zod.number(),
+  "event": zod.enum(['traditional', 'wedding']),
+  "eventDate": zod.string(),
+  "eventVenue": zod.string(),
+  "checkedInAt": zod.string().nullable(),
+  "alreadyCheckedIn": zod.boolean()
+})
+
+
+/**
+ * @summary Check a guest in by scanning their pass token at the gate
+ */
+export const ScanCheckInParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const ScanCheckInResponse = zod.object({
+  "guestName": zod.string(),
+  "guestCount": zod.number(),
+  "event": zod.enum(['traditional', 'wedding']),
+  "eventDate": zod.string(),
+  "eventVenue": zod.string(),
+  "checkedInAt": zod.string().nullable(),
+  "alreadyCheckedIn": zod.boolean()
 })
 
 
