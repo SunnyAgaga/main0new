@@ -27,21 +27,27 @@ import DashboardCampaigns from '@/pages/dashboard/campaigns';
 import DashboardRsvpForm from '@/pages/dashboard/rsvp-form';
 import DashboardSiteSettings from '@/pages/dashboard/site-settings';
 import { SiteTheme } from '@/components/site-theme';
+import type { PermissionKey } from '@wedplan/shared';
 
 const queryClient = new QueryClient();
 
 function ProtectedDashboard({
   children,
-  adminOnly = false,
+  permission,
 }: {
   children: ReactNode;
-  adminOnly?: boolean;
+  permission?: PermissionKey | 'team';
 }) {
   const { user, isLoading } = useAuth();
 
   if (isLoading) return null;
   if (!user) return <Redirect to="/sign-in" />;
-  if (adminOnly && user.role !== 'admin') return <Redirect to="/dashboard" />;
+
+  const allowed =
+    !permission ||
+    user.role === 'admin' ||
+    (permission !== 'team' && user.permissions?.includes(permission));
+  if (!allowed) return <Redirect to="/dashboard" />;
 
   return <DashboardLayout>{children}</DashboardLayout>;
 }
@@ -62,67 +68,67 @@ function Router() {
       </Route>
 
       <Route path="/dashboard/asoebi">
-        <ProtectedDashboard adminOnly>
+        <ProtectedDashboard permission="asoebi">
           <DashboardAsoebi />
         </ProtectedDashboard>
       </Route>
 
       <Route path="/dashboard/rsvps">
-        <ProtectedDashboard adminOnly>
+        <ProtectedDashboard permission="rsvps">
           <DashboardRsvps />
         </ProtectedDashboard>
       </Route>
 
       <Route path="/dashboard/orders">
-        <ProtectedDashboard adminOnly>
+        <ProtectedDashboard permission="orders">
           <DashboardOrders />
         </ProtectedDashboard>
       </Route>
 
       <Route path="/dashboard/campaigns">
-        <ProtectedDashboard adminOnly>
+        <ProtectedDashboard permission="campaigns">
           <DashboardCampaigns />
         </ProtectedDashboard>
       </Route>
 
       <Route path="/dashboard/rsvp-form">
-        <ProtectedDashboard adminOnly>
+        <ProtectedDashboard permission="rsvp-form">
           <DashboardRsvpForm />
         </ProtectedDashboard>
       </Route>
 
       <Route path="/dashboard/payments">
-        <ProtectedDashboard adminOnly>
+        <ProtectedDashboard permission="payments">
           <DashboardPayments />
         </ProtectedDashboard>
       </Route>
 
       <Route path="/dashboard/delivery">
-        <ProtectedDashboard adminOnly>
+        <ProtectedDashboard permission="delivery">
           <DashboardDelivery />
         </ProtectedDashboard>
       </Route>
 
       <Route path="/dashboard/notifications">
-        <ProtectedDashboard adminOnly>
+        <ProtectedDashboard permission="notifications">
           <DashboardNotifications />
         </ProtectedDashboard>
       </Route>
 
       <Route path="/dashboard/music">
-        <ProtectedDashboard adminOnly>
+        <ProtectedDashboard permission="music">
           <DashboardMusic />
         </ProtectedDashboard>
       </Route>
 
       <Route path="/dashboard/team">
-        <ProtectedDashboard adminOnly>
+        <ProtectedDashboard permission="team">
           <DashboardTeam />
         </ProtectedDashboard>
       </Route>
 
       <Route path="/dashboard/site-settings">
-        <ProtectedDashboard adminOnly>
+        <ProtectedDashboard permission="site-settings">
           <DashboardSiteSettings />
         </ProtectedDashboard>
       </Route>
