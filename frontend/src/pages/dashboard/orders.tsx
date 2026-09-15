@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   useListAdminOrders,
   useUpdateOrderFulfillment,
+  useVerifyBankTransfer,
   getListAdminOrdersQueryKey,
   type AdminOrder,
 } from '@/api';
@@ -12,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { FileSpreadsheet, FileText, PackageCheck, RotateCcw } from 'lucide-react';
+import { FileSpreadsheet, FileText, PackageCheck, RotateCcw, Check, X, ImageIcon } from 'lucide-react';
 
 const COLUMNS: { key: keyof AdminOrder; label: string }[] = [
   { key: 'reference', label: 'Reference' },
@@ -38,7 +39,80 @@ function statusBadge(status: string) {
   if (status === 'failed') {
     return <Badge variant="destructive">Failed</Badge>;
   }
-  return <Badge variant="secondary" className="bg-gray-100 text-gray-800 hover:bg-gray-100 border-none capitalize">{status}</Badge>;
+  if (status === 'pending_verification') {
+    return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-none">Needs Verification</Badge>;
+  }
+  return (
+    <Badge variant="secondary" className="bg-gray-100 text-gray-800 hover:bg-gray-100 border-none capitalize">
+      {status.replace(/_/g, ' ')}
+    </Badge>
+  );
+}
+
+function PaymentStatusCell({ order }: { order: AdminOrder }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const verifyTransfer = useVerifyBankTransfer();
+
+  const respond = (approved: boolean) => {
+    verifyTransfer.mutate({ id: order.id, data: { approved } }, {
+      onSuccess: (updated) => {
+        queryClient.setQueryData(getListAdminOrdersQueryKey(), (old: AdminOrder[] | undefined) =>
+          old?.map((o) => (o.id === updated.id ? updated : o)),
+        );
+        toast({ title: approved ? 'Payment confirmed' : 'Payment claim rejected' });
+      },
+      onError: (err) => {
+        toast({
+          variant: 'destructive',
+          title: 'Could not update',
+          description: err.data?.error || 'An error occurred.',
+        });
+      },
+    });
+  };
+
+  return (
+    <div className="space-y-1.5">
+      {statusBadge(order.status)}
+      {order.paymentMethod === 'bank_transfer' && order.status === 'pending_verification' && (
+        <div className="space-y-1">
+          {order.proofOfPaymentUrl && (
+            <a
+              href={order.proofOfPaymentUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 text-xs text-primary underline underline-offset-2"
+            >
+              <ImageIcon className="w-3 h-3" /> View proof
+            </a>
+          )}
+          <div className="flex gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              disabled={verifyTransfer.isPending}
+              onClick={() => respond(true)}
+            >
+              <Check className="w-3 h-3 mr-1" /> Confirm
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              disabled={verifyTransfer.isPending}
+              onClick={() => respond(false)}
+            >
+              <X className="w-3 h-3 mr-1" /> Reject
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function DeliveryCell({ order }: { order: AdminOrder }) {
@@ -219,7 +293,9 @@ export default function DashboardOrders() {
                     )}
                   </TableCell>
                   <TableCell className="capitalize">{order.paymentMethod.replace('_', ' ')}</TableCell>
-                  <TableCell>{statusBadge(order.status)}</TableCell>
+                  <TableCell>
+                    <PaymentStatusCell order={order} />
+                  </TableCell>
                   <TableCell>
                     <DeliveryCell order={order} />
                   </TableCell>

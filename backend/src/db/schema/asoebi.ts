@@ -89,6 +89,7 @@ export interface Order {
   currency: string;
   paymentMethod: string;
   status: string;
+  proofOfPaymentUrl: string | null;
   fulfillmentStatus: "pending" | "delivered";
   fulfilledAt: Date | null;
   createdAt: Date;
@@ -274,6 +275,7 @@ export const insertOrderSchema = z.object({
   currency: z.string().default("NGN"),
   paymentMethod: z.string(),
   status: z.string().default("pending"),
+  proofOfPaymentUrl: z.string().nullable().default(null),
   fulfillmentStatus: z.enum(["pending", "delivered"]).default("pending"),
   fulfilledAt: z.date().nullable().default(null),
 });
@@ -463,6 +465,37 @@ export async function markOrderDeliveredByReference(reference: string): Promise<
   return ordersCollection().findOneAndUpdate(
     { reference },
     { $set: { fulfillmentStatus: "delivered", fulfilledAt: new Date() } },
+    { returnDocument: "after" },
+  );
+}
+
+/**
+ * A guest declaring "I've sent the transfer" - moves the order out of
+ * awaiting_transfer so it shows up for admin review. Also allowed from
+ * pending_verification itself, so a guest can attach a proof image after
+ * the fact without the click being rejected as a no-op.
+ */
+export async function confirmBankTransfer(
+  reference: string,
+  proofOfPaymentUrl: string | null,
+): Promise<Order | null> {
+  return ordersCollection().findOneAndUpdate(
+    { reference, status: { $in: ["awaiting_transfer", "pending_verification"] } },
+    {
+      $set: {
+        status: "pending_verification",
+        ...(proofOfPaymentUrl ? { proofOfPaymentUrl } : {}),
+      },
+    },
+    { returnDocument: "after" },
+  );
+}
+
+/** Admin review of a guest's bank transfer claim, checked against the actual bank statement. */
+export async function verifyBankTransfer(id: number, approved: boolean): Promise<Order | null> {
+  return ordersCollection().findOneAndUpdate(
+    { id },
+    { $set: { status: approved ? "paid" : "awaiting_transfer" } },
     { returnDocument: "after" },
   );
 }

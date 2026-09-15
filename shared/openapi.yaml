@@ -729,6 +729,53 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/orders/{id}/verify-transfer:
+    put:
+      operationId: verifyBankTransfer
+      tags: [admin]
+      summary: Approve or reject a guest's "I've sent the transfer" claim, checked against the bank statement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyBankTransferInput"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminOrder"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /admin/rsvps:
     get:
       operationId: listAdminRsvps
@@ -1534,7 +1581,7 @@ components:
         note: { type: string }
     AdminOrder:
       type: object
-      required: [id, reference, type, guestName, email, totalAmount, giftAmount, currency, paymentMethod, status, itemCount, createdAt, deliveryMethod, fulfillmentStatus, fulfilledAt]
+      required: [id, reference, type, guestName, email, totalAmount, giftAmount, currency, paymentMethod, status, proofOfPaymentUrl, itemCount, createdAt, deliveryMethod, fulfillmentStatus, fulfilledAt]
       properties:
         id: { type: number }
         reference: { type: string }
@@ -1546,6 +1593,7 @@ components:
         currency: { type: string }
         paymentMethod: { type: string }
         status: { type: string }
+        proofOfPaymentUrl: { type: ["string", "null"] }
         itemCount: { type: number }
         createdAt: { type: string }
         deliveryMethod:
@@ -1558,6 +1606,11 @@ components:
       required: [status]
       properties:
         status: { type: string, enum: [pending, delivered] }
+    VerifyBankTransferInput:
+      type: object
+      required: [approved]
+      properties:
+        approved: { type: boolean }
     AdminAsoebiSelection:
       type: object
       required: [asoebiItemId, asoebiSize, quantity]

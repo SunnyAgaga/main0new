@@ -19,6 +19,9 @@ import {
   UpdateOrderFulfillmentResponse,
   UpdatePaymentConfigBody,
   UpdatePaymentConfigResponse,
+  VerifyBankTransferBody,
+  VerifyBankTransferParams,
+  VerifyBankTransferResponse,
 } from "@wedplan/shared";
 import { isPermissionKey } from "@wedplan/shared";
 import {
@@ -33,6 +36,7 @@ import {
   updateUserAccess,
   upsertPaymentConfig,
   usersCollection,
+  verifyBankTransfer,
   type Order,
   type PaymentConfig,
   type Rsvp,
@@ -284,6 +288,7 @@ function toAdminOrder(order: Order) {
     currency: order.currency,
     paymentMethod: order.paymentMethod,
     status: order.status,
+    proofOfPaymentUrl: order.proofOfPaymentUrl ?? null,
     itemCount: order.items.length,
     createdAt: order.createdAt.toISOString(),
     deliveryMethod: order.deliveryMethod ?? null,
@@ -324,6 +329,31 @@ router.put(
       "Order fulfillment status updated",
     );
     res.json(UpdateOrderFulfillmentResponse.parse(toAdminOrder(updated)));
+  },
+);
+
+router.put(
+  "/admin/orders/:id/verify-transfer",
+  requirePermission("orders"),
+  async (req, res): Promise<void> => {
+    const paramsResult = VerifyBankTransferParams.safeParse(req.params);
+    const parsed = VerifyBankTransferBody.safeParse(req.body);
+    if (!paramsResult.success || !parsed.success) {
+      res.status(400).json({ error: (paramsResult.error ?? parsed.error)!.message });
+      return;
+    }
+
+    const updated = await verifyBankTransfer(paramsResult.data.id, parsed.data.approved);
+    if (!updated) {
+      res.status(404).json({ error: "Order not found." });
+      return;
+    }
+
+    req.log.info(
+      { orderId: paramsResult.data.id, approved: parsed.data.approved },
+      "Bank transfer reviewed",
+    );
+    res.json(VerifyBankTransferResponse.parse(toAdminOrder(updated)));
   },
 );
 

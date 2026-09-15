@@ -169,6 +169,8 @@ export interface AdminOrder {
   currency: string;
   paymentMethod: string;
   status: string;
+  /** @nullable */
+  proofOfPaymentUrl: string | null;
   itemCount: number;
   createdAt: string;
   /** @nullable */
@@ -188,6 +190,10 @@ export const UpdateOrderFulfillmentInputStatus = {
 
 export interface UpdateOrderFulfillmentInput {
   status: UpdateOrderFulfillmentInputStatus;
+}
+
+export interface VerifyBankTransferInput {
+  approved: boolean;
 }
 
 export interface AdminAsoebiSelection {

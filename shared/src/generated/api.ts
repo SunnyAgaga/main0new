@@ -530,6 +530,7 @@ export const ListAdminOrdersResponseItem = zod.object({
   "currency": zod.string(),
   "paymentMethod": zod.string(),
   "status": zod.string(),
+  "proofOfPaymentUrl": zod.string().nullable(),
   "itemCount": zod.number(),
   "createdAt": zod.string(),
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
@@ -561,6 +562,38 @@ export const UpdateOrderFulfillmentResponse = zod.object({
   "currency": zod.string(),
   "paymentMethod": zod.string(),
   "status": zod.string(),
+  "proofOfPaymentUrl": zod.string().nullable(),
+  "itemCount": zod.number(),
+  "createdAt": zod.string(),
+  "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
+  "fulfillmentStatus": zod.enum(['pending', 'delivered']),
+  "fulfilledAt": zod.string().nullable()
+})
+
+
+/**
+ * @summary Approve or reject a guest's "I've sent the transfer" claim, checked against the bank statement
+ */
+export const VerifyBankTransferParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const VerifyBankTransferBody = zod.object({
+  "approved": zod.boolean()
+})
+
+export const VerifyBankTransferResponse = zod.object({
+  "id": zod.number(),
+  "reference": zod.string(),
+  "type": zod.enum(['asoebi', 'gift']),
+  "guestName": zod.string(),
+  "email": zod.string(),
+  "totalAmount": zod.number(),
+  "giftAmount": zod.number(),
+  "currency": zod.string(),
+  "paymentMethod": zod.string(),
+  "status": zod.string(),
+  "proofOfPaymentUrl": zod.string().nullable(),
   "itemCount": zod.number(),
   "createdAt": zod.string(),
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),

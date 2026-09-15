@@ -20,6 +20,8 @@ export interface AdminOrder {
   currency: string;
   paymentMethod: string;
   status: string;
+  /** @nullable */
+  proofOfPaymentUrl: string | null;
   itemCount: number;
   createdAt: string;
   /** @nullable */
