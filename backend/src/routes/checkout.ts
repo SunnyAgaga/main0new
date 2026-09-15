@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Router, type IRouter } from "express";
+import multer from "multer";
 import {
   CreateBankTransferOrderBody,
   CreateBankTransferOrderResponse,
@@ -13,10 +14,12 @@ import {
 } from "@wedplan/shared";
 import {
   asoebiItemsCollection,
+  confirmBankTransfer,
   insertOrder,
   ordersCollection,
   paymentConfigsCollection,
   rsvpsCollection,
+  saveUploadedImage,
   type AsoebiItem,
   type Order,
   type PaymentConfig,
@@ -24,6 +27,20 @@ import {
 } from "@/db";
 
 const router: IRouter = Router();
+
+const proofOfPaymentUpload = multer({
+  storage: multer.memoryStorage(),
+  // Same size cap as other guest-facing image uploads, comfortable for a
+  // bank app screenshot without letting the request balloon.
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      cb(new Error("Only image files are allowed"));
+      return;
+    }
+    cb(null, true);
+  },
+});
 
 interface OrderLine {
   guestName: string;
@@ -258,6 +275,7 @@ router.post("/checkout/flutterwave", async (req, res): Promise<void> => {
     currency: validated.currency,
     paymentMethod: "flutterwave",
     status: "pending",
+    proofOfPaymentUrl: null,
     fulfillmentStatus: "pending",
     fulfilledAt: null,
   });
@@ -315,6 +333,7 @@ router.post("/checkout/bank-transfer", async (req, res): Promise<void> => {
     currency: validated.currency,
     paymentMethod: "bank_transfer",
     status: "awaiting_transfer",
+    proofOfPaymentUrl: null,
     fulfillmentStatus: "pending",
     fulfilledAt: null,
   });
@@ -387,6 +406,7 @@ router.post("/checkout/gift/flutterwave", async (req, res): Promise<void> => {
     currency: "NGN",
     paymentMethod: "flutterwave",
     status: "pending",
+    proofOfPaymentUrl: null,
     fulfillmentStatus: "pending",
     fulfilledAt: null,
   });
@@ -429,6 +449,7 @@ router.post("/checkout/gift/bank-transfer", async (req, res): Promise<void> => {
     currency: "NGN",
     paymentMethod: "bank_transfer",
     status: "awaiting_transfer",
+    proofOfPaymentUrl: null,
     fulfillmentStatus: "pending",
     fulfilledAt: null,
   });
@@ -500,6 +521,44 @@ router.post("/checkout/verify", async (req, res): Promise<void> => {
   }
 
   res.json(VerifyCheckoutResponse.parse(toOrderStatus(order)));
+});
+
+router.post("/checkout/confirm-transfer", (req, res): void => {
+  proofOfPaymentUpload.single("file")(req, res, async (err: unknown) => {
+    if (err) {
+      const message =
+        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+          ? "Image is too large (5MB max)."
+          : err instanceof Error
+            ? err.message
+            : "Upload failed";
+      res.status(400).json({ error: message });
+      return;
+    }
+
+    const reference = typeof req.body?.reference === "string" ? req.body.reference.trim() : "";
+    if (!reference) {
+      res.status(400).json({ error: "Missing order reference." });
+      return;
+    }
+
+    let proofOfPaymentUrl: string | null = null;
+    if (req.file) {
+      const image = await saveUploadedImage(req.file.mimetype, req.file.buffer.toString("base64"));
+      proofOfPaymentUrl = `/api/uploads/${image.id}`;
+    }
+
+    const updated = await confirmBankTransfer(reference, proofOfPaymentUrl);
+    if (!updated) {
+      res.status(404).json({
+        error: "We couldn't find that order, or it's already been verified.",
+      });
+      return;
+    }
+
+    req.log.info({ reference, hasProof: Boolean(proofOfPaymentUrl) }, "Guest confirmed bank transfer sent");
+    res.json({ reference: updated.reference, status: updated.status });
+  });
 });
 
 export default router;

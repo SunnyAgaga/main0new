@@ -10,13 +10,14 @@ import {
   useGetPaymentMethods,
 } from '@/api';
 import { PaymentReturnScreen, isPaymentReturn } from '@/components/payment-return-screen';
+import { BankTransferConfirmation, type BankDetails } from '@/components/bank-transfer-confirmation';
 
 import { Gift, CreditCard, Landmark, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 
 const giftSchema = z.object({
@@ -40,15 +41,7 @@ export default function GiftPage() {
   const bankTransferMutation = useCreateGiftBankTransferOrder();
   const { data: paymentMethods } = useGetPaymentMethods();
 
-  const [bankDetails, setBankDetails] = useState<{
-    reference: string;
-    amount: number;
-    currency: string;
-    bankName: string;
-    accountName: string;
-    accountNumber: string;
-    instructions: string;
-  } | null>(null);
+  const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
 
   const form = useForm<GiftFormValues>({
     resolver: zodResolver(giftSchema),
@@ -101,49 +94,7 @@ export default function GiftPage() {
   }
 
   if (bankDetails) {
-    return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-background py-12 px-4">
-        <Card className="max-w-lg w-full border-none shadow-xl bg-card animate-in zoom-in-95 duration-500">
-          <CardHeader className="text-center space-y-4 pb-8">
-            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-              <Landmark className="w-8 h-8 text-primary" />
-            </div>
-            <CardTitle className="text-2xl font-serif">Thank You For Your Gift</CardTitle>
-            <CardDescription>
-              Please transfer exactly <strong>{bankDetails.currency} {bankDetails.amount.toLocaleString()}</strong> to the account below.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="bg-muted p-4 rounded-lg space-y-3">
-              <div className="flex justify-between border-b border-border/50 pb-2">
-                <span className="text-muted-foreground text-sm">Bank Name</span>
-                <span className="font-semibold">{bankDetails.bankName}</span>
-              </div>
-              <div className="flex justify-between border-b border-border/50 pb-2">
-                <span className="text-muted-foreground text-sm">Account Name</span>
-                <span className="font-semibold">{bankDetails.accountName}</span>
-              </div>
-              <div className="flex justify-between border-b border-border/50 pb-2">
-                <span className="text-muted-foreground text-sm">Account Number</span>
-                <span className="font-mono font-bold tracking-wider">{bankDetails.accountNumber}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground text-sm">Reference</span>
-                <span className="font-mono text-primary font-bold">{bankDetails.reference}</span>
-              </div>
-            </div>
-            <p className="text-sm text-center text-muted-foreground bg-primary/5 p-3 rounded text-primary">
-              {bankDetails.instructions}
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full h-12" onClick={() => setLocation('/')}>
-              Return Home
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    );
+    return <BankTransferConfirmation bankDetails={bankDetails} title="Thank You For Your Gift" />;
   }
 
   return (

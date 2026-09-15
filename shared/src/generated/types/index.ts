@@ -82,4 +82,5 @@ export * from './updateRsvpCheckInInput';
 export * from './updateRsvpCheckInInputEvent';
 export * from './updateRsvpConfirmationInput';
 export * from './updateRsvpConfirmationInputStatus';
+export * from './verifyBankTransferInput';
 export * from './verifyCheckoutInput';
