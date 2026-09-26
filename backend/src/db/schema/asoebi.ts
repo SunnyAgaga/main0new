@@ -309,6 +309,11 @@ export async function deleteAsoebiItem(id: number): Promise<boolean> {
   return result.deletedCount > 0;
 }
 
+export async function deleteRsvp(id: number): Promise<boolean> {
+  const result = await rsvpsCollection().deleteOne({ id });
+  return result.deletedCount > 0;
+}
+
 export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
   const doc: Rsvp = {
     ...input,

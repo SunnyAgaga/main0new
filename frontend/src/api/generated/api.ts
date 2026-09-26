@@ -2419,6 +2419,80 @@ export const useUpdateAdminRsvp = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateAdminRsvpMutationOptions(options));
     }
 
+export const getDeleteAdminRsvpUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/rsvps/${id}`
+}
+
+/**
+ * @summary Remove a guest's RSVP (admin role only)
+ */
+export const deleteAdminRsvp = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteAdminRsvpUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteAdminRsvpMutationKey = () => ['deleteAdminRsvp'] as const;
+
+export const getDeleteAdminRsvpMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminRsvp>>, TError,DeleteAdminRsvpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminRsvp>>, TError,DeleteAdminRsvpMutationVariables, TContext> => {
+
+const mutationKey = getDeleteAdminRsvpMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminRsvp>>, DeleteAdminRsvpMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAdminRsvp(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminRsvpMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminRsvp>>>
+
+    export type DeleteAdminRsvpMutationError = ErrorType<ErrorResponse>
+    export type DeleteAdminRsvpMutationVariables = {id: number}
+
+    /**
+ * @summary Remove a guest's RSVP (admin role only)
+ */
+export const useDeleteAdminRsvp = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminRsvp>>, TError,DeleteAdminRsvpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminRsvp>>,
+        TError,
+        DeleteAdminRsvpMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteAdminRsvpMutationOptions(options));
+    }
+
 export const getUpdateRsvpCheckInUrl = (id: number,) => {
 
 

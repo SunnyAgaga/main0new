@@ -714,6 +714,16 @@ export const UpdateAdminRsvpResponse = zod.object({
 
 
 /**
+ * @summary Remove a guest's RSVP (admin role only)
+ */
+export const DeleteAdminRsvpParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteAdminRsvpResponse = zod.void()
+
+
+/**
  * @summary Manually set a guest's check-in status for an event (fallback for scan failures)
  */
 export const UpdateRsvpCheckInParams = zod.object({

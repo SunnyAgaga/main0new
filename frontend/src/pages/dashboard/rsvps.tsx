@@ -7,6 +7,7 @@ import {
   useListAdminRsvps,
   useUpdateAdminRsvp,
   useUpdateRsvpConfirmation,
+  useDeleteAdminRsvp,
   getListAdminRsvpsQueryKey,
   useListAsoebi,
   type AdminRsvp,
@@ -29,7 +30,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, FileSpreadsheet, FileText, Check, X } from 'lucide-react';
+import { Pencil, FileSpreadsheet, FileText, Check, X, Trash2 } from 'lucide-react';
 
 function ConfirmationCell({ rsvp }: { rsvp: AdminRsvp }) {
   const { toast } = useToast();
@@ -503,11 +504,34 @@ function EditRsvpDialog({
 }
 
 export default function DashboardRsvps() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: rsvps, isLoading } = useListAdminRsvps();
   const { data: asoebiItems } = useListAsoebi();
   const [editing, setEditing] = useState<AdminRsvp | null>(null);
+  const deleteRsvp = useDeleteAdminRsvp();
 
   const itemsById = new Map((asoebiItems ?? []).map((item) => [item.id, item]));
+
+  const onDelete = (rsvp: AdminRsvp) => {
+    if (!window.confirm(`Remove "${rsvp.guestName}"'s RSVP? This cannot be undone.`)) return;
+
+    deleteRsvp.mutate({ id: rsvp.id }, {
+      onSuccess: () => {
+        queryClient.setQueryData(getListAdminRsvpsQueryKey(), (old: AdminRsvp[] | undefined) =>
+          old?.filter((r) => r.id !== rsvp.id),
+        );
+        toast({ title: 'RSVP removed' });
+      },
+      onError: (err) => {
+        toast({
+          variant: 'destructive',
+          title: 'Could not remove RSVP',
+          description: err.data?.error || 'An error occurred.',
+        });
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -550,7 +574,7 @@ export default function DashboardRsvps() {
               <TableHead>Asoebi</TableHead>
               <TableHead>Delivery</TableHead>
               <TableHead className="text-right">Date</TableHead>
-              <TableHead className="w-10" />
+              <TableHead className="w-20" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -595,9 +619,18 @@ export default function DashboardRsvps() {
                   <TableCell className="text-right text-sm text-muted-foreground">
                     {new Date(rsvp.createdAt).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-right space-x-1">
                     <Button variant="ghost" size="icon" onClick={() => setEditing(rsvp)} aria-label={`Edit ${rsvp.guestName}`}>
                       <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(rsvp)}
+                      disabled={deleteRsvp.isPending}
+                      aria-label={`Remove ${rsvp.guestName}`}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </TableCell>
                 </TableRow>

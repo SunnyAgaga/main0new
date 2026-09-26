@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import {
   CreateAdminUserBody,
   CreateAdminUserResponse,
+  DeleteAdminRsvpParams,
   DeleteAdminUserParams,
   GetAdminOverviewResponse,
   GetPaymentConfigResponse,
@@ -25,6 +26,7 @@ import {
 } from "@wedplan/shared";
 import { isPermissionKey } from "@wedplan/shared";
 import {
+  deleteRsvp,
   deleteUser,
   insertUser,
   listUsers,
@@ -410,6 +412,23 @@ router.put("/admin/rsvps/:id", requirePermission("rsvps"), async (req, res): Pro
 
   req.log.info({ rsvpId: paramsResult.data.id }, "RSVP updated by admin");
   res.json(UpdateAdminRsvpResponse.parse(toAdminRsvp(updated!)));
+});
+
+router.delete("/admin/rsvps/:id", requirePermission("rsvps"), async (req, res): Promise<void> => {
+  const params = DeleteAdminRsvpParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const deleted = await deleteRsvp(params.data.id);
+  if (!deleted) {
+    res.status(404).json({ error: "RSVP not found." });
+    return;
+  }
+
+  req.log.info({ rsvpId: params.data.id }, "RSVP removed by admin");
+  res.status(204).end();
 });
 
 export default router;
