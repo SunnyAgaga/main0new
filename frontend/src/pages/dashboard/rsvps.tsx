@@ -648,7 +648,7 @@ export default function DashboardRsvps() {
                       : '—'}
                   </TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">
-                    {new Date(rsvp.createdAt).toLocaleDateString()}
+                    {new Date(rsvp.createdAt).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right space-x-1">
                     <Button variant="ghost" size="icon" onClick={() => setEditing(rsvp)} aria-label={`Edit ${rsvp.guestName}`}>

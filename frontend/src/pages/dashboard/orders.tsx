@@ -44,6 +44,9 @@ function statusBadge(status: string) {
   if (status === 'pending_verification') {
     return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-none">Needs Verification</Badge>;
   }
+  if (status === 'pay_later') {
+    return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-none">Pay Later</Badge>;
+  }
   return (
     <Badge variant="secondary" className="bg-gray-100 text-gray-800 hover:bg-gray-100 border-none capitalize">
       {status.replace(/_/g, ' ')}
@@ -112,6 +115,18 @@ function PaymentStatusCell({ order }: { order: AdminOrder }) {
             </Button>
           </div>
         </div>
+      )}
+      {order.paymentMethod === 'pay_later' && order.status === 'pay_later' && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          disabled={verifyTransfer.isPending}
+          onClick={() => respond(true)}
+        >
+          <Check className="w-3 h-3 mr-1" /> Mark as Paid
+        </Button>
       )}
     </div>
   );
@@ -374,7 +389,7 @@ export default function DashboardOrders() {
                     <DeliveryCell order={order} />
                   </TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">
-                    {new Date(order.createdAt).toLocaleDateString()}
+                    {new Date(order.createdAt).toLocaleString()}
                   </TableCell>
                 </TableRow>
               ))

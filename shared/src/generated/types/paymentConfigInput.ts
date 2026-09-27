@@ -12,5 +12,6 @@ export interface PaymentConfigInput {
   flutterwaveSecretKey: string;
   flutterwaveWebhookSecret?: string;
   bankTransferEnabled: boolean;
+  payLaterEnabled: boolean;
   bankTransfer: BankTransferDetails;
 }

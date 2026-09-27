@@ -91,6 +91,7 @@ function safePaymentConfig(config: PaymentConfig | null | undefined, webhookUrl:
         config.accountName &&
         config.accountNumber,
     ),
+    payLaterEnabled: Boolean(config?.payLaterEnabled),
     bankTransfer: {
       bankName: config?.bankName ?? "",
       accountName: config?.accountName ?? "",
@@ -183,6 +184,7 @@ router.put(
       accountName: parsed.data.bankTransfer.accountName.trim(),
       accountNumber: parsed.data.bankTransfer.accountNumber.trim(),
       bankInstructions: parsed.data.bankTransfer.instructions.trim(),
+      payLaterEnabled: parsed.data.payLaterEnabled,
     });
 
     req.log.info("Payment configuration updated");

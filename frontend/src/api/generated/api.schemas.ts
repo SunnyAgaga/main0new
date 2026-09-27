@@ -540,9 +540,16 @@ export interface BankTransferResponse {
   instructions: string;
 }
 
+export interface PayLaterResponse {
+  reference: string;
+  amount: number;
+  currency: string;
+}
+
 export interface PaymentMethods {
   flutterwaveEnabled: boolean;
   bankTransferEnabled: boolean;
+  payLaterEnabled: boolean;
 }
 
 export interface BankTransferDetails {
@@ -558,6 +565,7 @@ export interface PaymentConfig {
   webhookUrl: string;
   webhookSecretConfigured: boolean;
   bankTransferConfigured: boolean;
+  payLaterEnabled: boolean;
   bankTransfer: BankTransferDetails;
 }
 
@@ -566,6 +574,7 @@ export interface PaymentConfigInput {
   flutterwaveSecretKey: string;
   flutterwaveWebhookSecret?: string;
   bankTransferEnabled: boolean;
+  payLaterEnabled: boolean;
   bankTransfer: BankTransferDetails;
 }
 

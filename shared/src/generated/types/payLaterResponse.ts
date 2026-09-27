@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface PaymentMethods {
-  flutterwaveEnabled: boolean;
-  bankTransferEnabled: boolean;
-  payLaterEnabled: boolean;
+export interface PayLaterResponse {
+  reference: string;
+  amount: number;
+  currency: string;
 }

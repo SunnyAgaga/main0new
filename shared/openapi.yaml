@@ -351,6 +351,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /checkout/pay-later:
+    post:
+      operationId: createPayLaterOrder
+      tags: [checkout]
+      summary: Record an asoebi order to be paid for later, e.g. in person at the event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutInput"
+      responses:
+        "201":
+          description: Order recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayLaterResponse"
+        "400":
+          description: Invalid checkout request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Pay later is not enabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /checkout/gift/flutterwave:
     post:
       operationId: startGiftFlutterwaveCheckout
@@ -1899,31 +1929,41 @@ components:
         accountName: { type: string }
         accountNumber: { type: string }
         instructions: { type: string }
+    PayLaterResponse:
+      type: object
+      required: [reference, amount, currency]
+      properties:
+        reference: { type: string }
+        amount: { type: number }
+        currency: { type: string }
     PaymentMethods:
       type: object
-      required: [flutterwaveEnabled, bankTransferEnabled]
+      required: [flutterwaveEnabled, bankTransferEnabled, payLaterEnabled]
       properties:
         flutterwaveEnabled: { type: boolean }
         bankTransferEnabled: { type: boolean }
+        payLaterEnabled: { type: boolean }
     PaymentConfig:
       type: object
-      required: [flutterwaveConfigured, bankTransferConfigured, flutterwaveKeyHint, webhookUrl, webhookSecretConfigured, bankTransfer]
+      required: [flutterwaveConfigured, bankTransferConfigured, payLaterEnabled, flutterwaveKeyHint, webhookUrl, webhookSecretConfigured, bankTransfer]
       properties:
         flutterwaveConfigured: { type: boolean }
         flutterwaveKeyHint: { type: string }
         webhookUrl: { type: string }
         webhookSecretConfigured: { type: boolean }
         bankTransferConfigured: { type: boolean }
+        payLaterEnabled: { type: boolean }
         bankTransfer:
           $ref: "#/components/schemas/BankTransferDetails"
     PaymentConfigInput:
       type: object
-      required: [flutterwaveEnabled, flutterwaveSecretKey, bankTransferEnabled, bankTransfer]
+      required: [flutterwaveEnabled, flutterwaveSecretKey, bankTransferEnabled, payLaterEnabled, bankTransfer]
       properties:
         flutterwaveEnabled: { type: boolean }
         flutterwaveSecretKey: { type: string }
         flutterwaveWebhookSecret: { type: string }
         bankTransferEnabled: { type: boolean }
+        payLaterEnabled: { type: boolean }
         bankTransfer:
           $ref: "#/components/schemas/BankTransferDetails"
     BankTransferDetails:

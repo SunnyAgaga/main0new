@@ -49,6 +49,7 @@ export * from './notificationConfig';
 export * from './notificationConfigInput';
 export * from './orderStatus';
 export * from './orderStatusType';
+export * from './payLaterResponse';
 export * from './paymentConfig';
 export * from './paymentConfigInput';
 export * from './paymentMethods';

@@ -319,6 +319,36 @@ export const CreateBankTransferOrderResponse = zod.object({
 
 
 /**
+ * @summary Record an asoebi order to be paid for later, e.g. in person at the event
+ */
+
+
+export const createPayLaterOrderBodyGiftAmountMin = 0;
+
+
+
+export const CreatePayLaterOrderBody = zod.object({
+  "rsvpId": zod.number(),
+  "guestName": zod.string(),
+  "email": zod.string(),
+  "items": zod.array(zod.object({
+  "guestName": zod.string(),
+  "itemId": zod.number(),
+  "size": zod.string(),
+  "quantity": zod.number().min(1).optional()
+})).min(1),
+  "giftAmount": zod.number().min(createPayLaterOrderBodyGiftAmountMin).optional(),
+  "giftMessage": zod.string().optional()
+})
+
+export const CreatePayLaterOrderResponse = zod.object({
+  "reference": zod.string(),
+  "amount": zod.number(),
+  "currency": zod.string()
+})
+
+
+/**
  * @summary Create a Flutterwave checkout link for a monetary gift
  */
 export const startGiftFlutterwaveCheckoutBodyGuestNameMin = 2;
@@ -412,6 +442,7 @@ export const GetPaymentConfigResponse = zod.object({
   "webhookUrl": zod.string(),
   "webhookSecretConfigured": zod.boolean(),
   "bankTransferConfigured": zod.boolean(),
+  "payLaterEnabled": zod.boolean(),
   "bankTransfer": zod.object({
   "bankName": zod.string(),
   "accountName": zod.string(),
@@ -429,6 +460,7 @@ export const UpdatePaymentConfigBody = zod.object({
   "flutterwaveSecretKey": zod.string(),
   "flutterwaveWebhookSecret": zod.string().optional(),
   "bankTransferEnabled": zod.boolean(),
+  "payLaterEnabled": zod.boolean(),
   "bankTransfer": zod.object({
   "bankName": zod.string(),
   "accountName": zod.string(),
@@ -443,6 +475,7 @@ export const UpdatePaymentConfigResponse = zod.object({
   "webhookUrl": zod.string(),
   "webhookSecretConfigured": zod.boolean(),
   "bankTransferConfigured": zod.boolean(),
+  "payLaterEnabled": zod.boolean(),
   "bankTransfer": zod.object({
   "bankName": zod.string(),
   "accountName": zod.string(),
@@ -1208,7 +1241,8 @@ export const UpdateRsvpFormCopyResponse = zod.object({
  */
 export const GetPaymentMethodsResponse = zod.object({
   "flutterwaveEnabled": zod.boolean(),
-  "bankTransferEnabled": zod.boolean()
+  "bankTransferEnabled": zod.boolean(),
+  "payLaterEnabled": zod.boolean()
 })
 
 
