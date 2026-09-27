@@ -26,6 +26,7 @@ import {
 } from "@wedplan/shared";
 import { isPermissionKey } from "@wedplan/shared";
 import {
+  asoebiItemsCollection,
   deleteRsvp,
   deleteUser,
   insertUser,
@@ -278,7 +279,17 @@ router.delete("/admin/users/:id", requireAdmin, async (req, res): Promise<void> 
   res.status(204).end();
 });
 
-function toAdminOrder(order: Order) {
+/** Line items only ever store the catalog item's id, so the human-readable
+ * name has to be resolved separately - looked up once per request rather
+ * than per order. Falls back to a placeholder if the item was since deleted,
+ * so an old order doesn't silently lose its breakdown.
+ */
+async function getAsoebiItemNames(): Promise<Map<number, string>> {
+  const items = await asoebiItemsCollection().find({}).project({ id: 1, name: 1 }).toArray();
+  return new Map(items.map((item) => [item.id as number, item.name as string]));
+}
+
+function toAdminOrder(order: Order, itemNames: Map<number, string>) {
   return {
     id: order.id,
     reference: order.reference,
@@ -292,6 +303,13 @@ function toAdminOrder(order: Order) {
     status: order.status,
     proofOfPaymentUrl: order.proofOfPaymentUrl ?? null,
     itemCount: order.items.length,
+    items: order.items.map((line) => ({
+      guestName: line.guestName,
+      name: itemNames.get(line.asoebiItemId) ?? `Item #${line.asoebiItemId} (removed)`,
+      size: line.size,
+      quantity: line.quantity,
+      amount: line.amount,
+    })),
     createdAt: order.createdAt.toISOString(),
     deliveryMethod: order.deliveryMethod ?? null,
     fulfillmentStatus: order.fulfillmentStatus ?? "pending",
@@ -300,8 +318,11 @@ function toAdminOrder(order: Order) {
 }
 
 router.get("/admin/orders", requirePermission("orders"), async (_req, res): Promise<void> => {
-  const orders = await ordersCollection().find({}).sort({ createdAt: -1 }).toArray();
-  res.json(ListAdminOrdersResponse.parse(orders.map(toAdminOrder)));
+  const [orders, itemNames] = await Promise.all([
+    ordersCollection().find({}).sort({ createdAt: -1 }).toArray(),
+    getAsoebiItemNames(),
+  ]);
+  res.json(ListAdminOrdersResponse.parse(orders.map((order) => toAdminOrder(order, itemNames))));
 });
 
 router.put(
@@ -330,7 +351,7 @@ router.put(
       { orderId: paramsResult.data.id, status: parsed.data.status },
       "Order fulfillment status updated",
     );
-    res.json(UpdateOrderFulfillmentResponse.parse(toAdminOrder(updated)));
+    res.json(UpdateOrderFulfillmentResponse.parse(toAdminOrder(updated, await getAsoebiItemNames())));
   },
 );
 
@@ -355,7 +376,7 @@ router.put(
       { orderId: paramsResult.data.id, approved: parsed.data.approved },
       "Bank transfer reviewed",
     );
-    res.json(VerifyBankTransferResponse.parse(toAdminOrder(updated)));
+    res.json(VerifyBankTransferResponse.parse(toAdminOrder(updated, await getAsoebiItemNames())));
   },
 );
 

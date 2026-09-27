@@ -1611,7 +1611,7 @@ components:
         note: { type: string }
     AdminOrder:
       type: object
-      required: [id, reference, type, guestName, email, totalAmount, giftAmount, currency, paymentMethod, status, proofOfPaymentUrl, itemCount, createdAt, deliveryMethod, fulfillmentStatus, fulfilledAt]
+      required: [id, reference, type, guestName, email, totalAmount, giftAmount, currency, paymentMethod, status, proofOfPaymentUrl, itemCount, items, createdAt, deliveryMethod, fulfillmentStatus, fulfilledAt]
       properties:
         id: { type: number }
         reference: { type: string }
@@ -1625,12 +1625,25 @@ components:
         status: { type: string }
         proofOfPaymentUrl: { type: ["string", "null"] }
         itemCount: { type: number }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminOrderLineItem"
         createdAt: { type: string }
         deliveryMethod:
           type: ["string", "null"]
           enum: [pickup, delivery, null]
         fulfillmentStatus: { type: string, enum: [pending, delivered] }
         fulfilledAt: { type: ["string", "null"] }
+    AdminOrderLineItem:
+      type: object
+      required: [guestName, name, size, quantity, amount]
+      properties:
+        guestName: { type: string }
+        name: { type: string }
+        size: { type: string }
+        quantity: { type: number }
+        amount: { type: number }
     UpdateOrderFulfillmentInput:
       type: object
       required: [status]

@@ -532,6 +532,13 @@ export const ListAdminOrdersResponseItem = zod.object({
   "status": zod.string(),
   "proofOfPaymentUrl": zod.string().nullable(),
   "itemCount": zod.number(),
+  "items": zod.array(zod.object({
+  "guestName": zod.string(),
+  "name": zod.string(),
+  "size": zod.string(),
+  "quantity": zod.number(),
+  "amount": zod.number()
+})),
   "createdAt": zod.string(),
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
   "fulfillmentStatus": zod.enum(['pending', 'delivered']),
@@ -564,6 +571,13 @@ export const UpdateOrderFulfillmentResponse = zod.object({
   "status": zod.string(),
   "proofOfPaymentUrl": zod.string().nullable(),
   "itemCount": zod.number(),
+  "items": zod.array(zod.object({
+  "guestName": zod.string(),
+  "name": zod.string(),
+  "size": zod.string(),
+  "quantity": zod.number(),
+  "amount": zod.number()
+})),
   "createdAt": zod.string(),
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
   "fulfillmentStatus": zod.enum(['pending', 'delivered']),
@@ -595,6 +609,13 @@ export const VerifyBankTransferResponse = zod.object({
   "status": zod.string(),
   "proofOfPaymentUrl": zod.string().nullable(),
   "itemCount": zod.number(),
+  "items": zod.array(zod.object({
+  "guestName": zod.string(),
+  "name": zod.string(),
+  "size": zod.string(),
+  "quantity": zod.number(),
+  "amount": zod.number()
+})),
   "createdAt": zod.string(),
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
   "fulfillmentStatus": zod.enum(['pending', 'delivered']),

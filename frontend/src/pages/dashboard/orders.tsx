@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useListAdminOrders,
@@ -12,8 +13,9 @@ import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { FileSpreadsheet, FileText, PackageCheck, RotateCcw, Check, X, ImageIcon } from 'lucide-react';
+import { FileSpreadsheet, FileText, PackageCheck, RotateCcw, Check, X, ImageIcon, ListOrdered } from 'lucide-react';
 
 const COLUMNS: { key: keyof AdminOrder; label: string }[] = [
   { key: 'reference', label: 'Reference' },
@@ -112,6 +114,75 @@ function PaymentStatusCell({ order }: { order: AdminOrder }) {
         </div>
       )}
     </div>
+  );
+}
+
+function ItemsCell({ order, onView }: { order: AdminOrder; onView: () => void }) {
+  if (order.itemCount === 0) {
+    return <span className="text-sm text-muted-foreground">—</span>;
+  }
+
+  return (
+    <Button type="button" variant="outline" size="sm" className="h-7 text-xs" onClick={onView}>
+      <ListOrdered className="w-3 h-3 mr-1" />
+      {order.itemCount} item{order.itemCount > 1 ? 's' : ''}
+    </Button>
+  );
+}
+
+function OrderItemsDialog({ order, onClose }: { order: AdminOrder; onClose: () => void }) {
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Order Breakdown — {order.reference}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>For</TableHead>
+                <TableHead>Item</TableHead>
+                <TableHead>Size</TableHead>
+                <TableHead className="text-right">Qty</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {order.items.map((line, index) => (
+                <TableRow key={index}>
+                  <TableCell>{line.guestName}</TableCell>
+                  <TableCell>{line.name}</TableCell>
+                  <TableCell>{line.size}</TableCell>
+                  <TableCell className="text-right">{line.quantity}</TableCell>
+                  <TableCell className="text-right">
+                    {order.currency} {line.amount.toLocaleString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <div className="space-y-1 text-sm border-t border-border pt-3">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Asoebi subtotal</span>
+              <span>
+                {order.currency} {(order.totalAmount - order.giftAmount).toLocaleString()}
+              </span>
+            </div>
+            {order.giftAmount > 0 && (
+              <div className="flex justify-between text-muted-foreground">
+                <span>Gift</span>
+                <span>{order.currency} {order.giftAmount.toLocaleString()}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-semibold text-foreground">
+              <span>Total paid</span>
+              <span>{order.currency} {order.totalAmount.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -221,6 +292,7 @@ async function exportPdf(orders: AdminOrder[]) {
 
 export default function DashboardOrders() {
   const { data: orders, isLoading } = useListAdminOrders();
+  const [viewing, setViewing] = useState<AdminOrder | null>(null);
 
   if (isLoading) {
     return (
@@ -283,7 +355,9 @@ export default function DashboardOrders() {
                     <div className="text-xs text-muted-foreground">{order.email}</div>
                   </TableCell>
                   <TableCell className="capitalize">{order.type}</TableCell>
-                  <TableCell>{order.itemCount || '—'}</TableCell>
+                  <TableCell>
+                    <ItemsCell order={order} onView={() => setViewing(order)} />
+                  </TableCell>
                   <TableCell>
                     {order.currency} {order.totalAmount.toLocaleString()}
                     {order.giftAmount > 0 && order.type === 'asoebi' && (
@@ -308,6 +382,8 @@ export default function DashboardOrders() {
           </TableBody>
         </Table>
       </Card>
+
+      {viewing && <OrderItemsDialog order={viewing} onClose={() => setViewing(null)} />}
     </div>
   );
 }

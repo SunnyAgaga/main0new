@@ -7,6 +7,7 @@
  */
 import type { AdminOrderDeliveryMethod } from './adminOrderDeliveryMethod';
 import type { AdminOrderFulfillmentStatus } from './adminOrderFulfillmentStatus';
+import type { AdminOrderLineItem } from './adminOrderLineItem';
 import type { AdminOrderType } from './adminOrderType';
 
 export interface AdminOrder {
@@ -23,6 +24,7 @@ export interface AdminOrder {
   /** @nullable */
   proofOfPaymentUrl: string | null;
   itemCount: number;
+  items: AdminOrderLineItem[];
   createdAt: string;
   /** @nullable */
   deliveryMethod: AdminOrderDeliveryMethod;

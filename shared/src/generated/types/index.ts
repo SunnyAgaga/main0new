@@ -12,6 +12,7 @@ export * from './adminAsoebiSelection';
 export * from './adminOrder';
 export * from './adminOrderDeliveryMethod';
 export * from './adminOrderFulfillmentStatus';
+export * from './adminOrderLineItem';
 export * from './adminOrderType';
 export * from './adminOverview';
 export * from './adminRsvp';

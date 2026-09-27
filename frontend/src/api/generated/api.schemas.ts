@@ -158,6 +158,14 @@ export const AdminOrderFulfillmentStatus = {
   delivered: 'delivered',
 } as const;
 
+export interface AdminOrderLineItem {
+  guestName: string;
+  name: string;
+  size: string;
+  quantity: number;
+  amount: number;
+}
+
 export interface AdminOrder {
   id: number;
   reference: string;
@@ -172,6 +180,7 @@ export interface AdminOrder {
   /** @nullable */
   proofOfPaymentUrl: string | null;
   itemCount: number;
+  items: AdminOrderLineItem[];
   createdAt: string;
   /** @nullable */
   deliveryMethod: AdminOrderDeliveryMethod;
