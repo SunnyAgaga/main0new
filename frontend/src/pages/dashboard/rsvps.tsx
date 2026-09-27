@@ -30,7 +30,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, FileSpreadsheet, FileText, Check, X, Trash2 } from 'lucide-react';
+import { Pencil, FileSpreadsheet, FileText, Check, X, Trash2, ShoppingBag } from 'lucide-react';
 
 function ConfirmationCell({ rsvp }: { rsvp: AdminRsvp }) {
   const { toast } = useToast();
@@ -232,6 +232,27 @@ function OrderDetails({ rsvp, itemsById }: { rsvp: AdminRsvp; itemsById: Map<num
         );
       })}
     </div>
+  );
+}
+
+function ViewOrderDetailsDialog({
+  rsvp,
+  itemsById,
+  onClose,
+}: {
+  rsvp: AdminRsvp;
+  itemsById: Map<number, AsoebiItem>;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Asoebi Order — {rsvp.guestName}</DialogTitle>
+        </DialogHeader>
+        <OrderDetails rsvp={rsvp} itemsById={itemsById} />
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -506,9 +527,11 @@ function EditRsvpDialog({
 export default function DashboardRsvps() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: rsvps, isLoading } = useListAdminRsvps();
-  const { data: asoebiItems } = useListAsoebi();
+  const { data: rsvps, isLoading: isLoadingRsvps } = useListAdminRsvps();
+  const { data: asoebiItems, isLoading: isLoadingAsoebi } = useListAsoebi();
+  const isLoading = isLoadingRsvps || isLoadingAsoebi;
   const [editing, setEditing] = useState<AdminRsvp | null>(null);
+  const [viewingOrder, setViewingOrder] = useState<AdminRsvp | null>(null);
   const deleteRsvp = useDeleteAdminRsvp();
 
   const itemsById = new Map((asoebiItems ?? []).map((item) => [item.id, item]));
@@ -604,7 +627,15 @@ export default function DashboardRsvps() {
                   </TableCell>
                   <TableCell>
                     {rsvp.asoebiInterest === 'yes' ? (
-                      <Badge variant="outline" className="text-secondary-foreground border-secondary bg-secondary/10">Yes</Badge>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => setViewingOrder(rsvp)}
+                      >
+                        <ShoppingBag className="w-3 h-3 mr-1" /> View
+                      </Button>
                     ) : (
                       <span className="text-sm text-muted-foreground">No</span>
                     )}
@@ -641,6 +672,7 @@ export default function DashboardRsvps() {
       </Card>
 
       {editing && <EditRsvpDialog rsvp={editing} itemsById={itemsById} onClose={() => setEditing(null)} />}
+      {viewingOrder && <ViewOrderDetailsDialog rsvp={viewingOrder} itemsById={itemsById} onClose={() => setViewingOrder(null)} />}
     </div>
   );
 }
