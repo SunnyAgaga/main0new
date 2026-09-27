@@ -319,6 +319,36 @@ export const CreateBankTransferOrderResponse = zod.object({
 
 
 /**
+ * @summary Record an asoebi order to be paid for later, e.g. in person at the event
+ */
+
+
+export const createPayLaterOrderBodyGiftAmountMin = 0;
+
+
+
+export const CreatePayLaterOrderBody = zod.object({
+  "rsvpId": zod.number(),
+  "guestName": zod.string(),
+  "email": zod.string(),
+  "items": zod.array(zod.object({
+  "guestName": zod.string(),
+  "itemId": zod.number(),
+  "size": zod.string(),
+  "quantity": zod.number().min(1).optional()
+})).min(1),
+  "giftAmount": zod.number().min(createPayLaterOrderBodyGiftAmountMin).optional(),
+  "giftMessage": zod.string().optional()
+})
+
+export const CreatePayLaterOrderResponse = zod.object({
+  "reference": zod.string(),
+  "amount": zod.number(),
+  "currency": zod.string()
+})
+
+
+/**
  * @summary Create a Flutterwave checkout link for a monetary gift
  */
 export const startGiftFlutterwaveCheckoutBodyGuestNameMin = 2;
@@ -412,6 +442,7 @@ export const GetPaymentConfigResponse = zod.object({
   "webhookUrl": zod.string(),
   "webhookSecretConfigured": zod.boolean(),
   "bankTransferConfigured": zod.boolean(),
+  "payLaterEnabled": zod.boolean(),
   "bankTransfer": zod.object({
   "bankName": zod.string(),
   "accountName": zod.string(),
@@ -429,6 +460,7 @@ export const UpdatePaymentConfigBody = zod.object({
   "flutterwaveSecretKey": zod.string(),
   "flutterwaveWebhookSecret": zod.string().optional(),
   "bankTransferEnabled": zod.boolean(),
+  "payLaterEnabled": zod.boolean(),
   "bankTransfer": zod.object({
   "bankName": zod.string(),
   "accountName": zod.string(),
@@ -443,6 +475,7 @@ export const UpdatePaymentConfigResponse = zod.object({
   "webhookUrl": zod.string(),
   "webhookSecretConfigured": zod.boolean(),
   "bankTransferConfigured": zod.boolean(),
+  "payLaterEnabled": zod.boolean(),
   "bankTransfer": zod.object({
   "bankName": zod.string(),
   "accountName": zod.string(),
@@ -532,6 +565,13 @@ export const ListAdminOrdersResponseItem = zod.object({
   "status": zod.string(),
   "proofOfPaymentUrl": zod.string().nullable(),
   "itemCount": zod.number(),
+  "items": zod.array(zod.object({
+  "guestName": zod.string(),
+  "name": zod.string(),
+  "size": zod.string(),
+  "quantity": zod.number(),
+  "amount": zod.number()
+})),
   "createdAt": zod.string(),
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
   "fulfillmentStatus": zod.enum(['pending', 'delivered']),
@@ -564,6 +604,13 @@ export const UpdateOrderFulfillmentResponse = zod.object({
   "status": zod.string(),
   "proofOfPaymentUrl": zod.string().nullable(),
   "itemCount": zod.number(),
+  "items": zod.array(zod.object({
+  "guestName": zod.string(),
+  "name": zod.string(),
+  "size": zod.string(),
+  "quantity": zod.number(),
+  "amount": zod.number()
+})),
   "createdAt": zod.string(),
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
   "fulfillmentStatus": zod.enum(['pending', 'delivered']),
@@ -595,6 +642,13 @@ export const VerifyBankTransferResponse = zod.object({
   "status": zod.string(),
   "proofOfPaymentUrl": zod.string().nullable(),
   "itemCount": zod.number(),
+  "items": zod.array(zod.object({
+  "guestName": zod.string(),
+  "name": zod.string(),
+  "size": zod.string(),
+  "quantity": zod.number(),
+  "amount": zod.number()
+})),
   "createdAt": zod.string(),
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
   "fulfillmentStatus": zod.enum(['pending', 'delivered']),
@@ -711,6 +765,16 @@ export const UpdateAdminRsvpResponse = zod.object({
   "weddingCheckedInAt": zod.string().nullable(),
   "confirmationStatus": zod.enum(['pending', 'approved', 'rejected'])
 })
+
+
+/**
+ * @summary Remove a guest's RSVP (admin role only)
+ */
+export const DeleteAdminRsvpParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteAdminRsvpResponse = zod.void()
 
 
 /**
@@ -1177,7 +1241,8 @@ export const UpdateRsvpFormCopyResponse = zod.object({
  */
 export const GetPaymentMethodsResponse = zod.object({
   "flutterwaveEnabled": zod.boolean(),
-  "bankTransferEnabled": zod.boolean()
+  "bankTransferEnabled": zod.boolean(),
+  "payLaterEnabled": zod.boolean()
 })
 
 

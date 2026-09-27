@@ -61,6 +61,7 @@ export interface PaymentConfig {
   accountName: string;
   accountNumber: string;
   bankInstructions: string;
+  payLaterEnabled: boolean;
   updatedAt: Date;
 }
 
@@ -309,6 +310,11 @@ export async function deleteAsoebiItem(id: number): Promise<boolean> {
   return result.deletedCount > 0;
 }
 
+export async function deleteRsvp(id: number): Promise<boolean> {
+  const result = await rsvpsCollection().deleteOne({ id });
+  return result.deletedCount > 0;
+}
+
 export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
   const doc: Rsvp = {
     ...input,
@@ -492,10 +498,21 @@ export async function confirmBankTransfer(
 }
 
 /** Admin review of a guest's bank transfer claim, checked against the actual bank statement. */
+/**
+ * Marks a manually-settled order (bank transfer or pay-later) paid, or
+ * reverts it. The revert target depends on payment method: a bank transfer
+ * claim that doesn't check out goes back to "awaiting_transfer" so the
+ * guest can retry; a pay-later order just goes back to "pay_later" since
+ * there's no claim to dispute, only a payment still owed.
+ */
 export async function verifyBankTransfer(id: number, approved: boolean): Promise<Order | null> {
+  const existing = await ordersCollection().findOne({ id });
+  if (!existing) return null;
+
+  const revertStatus = existing.paymentMethod === "pay_later" ? "pay_later" : "awaiting_transfer";
   return ordersCollection().findOneAndUpdate(
     { id },
-    { $set: { status: approved ? "paid" : "awaiting_transfer" } },
+    { $set: { status: approved ? "paid" : revertStatus } },
     { returnDocument: "after" },
   );
 }

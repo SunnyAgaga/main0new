@@ -6,8 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface PaymentMethods {
-  flutterwaveEnabled: boolean;
-  bankTransferEnabled: boolean;
-  payLaterEnabled: boolean;
+export interface AdminOrderLineItem {
+  guestName: string;
+  name: string;
+  size: string;
+  quantity: number;
+  amount: number;
 }

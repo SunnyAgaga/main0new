@@ -5,6 +5,8 @@ import {
   CreateBankTransferOrderBody,
   CreateBankTransferOrderResponse,
   CreateGiftBankTransferOrderBody,
+  CreatePayLaterOrderBody,
+  CreatePayLaterOrderResponse,
   StartFlutterwaveCheckoutBody,
   StartFlutterwaveCheckoutResponse,
   StartGiftFlutterwaveCheckoutBody,
@@ -199,6 +201,7 @@ router.get("/payment-methods", async (_req, res): Promise<void> => {
     GetPaymentMethodsResponse.parse({
       flutterwaveEnabled: flutterwaveConfigured(config),
       bankTransferEnabled: bankTransferConfigured(config),
+      payLaterEnabled: Boolean(config?.payLaterEnabled),
     }),
   );
 });
@@ -349,6 +352,66 @@ router.post("/checkout/bank-transfer", async (req, res): Promise<void> => {
       instructions:
         config.bankInstructions ||
         "Use your order reference as the transfer narration.",
+    }),
+  );
+});
+
+router.post("/checkout/pay-later", async (req, res): Promise<void> => {
+  const parsed = CreatePayLaterOrderBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const validated = await validateOrderInput(parsed.data);
+  if (!validated) {
+    res.status(400).json({ error: "The selected order could not be verified." });
+    return;
+  }
+
+  const config = await paymentConfigsCollection().findOne({ id: 1 });
+  if (!config?.payLaterEnabled) {
+    res.status(503).json({ error: "Pay later is not enabled." });
+    return;
+  }
+
+  const giftAmount = Math.max(0, parsed.data.giftAmount ?? 0);
+  const combinedTotal = validated.totalAmount + giftAmount;
+
+  const reference = `WED-PL-${randomUUID().slice(0, 8).toUpperCase()}`;
+  await insertOrder({
+    reference,
+    type: "asoebi",
+    rsvpId: validated.rsvp.id,
+    guestName: validated.rsvp.guestName,
+    email: parsed.data.email,
+    items: validated.lines.map((line) => ({
+      guestName: line.guestName,
+      asoebiItemId: line.item.id,
+      size: line.size,
+      quantity: line.quantity,
+      amount: line.item.price * line.quantity,
+    })),
+    giftAmount,
+    giftMessage: parsed.data.giftMessage || null,
+    deliveryMethod: validated.rsvp.deliveryMethod,
+    deliveryAddress: validated.rsvp.deliveryAddress,
+    deliveryProvider: validated.rsvp.deliveryProvider,
+    totalAmount: combinedTotal,
+    currency: validated.currency,
+    paymentMethod: "pay_later",
+    status: "pay_later",
+    proofOfPaymentUrl: null,
+    fulfillmentStatus: "pending",
+    fulfilledAt: null,
+  });
+
+  req.log.info({ reference }, "Pay-later order recorded");
+  res.status(201).json(
+    CreatePayLaterOrderResponse.parse({
+      reference,
+      amount: combinedTotal,
+      currency: validated.currency,
     }),
   );
 });

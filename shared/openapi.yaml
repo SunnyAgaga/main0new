@@ -351,6 +351,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /checkout/pay-later:
+    post:
+      operationId: createPayLaterOrder
+      tags: [checkout]
+      summary: Record an asoebi order to be paid for later, e.g. in person at the event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckoutInput"
+      responses:
+        "201":
+          description: Order recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PayLaterResponse"
+        "400":
+          description: Invalid checkout request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Pay later is not enabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /checkout/gift/flutterwave:
     post:
       operationId: startGiftFlutterwaveCheckout
@@ -831,6 +861,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: RSVP not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteAdminRsvp
+      tags: [admin]
+      summary: Remove a guest's RSVP (admin role only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "204":
+          description: RSVP removed
         "401":
           description: Authentication required
           content:
@@ -1581,7 +1641,7 @@ components:
         note: { type: string }
     AdminOrder:
       type: object
-      required: [id, reference, type, guestName, email, totalAmount, giftAmount, currency, paymentMethod, status, proofOfPaymentUrl, itemCount, createdAt, deliveryMethod, fulfillmentStatus, fulfilledAt]
+      required: [id, reference, type, guestName, email, totalAmount, giftAmount, currency, paymentMethod, status, proofOfPaymentUrl, itemCount, items, createdAt, deliveryMethod, fulfillmentStatus, fulfilledAt]
       properties:
         id: { type: number }
         reference: { type: string }
@@ -1595,12 +1655,25 @@ components:
         status: { type: string }
         proofOfPaymentUrl: { type: ["string", "null"] }
         itemCount: { type: number }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminOrderLineItem"
         createdAt: { type: string }
         deliveryMethod:
           type: ["string", "null"]
           enum: [pickup, delivery, null]
         fulfillmentStatus: { type: string, enum: [pending, delivered] }
         fulfilledAt: { type: ["string", "null"] }
+    AdminOrderLineItem:
+      type: object
+      required: [guestName, name, size, quantity, amount]
+      properties:
+        guestName: { type: string }
+        name: { type: string }
+        size: { type: string }
+        quantity: { type: number }
+        amount: { type: number }
     UpdateOrderFulfillmentInput:
       type: object
       required: [status]
@@ -1856,31 +1929,41 @@ components:
         accountName: { type: string }
         accountNumber: { type: string }
         instructions: { type: string }
+    PayLaterResponse:
+      type: object
+      required: [reference, amount, currency]
+      properties:
+        reference: { type: string }
+        amount: { type: number }
+        currency: { type: string }
     PaymentMethods:
       type: object
-      required: [flutterwaveEnabled, bankTransferEnabled]
+      required: [flutterwaveEnabled, bankTransferEnabled, payLaterEnabled]
       properties:
         flutterwaveEnabled: { type: boolean }
         bankTransferEnabled: { type: boolean }
+        payLaterEnabled: { type: boolean }
     PaymentConfig:
       type: object
-      required: [flutterwaveConfigured, bankTransferConfigured, flutterwaveKeyHint, webhookUrl, webhookSecretConfigured, bankTransfer]
+      required: [flutterwaveConfigured, bankTransferConfigured, payLaterEnabled, flutterwaveKeyHint, webhookUrl, webhookSecretConfigured, bankTransfer]
       properties:
         flutterwaveConfigured: { type: boolean }
         flutterwaveKeyHint: { type: string }
         webhookUrl: { type: string }
         webhookSecretConfigured: { type: boolean }
         bankTransferConfigured: { type: boolean }
+        payLaterEnabled: { type: boolean }
         bankTransfer:
           $ref: "#/components/schemas/BankTransferDetails"
     PaymentConfigInput:
       type: object
-      required: [flutterwaveEnabled, flutterwaveSecretKey, bankTransferEnabled, bankTransfer]
+      required: [flutterwaveEnabled, flutterwaveSecretKey, bankTransferEnabled, payLaterEnabled, bankTransfer]
       properties:
         flutterwaveEnabled: { type: boolean }
         flutterwaveSecretKey: { type: string }
         flutterwaveWebhookSecret: { type: string }
         bankTransferEnabled: { type: boolean }
+        payLaterEnabled: { type: boolean }
         bankTransfer:
           $ref: "#/components/schemas/BankTransferDetails"
     BankTransferDetails:

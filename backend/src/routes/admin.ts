@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import {
   CreateAdminUserBody,
   CreateAdminUserResponse,
+  DeleteAdminRsvpParams,
   DeleteAdminUserParams,
   GetAdminOverviewResponse,
   GetPaymentConfigResponse,
@@ -25,6 +26,8 @@ import {
 } from "@wedplan/shared";
 import { isPermissionKey } from "@wedplan/shared";
 import {
+  asoebiItemsCollection,
+  deleteRsvp,
   deleteUser,
   insertUser,
   listUsers,
@@ -88,6 +91,7 @@ function safePaymentConfig(config: PaymentConfig | null | undefined, webhookUrl:
         config.accountName &&
         config.accountNumber,
     ),
+    payLaterEnabled: Boolean(config?.payLaterEnabled),
     bankTransfer: {
       bankName: config?.bankName ?? "",
       accountName: config?.accountName ?? "",
@@ -180,6 +184,7 @@ router.put(
       accountName: parsed.data.bankTransfer.accountName.trim(),
       accountNumber: parsed.data.bankTransfer.accountNumber.trim(),
       bankInstructions: parsed.data.bankTransfer.instructions.trim(),
+      payLaterEnabled: parsed.data.payLaterEnabled,
     });
 
     req.log.info("Payment configuration updated");
@@ -276,7 +281,17 @@ router.delete("/admin/users/:id", requireAdmin, async (req, res): Promise<void> 
   res.status(204).end();
 });
 
-function toAdminOrder(order: Order) {
+/** Line items only ever store the catalog item's id, so the human-readable
+ * name has to be resolved separately - looked up once per request rather
+ * than per order. Falls back to a placeholder if the item was since deleted,
+ * so an old order doesn't silently lose its breakdown.
+ */
+async function getAsoebiItemNames(): Promise<Map<number, string>> {
+  const items = await asoebiItemsCollection().find({}).project({ id: 1, name: 1 }).toArray();
+  return new Map(items.map((item) => [item.id as number, item.name as string]));
+}
+
+function toAdminOrder(order: Order, itemNames: Map<number, string>) {
   return {
     id: order.id,
     reference: order.reference,
@@ -290,6 +305,13 @@ function toAdminOrder(order: Order) {
     status: order.status,
     proofOfPaymentUrl: order.proofOfPaymentUrl ?? null,
     itemCount: order.items.length,
+    items: order.items.map((line) => ({
+      guestName: line.guestName,
+      name: itemNames.get(line.asoebiItemId) ?? `Item #${line.asoebiItemId} (removed)`,
+      size: line.size,
+      quantity: line.quantity,
+      amount: line.amount,
+    })),
     createdAt: order.createdAt.toISOString(),
     deliveryMethod: order.deliveryMethod ?? null,
     fulfillmentStatus: order.fulfillmentStatus ?? "pending",
@@ -298,8 +320,11 @@ function toAdminOrder(order: Order) {
 }
 
 router.get("/admin/orders", requirePermission("orders"), async (_req, res): Promise<void> => {
-  const orders = await ordersCollection().find({}).sort({ createdAt: -1 }).toArray();
-  res.json(ListAdminOrdersResponse.parse(orders.map(toAdminOrder)));
+  const [orders, itemNames] = await Promise.all([
+    ordersCollection().find({}).sort({ createdAt: -1 }).toArray(),
+    getAsoebiItemNames(),
+  ]);
+  res.json(ListAdminOrdersResponse.parse(orders.map((order) => toAdminOrder(order, itemNames))));
 });
 
 router.put(
@@ -328,7 +353,7 @@ router.put(
       { orderId: paramsResult.data.id, status: parsed.data.status },
       "Order fulfillment status updated",
     );
-    res.json(UpdateOrderFulfillmentResponse.parse(toAdminOrder(updated)));
+    res.json(UpdateOrderFulfillmentResponse.parse(toAdminOrder(updated, await getAsoebiItemNames())));
   },
 );
 
@@ -353,7 +378,7 @@ router.put(
       { orderId: paramsResult.data.id, approved: parsed.data.approved },
       "Bank transfer reviewed",
     );
-    res.json(VerifyBankTransferResponse.parse(toAdminOrder(updated)));
+    res.json(VerifyBankTransferResponse.parse(toAdminOrder(updated, await getAsoebiItemNames())));
   },
 );
 
@@ -410,6 +435,23 @@ router.put("/admin/rsvps/:id", requirePermission("rsvps"), async (req, res): Pro
 
   req.log.info({ rsvpId: paramsResult.data.id }, "RSVP updated by admin");
   res.json(UpdateAdminRsvpResponse.parse(toAdminRsvp(updated!)));
+});
+
+router.delete("/admin/rsvps/:id", requirePermission("rsvps"), async (req, res): Promise<void> => {
+  const params = DeleteAdminRsvpParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const deleted = await deleteRsvp(params.data.id);
+  if (!deleted) {
+    res.status(404).json({ error: "RSVP not found." });
+    return;
+  }
+
+  req.log.info({ rsvpId: params.data.id }, "RSVP removed by admin");
+  res.status(204).end();
 });
 
 export default router;

@@ -118,7 +118,7 @@ export default function DashboardIndex() {
                       )}
                     </TableCell>
                     <TableCell className="text-right text-sm text-muted-foreground">
-                      {new Date(rsvp.createdAt).toLocaleDateString()}
+                      {new Date(rsvp.createdAt).toLocaleString()}
                     </TableCell>
                   </TableRow>
                 ))

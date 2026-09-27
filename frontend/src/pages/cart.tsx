@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useSearch } from 'wouter';
-import { useStartFlutterwaveCheckout, useCreateBankTransferOrder, useGetPaymentMethods, type RsvpResult } from '@/api';
+import { useStartFlutterwaveCheckout, useCreateBankTransferOrder, useCreatePayLaterOrder, useGetPaymentMethods, type RsvpResult } from '@/api';
 import { PaymentReturnScreen, isPaymentReturn } from '@/components/payment-return-screen';
 import { BankTransferConfirmation, type BankDetails } from '@/components/bank-transfer-confirmation';
 
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { CreditCard, Landmark, ArrowLeft, Gift } from 'lucide-react';
+import { CreditCard, Landmark, ArrowLeft, Gift, Clock } from 'lucide-react';
 
 interface GiftPrefill {
   guestName: string;
@@ -25,6 +25,7 @@ export default function CartPage() {
 
   const flutterwaveMutation = useStartFlutterwaveCheckout();
   const bankTransferMutation = useCreateBankTransferOrder();
+  const payLaterMutation = useCreatePayLaterOrder();
   const { data: paymentMethods } = useGetPaymentMethods();
 
   const [bankDetails, setBankDetails] = useState<BankDetails | null>(null);
@@ -126,6 +127,35 @@ export default function CartPage() {
           variant: "destructive",
           title: "Transfer Error",
           description: err.data?.error || "Could not generate bank transfer details."
+        });
+      }
+    });
+  };
+
+  const handlePayLater = () => {
+    payLaterMutation.mutate({
+      data: {
+        rsvpId: rsvpData.id,
+        guestName: rsvpData.guestName,
+        email: rsvpData.email,
+        items: checkoutItems,
+        giftAmount: giftAmount || undefined,
+      }
+    }, {
+      onSuccess: (res) => {
+        sessionStorage.removeItem('wedplan_rsvp');
+        sessionStorage.removeItem('wedplan_gift_prefill');
+        toast({
+          title: 'Order recorded',
+          description: `Reference ${res.reference} — please complete payment before the event.`,
+        });
+        setLocation('/');
+      },
+      onError: (err) => {
+        toast({
+          variant: "destructive",
+          title: "Could not record order",
+          description: err.data?.error || "An error occurred."
         });
       }
     });
@@ -247,7 +277,32 @@ export default function CartPage() {
               </Card>
             )}
 
-            {paymentMethods && !paymentMethods.flutterwaveEnabled && !paymentMethods.bankTransferEnabled && (
+            {paymentMethods?.payLaterEnabled && (paymentMethods?.flutterwaveEnabled || paymentMethods?.bankTransferEnabled) && (
+              <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-border"></div>
+                <span className="flex-shrink-0 mx-4 text-muted-foreground text-sm font-medium">OR</span>
+                <div className="flex-grow border-t border-border"></div>
+              </div>
+            )}
+
+            {paymentMethods?.payLaterEnabled && (
+              <Card className="border-border hover:border-primary/50 transition-colors cursor-pointer" onClick={handlePayLater}>
+                <CardContent className="p-6 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <Clock className="w-6 h-6 text-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground">Pay Later</h4>
+                    <p className="text-sm text-muted-foreground">Record your order now and pay in person at the event</p>
+                  </div>
+                  {payLaterMutation.isPending ? (
+                    <span className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  ) : null}
+                </CardContent>
+              </Card>
+            )}
+
+            {paymentMethods && !paymentMethods.flutterwaveEnabled && !paymentMethods.bankTransferEnabled && !paymentMethods.payLaterEnabled && (
               <p className="text-sm text-muted-foreground text-center py-6">
                 No payment method is available right now. Please contact the couple directly.
               </p>

@@ -13,5 +13,6 @@ export interface PaymentConfig {
   webhookUrl: string;
   webhookSecretConfigured: boolean;
   bankTransferConfigured: boolean;
+  payLaterEnabled: boolean;
   bankTransfer: BankTransferDetails;
 }

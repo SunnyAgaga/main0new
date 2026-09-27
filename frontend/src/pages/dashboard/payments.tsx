@@ -26,7 +26,8 @@ const paymentConfigSchema = z.object({
     accountName: z.string(),
     accountNumber: z.string(),
     instructions: z.string()
-  })
+  }),
+  payLaterEnabled: z.boolean(),
 }).refine(data => !data.bankTransferEnabled || data.bankTransfer.bankName.trim().length >= 2, {
   message: "Bank name required",
   path: ["bankTransfer", "bankName"],
@@ -59,7 +60,8 @@ export default function DashboardPayments() {
         accountName: "",
         accountNumber: "",
         instructions: ""
-      }
+      },
+      payLaterEnabled: false,
     }
   });
 
@@ -76,7 +78,8 @@ export default function DashboardPayments() {
           accountName: "",
           accountNumber: "",
           instructions: ""
-        }
+        },
+        payLaterEnabled: config.payLaterEnabled,
       });
     }
   }, [config, form]);
@@ -91,7 +94,8 @@ export default function DashboardPayments() {
         flutterwaveSecretKey: values.flutterwaveSecretKey || "",
         flutterwaveWebhookSecret: values.flutterwaveWebhookSecret || "",
         bankTransferEnabled: values.bankTransferEnabled,
-        bankTransfer: values.bankTransfer
+        bankTransfer: values.bankTransfer,
+        payLaterEnabled: values.payLaterEnabled,
       }
     }, {
       onSuccess: (updatedData) => {
@@ -323,6 +327,32 @@ export default function DashboardPayments() {
                 />
               </CardContent>
             )}
+          </Card>
+
+          {/* Pay Later Card */}
+          <Card className="border-none shadow-sm bg-card">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl font-serif text-primary">Pay Later</CardTitle>
+                  <CardDescription>
+                    Let guests record their asoebi order without paying immediately — useful for guests
+                    planning to pay in cash at the event. You'll mark it paid yourself on the Orders page.
+                  </CardDescription>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="payLaterEnabled"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardHeader>
           </Card>
 
           <Button type="submit" size="lg" disabled={updateConfig.isPending}>

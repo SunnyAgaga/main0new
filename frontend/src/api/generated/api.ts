@@ -42,6 +42,7 @@ import type {
   NotificationConfig,
   NotificationConfigInput,
   OrderStatus,
+  PayLaterResponse,
   PaymentConfig,
   PaymentConfigInput,
   PaymentMethods,
@@ -1162,6 +1163,94 @@ export const useCreateBankTransferOrder = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getCreateBankTransferOrderMutationOptions(options));
+    }
+
+export const getCreatePayLaterOrderUrl = () => {
+
+
+
+
+  return `/api/checkout/pay-later`
+}
+
+/**
+ * @summary Record an asoebi order to be paid for later, e.g. in person at the event
+ */
+export const createPayLaterOrder = async (checkoutInput: CheckoutInput, options?: Parameters<typeof customFetch>[1]): Promise<PayLaterResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<PayLaterResponse>(getCreatePayLaterOrderUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(checkoutInput)
+  }
+);}
+
+
+
+
+
+export const getCreatePayLaterOrderMutationKey = () => ['createPayLaterOrder'] as const;
+
+export const getCreatePayLaterOrderMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPayLaterOrder>>, TError,CreatePayLaterOrderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPayLaterOrder>>, TError,CreatePayLaterOrderMutationVariables, TContext> => {
+
+const mutationKey = getCreatePayLaterOrderMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPayLaterOrder>>, CreatePayLaterOrderMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPayLaterOrder(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePayLaterOrderMutationResult = NonNullable<Awaited<ReturnType<typeof createPayLaterOrder>>>
+    export type CreatePayLaterOrderMutationBody = BodyType<CheckoutInput>
+    export type CreatePayLaterOrderMutationError = ErrorType<ErrorResponse>
+    export type CreatePayLaterOrderMutationVariables = {data: BodyType<CheckoutInput>}
+
+    /**
+ * @summary Record an asoebi order to be paid for later, e.g. in person at the event
+ */
+export const useCreatePayLaterOrder = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPayLaterOrder>>, TError,CreatePayLaterOrderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createPayLaterOrder>>,
+        TError,
+        CreatePayLaterOrderMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreatePayLaterOrderMutationOptions(options));
     }
 
 export const getStartGiftFlutterwaveCheckoutUrl = () => {
@@ -2417,6 +2506,80 @@ export const useUpdateAdminRsvp = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getUpdateAdminRsvpMutationOptions(options));
+    }
+
+export const getDeleteAdminRsvpUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/rsvps/${id}`
+}
+
+/**
+ * @summary Remove a guest's RSVP (admin role only)
+ */
+export const deleteAdminRsvp = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteAdminRsvpUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteAdminRsvpMutationKey = () => ['deleteAdminRsvp'] as const;
+
+export const getDeleteAdminRsvpMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminRsvp>>, TError,DeleteAdminRsvpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminRsvp>>, TError,DeleteAdminRsvpMutationVariables, TContext> => {
+
+const mutationKey = getDeleteAdminRsvpMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminRsvp>>, DeleteAdminRsvpMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAdminRsvp(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminRsvpMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminRsvp>>>
+
+    export type DeleteAdminRsvpMutationError = ErrorType<ErrorResponse>
+    export type DeleteAdminRsvpMutationVariables = {id: number}
+
+    /**
+ * @summary Remove a guest's RSVP (admin role only)
+ */
+export const useDeleteAdminRsvp = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminRsvp>>, TError,DeleteAdminRsvpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminRsvp>>,
+        TError,
+        DeleteAdminRsvpMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDeleteAdminRsvpMutationOptions(options));
     }
 
 export const getUpdateRsvpCheckInUrl = (id: number,) => {

@@ -158,6 +158,14 @@ export const AdminOrderFulfillmentStatus = {
   delivered: 'delivered',
 } as const;
 
+export interface AdminOrderLineItem {
+  guestName: string;
+  name: string;
+  size: string;
+  quantity: number;
+  amount: number;
+}
+
 export interface AdminOrder {
   id: number;
   reference: string;
@@ -172,6 +180,7 @@ export interface AdminOrder {
   /** @nullable */
   proofOfPaymentUrl: string | null;
   itemCount: number;
+  items: AdminOrderLineItem[];
   createdAt: string;
   /** @nullable */
   deliveryMethod: AdminOrderDeliveryMethod;
@@ -531,9 +540,16 @@ export interface BankTransferResponse {
   instructions: string;
 }
 
+export interface PayLaterResponse {
+  reference: string;
+  amount: number;
+  currency: string;
+}
+
 export interface PaymentMethods {
   flutterwaveEnabled: boolean;
   bankTransferEnabled: boolean;
+  payLaterEnabled: boolean;
 }
 
 export interface BankTransferDetails {
@@ -549,6 +565,7 @@ export interface PaymentConfig {
   webhookUrl: string;
   webhookSecretConfigured: boolean;
   bankTransferConfigured: boolean;
+  payLaterEnabled: boolean;
   bankTransfer: BankTransferDetails;
 }
 
@@ -557,6 +574,7 @@ export interface PaymentConfigInput {
   flutterwaveSecretKey: string;
   flutterwaveWebhookSecret?: string;
   bankTransferEnabled: boolean;
+  payLaterEnabled: boolean;
   bankTransfer: BankTransferDetails;
 }
 
