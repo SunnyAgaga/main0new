@@ -3,11 +3,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useQueryClient } from '@tanstack/react-query';
+import { Link, useSearch } from 'wouter';
 import {
   useListAdminRsvps,
   useUpdateAdminRsvp,
   useUpdateRsvpConfirmation,
   useDeleteAdminRsvp,
+  useSendPaymentReminder,
   getListAdminRsvpsQueryKey,
   useListAsoebi,
   type AdminRsvp,
@@ -30,7 +32,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, FileSpreadsheet, FileText, Check, X, Trash2, ShoppingBag } from 'lucide-react';
+import { Pencil, FileSpreadsheet, FileText, Check, X, Trash2, ShoppingBag, Mail, XCircle } from 'lucide-react';
 
 function ConfirmationCell({ rsvp }: { rsvp: AdminRsvp }) {
   const { toast } = useToast();
@@ -524,9 +526,56 @@ function EditRsvpDialog({
   );
 }
 
+function SendReminderButton({ rsvp }: { rsvp: AdminRsvp }) {
+  const { toast } = useToast();
+  const sendReminder = useSendPaymentReminder();
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      disabled={sendReminder.isPending}
+      onClick={() =>
+        sendReminder.mutate(
+          { id: rsvp.id },
+          {
+            onSuccess: (res) => {
+              toast({
+                title: res.sent ? 'Reminder sent' : 'Reminder not sent',
+                description: res.sent
+                  ? `Payment reminder emailed to ${rsvp.email}.`
+                  : 'Email notifications are not configured — nothing was sent.',
+                variant: res.sent ? undefined : 'destructive',
+              });
+            },
+            onError: (err) => {
+              toast({
+                variant: 'destructive',
+                title: 'Could not send reminder',
+                description: err.data?.error || 'An error occurred.',
+              });
+            },
+          },
+        )
+      }
+      aria-label={`Send payment reminder to ${rsvp.guestName}`}
+    >
+      <Mail className="w-4 h-4" />
+    </Button>
+  );
+}
+
+const FILTER_LABELS: Record<string, string> = {
+  attending: 'Attending',
+  asoebi: 'Asoebi Interest',
+};
+
 export default function DashboardRsvps() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const search = useSearch();
+  const filter = new URLSearchParams(search).get('filter');
   const { data: rsvps, isLoading: isLoadingRsvps } = useListAdminRsvps();
   const { data: asoebiItems, isLoading: isLoadingAsoebi } = useListAsoebi();
   const isLoading = isLoadingRsvps || isLoadingAsoebi;
@@ -565,7 +614,13 @@ export default function DashboardRsvps() {
     );
   }
 
-  const rows = rsvps ?? [];
+  const allRows = rsvps ?? [];
+  const rows =
+    filter === 'attending'
+      ? allRows.filter((r) => r.attending)
+      : filter === 'asoebi'
+        ? allRows.filter((r) => r.asoebiInterest === 'yes')
+        : allRows;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -573,6 +628,16 @@ export default function DashboardRsvps() {
         <div>
           <h1 className="text-3xl font-serif font-bold text-foreground">RSVPs</h1>
           <p className="text-muted-foreground mt-1">View and correct guest responses.</p>
+          {filter && FILTER_LABELS[filter] && (
+            <div className="flex items-center gap-2 mt-2 text-sm">
+              <Badge variant="outline" className="text-secondary-foreground border-secondary bg-secondary/10">
+                Filtered by {FILTER_LABELS[filter]}
+              </Badge>
+              <Link href="/dashboard/rsvps" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+                <XCircle className="w-3.5 h-3.5" /> Clear
+              </Link>
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" disabled={rows.length === 0} onClick={() => exportRsvpsCsv(rows)}>
@@ -597,18 +662,18 @@ export default function DashboardRsvps() {
               <TableHead>Asoebi</TableHead>
               <TableHead>Delivery</TableHead>
               <TableHead className="text-right">Date</TableHead>
-              <TableHead className="w-20" />
+              <TableHead className="w-28" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(rsvps ?? []).length === 0 ? (
+            {rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  No RSVPs yet.
+                  {filter ? 'No RSVPs match this filter.' : 'No RSVPs yet.'}
                 </TableCell>
               </TableRow>
             ) : (
-              rsvps!.map((rsvp) => (
+              rows.map((rsvp) => (
                 <TableRow key={rsvp.id}>
                   <TableCell className="font-medium">{rsvp.guestName}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
@@ -651,6 +716,7 @@ export default function DashboardRsvps() {
                     {new Date(rsvp.createdAt).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right space-x-1">
+                    {rsvp.asoebiInterest === 'yes' && <SendReminderButton rsvp={rsvp} />}
                     <Button variant="ghost" size="icon" onClick={() => setEditing(rsvp)} aria-label={`Edit ${rsvp.guestName}`}>
                       <Pencil className="w-4 h-4" />
                     </Button>

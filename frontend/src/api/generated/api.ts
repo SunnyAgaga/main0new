@@ -46,12 +46,14 @@ import type {
   PaymentConfig,
   PaymentConfigInput,
   PaymentMethods,
+  PaymentReminderResult,
   PublicDeliveryOptions,
   RsvpFormCopy,
   RsvpFormCopyInput,
   RsvpInput,
   RsvpPass,
   RsvpResult,
+  RsvpResumeInfo,
   SendCampaignInput,
   SiteSettings,
   SiteSettingsInput,
@@ -2834,6 +2836,80 @@ export const useUpdateRsvpConfirmation = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateRsvpConfirmationMutationOptions(options));
     }
 
+export const getSendPaymentReminderUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/rsvps/${id}/payment-reminder`
+}
+
+/**
+ * @summary Email a guest a link to resume and pay for their Aso Ebi order (admin role only)
+ */
+export const sendPaymentReminder = async (id: number, options?: Parameters<typeof customFetch>[1]): Promise<PaymentReminderResult> => {
+
+  return customFetch<PaymentReminderResult>(getSendPaymentReminderUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getSendPaymentReminderMutationKey = () => ['sendPaymentReminder'] as const;
+
+export const getSendPaymentReminderMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPaymentReminder>>, TError,SendPaymentReminderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendPaymentReminder>>, TError,SendPaymentReminderMutationVariables, TContext> => {
+
+const mutationKey = getSendPaymentReminderMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendPaymentReminder>>, SendPaymentReminderMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  sendPaymentReminder(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendPaymentReminderMutationResult = NonNullable<Awaited<ReturnType<typeof sendPaymentReminder>>>
+
+    export type SendPaymentReminderMutationError = ErrorType<ErrorResponse>
+    export type SendPaymentReminderMutationVariables = {id: number}
+
+    /**
+ * @summary Email a guest a link to resume and pay for their Aso Ebi order (admin role only)
+ */
+export const useSendPaymentReminder = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPaymentReminder>>, TError,SendPaymentReminderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof sendPaymentReminder>>,
+        TError,
+        SendPaymentReminderMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSendPaymentReminderMutationOptions(options));
+    }
+
 export const getGetRsvpPassUrl = (token: string,) => {
 
 
@@ -2899,6 +2975,83 @@ export function useGetRsvpPass<TData = Awaited<ReturnType<typeof getRsvpPass>>, 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetRsvpPassQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetRsvpResumeUrl = (token: string,) => {
+
+
+
+
+  return `/api/rsvp-resume/${token}`
+}
+
+/**
+ * @summary Look up a guest's Aso Ebi order (rebuilt from their RSVP) by their resume token, to complete payment
+ */
+export const getRsvpResume = async (token: string, options?: Parameters<typeof customFetch>[1]): Promise<RsvpResumeInfo> => {
+
+  return customFetch<RsvpResumeInfo>(getGetRsvpResumeUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRsvpResumeQueryKey = (token: string,) => {
+    return [
+    `/api/rsvp-resume/${token}`
+    ] as const;
+    }
+
+
+export const getGetRsvpResumeQueryOptions = <TData = Awaited<ReturnType<typeof getRsvpResume>>, TError = ErrorType<ErrorResponse>>(token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRsvpResume>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRsvpResumeQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRsvpResume>>> = ({ signal }) => getRsvpResume(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: token !== null && token !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRsvpResume>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRsvpResumeQueryResult = NonNullable<Awaited<ReturnType<typeof getRsvpResume>>>
+export type GetRsvpResumeQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Look up a guest's Aso Ebi order (rebuilt from their RSVP) by their resume token, to complete payment
+ */
+
+export function useGetRsvpResume<TData = Awaited<ReturnType<typeof getRsvpResume>>, TError = ErrorType<ErrorResponse>>(
+ token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRsvpResume>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRsvpResumeQueryOptions(token,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

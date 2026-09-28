@@ -875,6 +875,18 @@ export const UpdateRsvpConfirmationResponse = zod.object({
 
 
 /**
+ * @summary Email a guest a link to resume and pay for their Aso Ebi order (admin role only)
+ */
+export const SendPaymentReminderParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SendPaymentReminderResponse = zod.object({
+  "sent": zod.boolean()
+})
+
+
+/**
  * @summary Look up a guest's gate pass by their pass token
  */
 export const GetRsvpPassParams = zod.object({
@@ -889,6 +901,32 @@ export const GetRsvpPassResponse = zod.object({
   "eventVenue": zod.string(),
   "checkedInAt": zod.string().nullable(),
   "alreadyCheckedIn": zod.boolean()
+})
+
+
+/**
+ * @summary Look up a guest's Aso Ebi order (rebuilt from their RSVP) by their resume token, to complete payment
+ */
+export const GetRsvpResumeParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const GetRsvpResumeResponse = zod.object({
+  "rsvpId": zod.number(),
+  "guestName": zod.string(),
+  "email": zod.string(),
+  "items": zod.array(zod.object({
+  "guestName": zod.string(),
+  "itemId": zod.number(),
+  "name": zod.string(),
+  "size": zod.string(),
+  "quantity": zod.number(),
+  "amount": zod.number()
+})),
+  "totalAmount": zod.number(),
+  "currency": zod.string(),
+  "existingOrderReference": zod.string().nullable(),
+  "existingOrderStatus": zod.string().nullable()
 })
 
 

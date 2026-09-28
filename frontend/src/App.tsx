@@ -13,6 +13,7 @@ import RsvpPage from '@/pages/rsvp';
 import CartPage from '@/pages/cart';
 import GiftPage from '@/pages/gift';
 import PassPage from '@/pages/pass';
+import ResumePage from '@/pages/resume';
 import SignInPage from '@/pages/auth/sign-in';
 import DashboardLayout from '@/components/dashboard-layout';
 import DashboardIndex from '@/pages/dashboard/index';
@@ -62,6 +63,7 @@ function Router() {
       <Route path="/cart" component={CartPage} />
       <Route path="/gift" component={GiftPage} />
       <Route path="/pass/:token">{(params) => <PassPage token={params.token} />}</Route>
+      <Route path="/resume/:token">{(params) => <ResumePage token={params.token} />}</Route>
       <Route path="/sign-in" component={SignInPage} />
 
       <Route path="/dashboard">

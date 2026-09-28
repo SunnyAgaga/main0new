@@ -1,6 +1,7 @@
 import type { Request } from "express";
-import { eventDetailsCollection, notificationConfigsCollection, type NotificationConfig, type Rsvp } from "@/db";
+import { eventDetailsCollection, notificationConfigsCollection, paymentConfigsCollection, type NotificationConfig, type Rsvp } from "@/db";
 import { sendSmtpEmail } from "./email";
+import type { ResumeLineItem } from "./rsvp-resume";
 
 function formatEventDateTime(iso: string): string {
   const date = new Date(iso);
@@ -18,7 +19,7 @@ function formatEventDateTime(iso: string): string {
 // Mirrors the dev/prod origin split used for Spotify's OAuth redirect: in dev,
 // Vite serves the SPA on its own port and proxies /api here, so a link meant
 // for the guest's browser has to point at that port, not this API's own.
-function guestOrigin(req: Request): string {
+export function guestOrigin(req: Request): string {
   if (process.env.NODE_ENV !== "production" && process.env.FRONTEND_PORT) {
     return `${req.protocol}://${req.hostname}:${process.env.FRONTEND_PORT}`;
   }
@@ -116,5 +117,64 @@ export async function sendGatePassEmail(req: Request, rsvp: Rsvp): Promise<void>
     });
   } catch (err) {
     req.log.warn({ err, rsvpId: rsvp.id }, "Failed to send gate pass email");
+  }
+}
+
+/** Sent on demand from the RSVPs page - nudges a guest who hasn't paid for their Aso Ebi yet. */
+export async function sendPaymentReminderEmail(
+  req: Request,
+  rsvp: Rsvp,
+  resumeUrl: string,
+  items: ResumeLineItem[],
+  totalAmount: number,
+  currency: string,
+): Promise<boolean> {
+  const config = await getEmailConfig();
+  if (!config) return false;
+
+  const paymentConfig = await paymentConfigsCollection().findOne({ id: 1 });
+  const bankDetailsLines =
+    paymentConfig?.bankTransferEnabled && paymentConfig.bankName
+      ? [
+          ``,
+          `Prefer to transfer directly? Our account details:`,
+          `${paymentConfig.bankName} — ${paymentConfig.accountName} — ${paymentConfig.accountNumber}`,
+          ...(paymentConfig.bankInstructions ? [paymentConfig.bankInstructions] : []),
+        ]
+      : [];
+
+  const itemLines = items.map(
+    (item) => `  ${item.name} (${item.size}) x${item.quantity} — ${currency} ${item.amount.toLocaleString()}`,
+  );
+
+  const text = [
+    `Hi ${rsvp.guestName},`,
+    ``,
+    `Just a friendly reminder that your Aso Ebi order is still awaiting payment:`,
+    ``,
+    ...itemLines,
+    ``,
+    `Total due: ${currency} ${totalAmount.toLocaleString()}`,
+    ``,
+    `Complete your payment here: ${resumeUrl}`,
+    ...bankDetailsLines,
+    ``,
+    `Thank you!`,
+  ].join("\n");
+
+  try {
+    return await sendSmtpEmail({
+      host: config.smtpHost,
+      port: config.smtpPort,
+      username: config.smtpUsername,
+      password: config.smtpPassword,
+      from: config.smtpFromEmail,
+      to: rsvp.email,
+      subject: "Reminder: complete your Aso Ebi payment",
+      text,
+    });
+  } catch (err) {
+    req.log.warn({ err, rsvpId: rsvp.id }, "Failed to send payment reminder email");
+    return false;
   }
 }

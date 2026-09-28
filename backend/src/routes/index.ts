@@ -16,6 +16,7 @@ import uploadsRouter from "./uploads";
 import rsvpFormCopyRouter from "./rsvp-form-copy";
 import campaignsRouter from "./campaigns";
 import checkInRouter from "./check-in";
+import rsvpResumeRouter from "./rsvp-resume";
 
 const router: IRouter = Router();
 
@@ -36,5 +37,6 @@ router.use(uploadsRouter);
 router.use(rsvpFormCopyRouter);
 router.use(campaignsRouter);
 router.use(checkInRouter);
+router.use(rsvpResumeRouter);
 
 export default router;
