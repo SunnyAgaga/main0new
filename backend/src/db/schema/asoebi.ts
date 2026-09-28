@@ -315,6 +315,11 @@ export async function deleteRsvp(id: number): Promise<boolean> {
   return result.deletedCount > 0;
 }
 
+export async function deleteOrder(id: number): Promise<boolean> {
+  const result = await ordersCollection().deleteOne({ id });
+  return result.deletedCount > 0;
+}
+
 export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
   const doc: Rsvp = {
     ...input,
