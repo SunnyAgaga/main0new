@@ -581,6 +581,16 @@ export const ListAdminOrdersResponse = zod.array(ListAdminOrdersResponseItem)
 
 
 /**
+ * @summary Remove an order/transaction record (admin role only)
+ */
+export const DeleteAdminOrderParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteAdminOrderResponse = zod.void()
+
+
+/**
  * @summary Mark an asoebi order as picked up/delivered or reset it back to pending
  */
 export const UpdateOrderFulfillmentParams = zod.object({

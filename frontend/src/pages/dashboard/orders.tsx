@@ -4,6 +4,7 @@ import {
   useListAdminOrders,
   useUpdateOrderFulfillment,
   useVerifyBankTransfer,
+  useDeleteAdminOrder,
   getListAdminOrdersQueryKey,
   type AdminOrder,
 } from '@/api';
@@ -15,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { FileSpreadsheet, FileText, PackageCheck, RotateCcw, Check, X, ImageIcon, ListOrdered } from 'lucide-react';
+import { FileSpreadsheet, FileText, PackageCheck, RotateCcw, Check, X, ImageIcon, ListOrdered, Trash2 } from 'lucide-react';
 
 const COLUMNS: { key: keyof AdminOrder; label: string }[] = [
   { key: 'reference', label: 'Reference' },
@@ -306,8 +307,31 @@ async function exportPdf(orders: AdminOrder[]) {
 }
 
 export default function DashboardOrders() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: orders, isLoading } = useListAdminOrders();
   const [viewing, setViewing] = useState<AdminOrder | null>(null);
+  const deleteOrder = useDeleteAdminOrder();
+
+  const onDelete = (order: AdminOrder) => {
+    if (!window.confirm(`Remove order ${order.reference}? This cannot be undone.`)) return;
+
+    deleteOrder.mutate({ id: order.id }, {
+      onSuccess: () => {
+        queryClient.setQueryData(getListAdminOrdersQueryKey(), (old: AdminOrder[] | undefined) =>
+          old?.filter((o) => o.id !== order.id),
+        );
+        toast({ title: 'Order removed' });
+      },
+      onError: (err) => {
+        toast({
+          variant: 'destructive',
+          title: 'Could not remove order',
+          description: err.data?.error || 'An error occurred.',
+        });
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -352,12 +376,13 @@ export default function DashboardOrders() {
               <TableHead>Status</TableHead>
               <TableHead>Delivery</TableHead>
               <TableHead className="text-right">Date</TableHead>
+              <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   No orders yet.
                 </TableCell>
               </TableRow>
@@ -390,6 +415,17 @@ export default function DashboardOrders() {
                   </TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">
                     {new Date(order.createdAt).toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onDelete(order)}
+                      disabled={deleteOrder.isPending}
+                      aria-label={`Remove order ${order.reference}`}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))

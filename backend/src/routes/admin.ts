@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import {
   CreateAdminUserBody,
   CreateAdminUserResponse,
+  DeleteAdminOrderParams,
   DeleteAdminRsvpParams,
   DeleteAdminUserParams,
   GetAdminOverviewResponse,
@@ -27,6 +28,7 @@ import {
 import { isPermissionKey } from "@wedplan/shared";
 import {
   asoebiItemsCollection,
+  deleteOrder,
   deleteRsvp,
   deleteUser,
   insertUser,
@@ -325,6 +327,23 @@ router.get("/admin/orders", requirePermission("orders"), async (_req, res): Prom
     getAsoebiItemNames(),
   ]);
   res.json(ListAdminOrdersResponse.parse(orders.map((order) => toAdminOrder(order, itemNames))));
+});
+
+router.delete("/admin/orders/:id", requirePermission("orders"), async (req, res): Promise<void> => {
+  const params = DeleteAdminOrderParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const deleted = await deleteOrder(params.data.id);
+  if (!deleted) {
+    res.status(404).json({ error: "Order not found." });
+    return;
+  }
+
+  req.log.info({ orderId: params.data.id }, "Order removed by admin");
+  res.status(204).end();
 });
 
 router.put(
