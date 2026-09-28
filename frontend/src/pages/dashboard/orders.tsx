@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { Link, useSearch } from 'wouter';
 import {
   useListAdminOrders,
   useUpdateOrderFulfillment,
@@ -16,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { FileSpreadsheet, FileText, PackageCheck, RotateCcw, Check, X, ImageIcon, ListOrdered, Trash2 } from 'lucide-react';
+import { FileSpreadsheet, FileText, PackageCheck, RotateCcw, Check, X, ImageIcon, ListOrdered, Trash2, XCircle } from 'lucide-react';
 
 const COLUMNS: { key: keyof AdminOrder; label: string }[] = [
   { key: 'reference', label: 'Reference' },
@@ -309,6 +310,8 @@ async function exportPdf(orders: AdminOrder[]) {
 export default function DashboardOrders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const search = useSearch();
+  const filter = new URLSearchParams(search).get('filter');
   const { data: orders, isLoading } = useListAdminOrders();
   const [viewing, setViewing] = useState<AdminOrder | null>(null);
   const deleteOrder = useDeleteAdminOrder();
@@ -342,7 +345,8 @@ export default function DashboardOrders() {
     );
   }
 
-  const rows = orders ?? [];
+  const allRows = orders ?? [];
+  const rows = filter === 'paid' ? allRows.filter((o) => o.status === 'paid') : allRows;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -350,6 +354,16 @@ export default function DashboardOrders() {
         <div>
           <h1 className="text-3xl font-serif font-bold text-foreground">Orders</h1>
           <p className="text-muted-foreground mt-1">Every asoebi and gift transaction, for your records.</p>
+          {filter === 'paid' && (
+            <div className="flex items-center gap-2 mt-2 text-sm">
+              <Badge variant="outline" className="text-secondary-foreground border-secondary bg-secondary/10">
+                Filtered by Paid Orders
+              </Badge>
+              <Link href="/dashboard/orders" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+                <XCircle className="w-3.5 h-3.5" /> Clear
+              </Link>
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" disabled={rows.length === 0} onClick={() => exportCsv(rows)}>
@@ -383,7 +397,7 @@ export default function DashboardOrders() {
             {rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                  No orders yet.
+                  {filter ? 'No orders match this filter.' : 'No orders yet.'}
                 </TableCell>
               </TableRow>
             ) : (

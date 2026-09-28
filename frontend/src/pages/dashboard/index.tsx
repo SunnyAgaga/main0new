@@ -1,3 +1,4 @@
+import { Link } from 'wouter';
 import { useGetAdminOverview } from '@/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,45 +40,53 @@ export default function DashboardIndex() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-none shadow-sm bg-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total RSVPs</CardTitle>
-            <Users className="w-4 h-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-foreground">{overview.totalRsvps}</div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-none shadow-sm bg-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Attending</CardTitle>
-            <CheckCircle className="w-4 h-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-foreground">{overview.attendingCount}</div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-none shadow-sm bg-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Asoebi Interest</CardTitle>
-            <ShoppingBag className="w-4 h-4 text-secondary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-foreground">{overview.asoebiInterestCount}</div>
-          </CardContent>
-        </Card>
+        <Link href="/dashboard/rsvps">
+          <Card className="border-none shadow-sm bg-card cursor-pointer transition-shadow hover:shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total RSVPs</CardTitle>
+              <Users className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-foreground">{overview.totalRsvps}</div>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="border-none shadow-sm bg-card">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Paid Orders</CardTitle>
-            <CreditCard className="w-4 h-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-foreground">{overview.paidOrders}</div>
-          </CardContent>
-        </Card>
+        <Link href="/dashboard/rsvps?filter=attending">
+          <Card className="border-none shadow-sm bg-card cursor-pointer transition-shadow hover:shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Attending</CardTitle>
+              <CheckCircle className="w-4 h-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-foreground">{overview.attendingCount}</div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/rsvps?filter=asoebi">
+          <Card className="border-none shadow-sm bg-card cursor-pointer transition-shadow hover:shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Asoebi Interest</CardTitle>
+              <ShoppingBag className="w-4 h-4 text-secondary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-foreground">{overview.asoebiInterestCount}</div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/orders?filter=paid">
+          <Card className="border-none shadow-sm bg-card cursor-pointer transition-shadow hover:shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Paid Orders</CardTitle>
+              <CreditCard className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-foreground">{overview.paidOrders}</div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="mt-12">

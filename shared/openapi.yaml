@@ -1034,6 +1034,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/rsvps/{id}/payment-reminder:
+    post:
+      operationId: sendPaymentReminder
+      tags: [admin]
+      summary: Email a guest a link to resume and pay for their Aso Ebi order (admin role only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: number }
+      responses:
+        "200":
+          description: Reminder result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentReminderResult"
+        "400":
+          description: Guest has no Aso Ebi interest to remind about
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: RSVP not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /rsvp-pass/{token}:
     get:
       operationId: getRsvpPass
@@ -1053,6 +1094,29 @@ paths:
                 $ref: "#/components/schemas/RsvpPass"
         "404":
           description: Pass not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /rsvp-resume/{token}:
+    get:
+      operationId: getRsvpResume
+      tags: [rsvp]
+      summary: Look up a guest's Aso Ebi order (rebuilt from their RSVP) by their resume token, to complete payment
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Resume info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RsvpResumeInfo"
+        "404":
+          description: Resume link not found
           content:
             application/json:
               schema:
@@ -1792,6 +1856,36 @@ components:
           type: string
           enum: [traditional, wedding]
         checkedIn: { type: boolean }
+    RsvpResumeLineItem:
+      type: object
+      required: [guestName, itemId, name, size, quantity, amount]
+      properties:
+        guestName: { type: string }
+        itemId: { type: number }
+        name: { type: string }
+        size: { type: string }
+        quantity: { type: number }
+        amount: { type: number }
+    RsvpResumeInfo:
+      type: object
+      required: [rsvpId, guestName, email, items, totalAmount, currency, existingOrderReference, existingOrderStatus]
+      properties:
+        rsvpId: { type: number }
+        guestName: { type: string }
+        email: { type: string }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/RsvpResumeLineItem"
+        totalAmount: { type: number }
+        currency: { type: string }
+        existingOrderReference: { type: ["string", "null"] }
+        existingOrderStatus: { type: ["string", "null"] }
+    PaymentReminderResult:
+      type: object
+      required: [sent]
+      properties:
+        sent: { type: boolean }
     RsvpFormCopy:
       type: object
       required: [pageTitle, guestInfoHeading, fullNameLabel, emailLabel, phoneLabel, attendanceHeading, attendingQuestion, attendingYesLabel, attendingNoLabel, guestCountLabel, adultsOnlyNotice, asoebiQuestion, asoebiYesLabel, asoebiNoLabel, asoebiPickerHint, additionalGuestsHeading, deliveryHeading, deliveryQuestion, pickupLabel, deliveryLabel, deliveryProviderQuestion, deliveryAddressLabel, giftHeading, giftQuestion, giftYesLabel, giftNoLabel, giftAmountLabel, noteLabel, submitLabel, submitWithPaymentLabel, completeAttendingTitle, completeAttendingMessage, completeDecliningTitle, completeDecliningMessage]

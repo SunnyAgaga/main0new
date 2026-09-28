@@ -315,6 +315,32 @@ export interface UpdateRsvpCheckInInput {
   checkedIn: boolean;
 }
 
+export interface RsvpResumeLineItem {
+  guestName: string;
+  itemId: number;
+  name: string;
+  size: string;
+  quantity: number;
+  amount: number;
+}
+
+export interface RsvpResumeInfo {
+  rsvpId: number;
+  guestName: string;
+  email: string;
+  items: RsvpResumeLineItem[];
+  totalAmount: number;
+  currency: string;
+  /** @nullable */
+  existingOrderReference: string | null;
+  /** @nullable */
+  existingOrderStatus: string | null;
+}
+
+export interface PaymentReminderResult {
+  sent: boolean;
+}
+
 export interface RsvpFormCopy {
   pageTitle: string;
   guestInfoHeading: string;

@@ -46,6 +46,7 @@ export interface Rsvp {
   traditionalCheckedInAt: Date | null;
   weddingPassToken: string | null;
   weddingCheckedInAt: Date | null;
+  paymentReminderToken: string | null;
   createdAt: Date;
 }
 
@@ -337,6 +338,7 @@ export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
     traditionalCheckedInAt: null,
     weddingPassToken: null,
     weddingCheckedInAt: null,
+    paymentReminderToken: null,
     createdAt: new Date(),
   };
   await rsvpsCollection().insertOne(doc);
@@ -363,6 +365,26 @@ export async function approveRsvp(rsvpId: number): Promise<Rsvp | null> {
     },
     { returnDocument: "after" },
   );
+}
+
+/**
+ * Returns the guest's existing payment-reminder token, or generates one on
+ * first use. Reused indefinitely so a repeat reminder always points at the
+ * same link rather than invalidating the last one. Returns null for a guest
+ * who never expressed Aso Ebi interest - there's nothing to resume.
+ */
+export async function getOrCreateResumeToken(rsvpId: number): Promise<string | null> {
+  const rsvp = await rsvpsCollection().findOne({ id: rsvpId });
+  if (!rsvp || rsvp.asoebiInterest !== "yes") return null;
+  if (rsvp.paymentReminderToken) return rsvp.paymentReminderToken;
+
+  const token = randomBytes(12).toString("hex");
+  await rsvpsCollection().updateOne({ id: rsvpId }, { $set: { paymentReminderToken: token } });
+  return token;
+}
+
+export async function findRsvpByResumeToken(token: string): Promise<Rsvp | null> {
+  return rsvpsCollection().findOne({ paymentReminderToken: token });
 }
 
 /**
