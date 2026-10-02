@@ -118,7 +118,8 @@ function PaymentStatusCell({ order }: { order: AdminOrder }) {
           </div>
         </div>
       )}
-      {order.paymentMethod === 'pay_later' && order.status === 'pay_later' && (
+      {((order.paymentMethod === 'pay_later' && order.status === 'pay_later') ||
+        (order.paymentMethod === 'bank_transfer' && order.status === 'awaiting_transfer')) && (
         <Button
           type="button"
           variant="outline"
