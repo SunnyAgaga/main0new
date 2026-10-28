@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Link, useSearch } from 'wouter';
+import { useSearch } from 'wouter';
 import {
   useListAdminOrders,
   useUpdateOrderFulfillment,
@@ -16,8 +16,33 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { FileSpreadsheet, FileText, PackageCheck, RotateCcw, Check, X, ImageIcon, ListOrdered, Trash2, XCircle } from 'lucide-react';
+
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'paid', label: 'Paid' },
+  { value: 'pending_verification', label: 'Needs Verification' },
+  { value: 'awaiting_transfer', label: 'Awaiting Transfer' },
+  { value: 'pay_later', label: 'Pay Later' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'failed', label: 'Failed' },
+];
+
+const DELIVERY_OPTIONS: { value: string; label: string }[] = [
+  { value: 'all', label: 'All delivery' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'delivered', label: 'Delivered' },
+];
+
+function statusLabel(value: string): string {
+  return STATUS_OPTIONS.find((o) => o.value === value)?.label ?? value;
+}
+
+function deliveryLabel(value: string): string {
+  return DELIVERY_OPTIONS.find((o) => o.value === value)?.label ?? value;
+}
 
 const COLUMNS: { key: keyof AdminOrder; label: string }[] = [
   { key: 'reference', label: 'Reference' },
@@ -312,9 +337,11 @@ export default function DashboardOrders() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const search = useSearch();
-  const filter = new URLSearchParams(search).get('filter');
+  const urlFilter = new URLSearchParams(search).get('filter');
   const { data: orders, isLoading } = useListAdminOrders();
   const [viewing, setViewing] = useState<AdminOrder | null>(null);
+  const [statusFilter, setStatusFilter] = useState(urlFilter === 'paid' ? 'paid' : 'all');
+  const [deliveryFilter, setDeliveryFilter] = useState('all');
   const deleteOrder = useDeleteAdminOrder();
 
   const onDelete = (order: AdminOrder) => {
@@ -347,7 +374,16 @@ export default function DashboardOrders() {
   }
 
   const allRows = orders ?? [];
-  const rows = filter === 'paid' ? allRows.filter((o) => o.status === 'paid') : allRows;
+  const rows = allRows.filter((o) => {
+    if (statusFilter !== 'all' && o.status !== statusFilter) return false;
+    if (deliveryFilter !== 'all' && (o.type !== 'asoebi' || o.fulfillmentStatus !== deliveryFilter)) return false;
+    return true;
+  });
+  const hasActiveFilter = statusFilter !== 'all' || deliveryFilter !== 'all';
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setDeliveryFilter('all');
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -355,18 +391,53 @@ export default function DashboardOrders() {
         <div>
           <h1 className="text-3xl font-serif font-bold text-foreground">Orders</h1>
           <p className="text-muted-foreground mt-1">Every asoebi and gift transaction, for your records.</p>
-          {filter === 'paid' && (
-            <div className="flex items-center gap-2 mt-2 text-sm">
-              <Badge variant="outline" className="text-secondary-foreground border-secondary bg-secondary/10">
-                Filtered by Paid Orders
-              </Badge>
-              <Link href="/dashboard/orders" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+          {hasActiveFilter && (
+            <div className="flex items-center gap-2 mt-2 text-sm flex-wrap">
+              {statusFilter !== 'all' && (
+                <Badge variant="outline" className="text-secondary-foreground border-secondary bg-secondary/10">
+                  Status: {statusLabel(statusFilter)}
+                </Badge>
+              )}
+              {deliveryFilter !== 'all' && (
+                <Badge variant="outline" className="text-secondary-foreground border-secondary bg-secondary/10">
+                  Delivery: {deliveryLabel(deliveryFilter)}
+                </Badge>
+              )}
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+              >
                 <XCircle className="w-3.5 h-3.5" /> Clear
-              </Link>
+              </button>
             </div>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[170px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={deliveryFilter} onValueChange={setDeliveryFilter}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Delivery" />
+            </SelectTrigger>
+            <SelectContent>
+              {DELIVERY_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button variant="outline" disabled={rows.length === 0} onClick={() => exportCsv(rows)}>
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             Export Excel (CSV)
@@ -398,7 +469,7 @@ export default function DashboardOrders() {
             {rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                  {filter ? 'No orders match this filter.' : 'No orders yet.'}
+                  {hasActiveFilter ? 'No orders match this filter.' : 'No orders yet.'}
                 </TableCell>
               </TableRow>
             ) : (
