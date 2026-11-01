@@ -239,11 +239,15 @@ export default function RsvpPage() {
   const { toast } = useToast();
   const [isComplete, setIsComplete] = useState(false);
 
-  const { data: event } = useGetEvent();
+  const { data: event, isLoading: loadingEvent } = useGetEvent();
   const { data: asoebiItems, isLoading: loadingAsoebi } = useListAsoebi();
   const { data: deliveryOptions } = useGetDeliveryOptions();
   const { data: copy } = useGetRsvpFormCopy();
   const createRsvp = useCreateRsvp();
+
+  const now = new Date();
+  const rsvpClosed = event ? now >= new Date(event.rsvpClosesAt) : false;
+  const asoebiClosed = event ? now >= new Date(event.asoebiClosesAt) : false;
 
   const form = useForm<RsvpFormValues>({
     resolver: zodResolver(rsvpSchema),
@@ -251,8 +255,10 @@ export default function RsvpPage() {
       guestName: "",
       email: "",
       phone: "",
+      attending: rsvpClosed ? true : undefined,
       guestCount: 1,
       additionalGuests: [],
+      asoebiInterest: rsvpClosed ? 'yes' : undefined,
       asoebiSelections: [],
       note: "",
     }
@@ -283,6 +289,18 @@ export default function RsvpPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchGuestCount, watchAttending]);
+
+  // RSVP (attendance) collection has closed but asoebi ordering hasn't yet -
+  // the attendance and "want asoebi?" questions are hidden, so force the
+  // values they'd otherwise have supplied once the event details (and so
+  // rsvpClosed) are known. Guarded so it only fires once, not on every
+  // keystroke of an unrelated field.
+  useEffect(() => {
+    if (!rsvpClosed) return;
+    if (form.getValues('attending') === undefined) form.setValue('attending', true);
+    if (form.getValues('asoebiInterest') === undefined) form.setValue('asoebiInterest', 'yes');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rsvpClosed]);
 
   const onSubmit = (values: RsvpFormValues) => {
     const { wantsGift, giftAmount, ...rsvpValues } = values;
@@ -322,6 +340,35 @@ export default function RsvpPage() {
     });
   };
 
+  if (loadingEvent) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background p-6">
+        <Skeleton className="w-full max-w-md h-64 rounded-xl" />
+      </div>
+    );
+  }
+
+  if (asoebiClosed) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background p-6">
+        <div className="max-w-md w-full text-center space-y-6 animate-in fade-in zoom-in duration-500">
+          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-primary">
+            <Heart className="w-10 h-10" />
+          </div>
+          <h1 className="text-3xl font-serif font-bold text-foreground">RSVP &amp; Asoebi Ordering Has Closed</h1>
+          <p className="text-muted-foreground">
+            We're no longer accepting RSVPs or asoebi orders, but we'd still love to celebrate with you
+            {event ? ` — a gift for ${event.coupleNames} is always welcome.` : '.'}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <Button onClick={() => setLocation('/gift')} size="lg">Send a Gift</Button>
+            <Button onClick={() => setLocation('/')} variant="outline">Return Home</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isComplete) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background p-6">
@@ -354,8 +401,20 @@ export default function RsvpPage() {
           <ArrowLeft className="w-4 h-4 mr-2" /> Back Home
         </Button>
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-serif font-bold text-foreground">{copy?.pageTitle ?? 'RSVP'}</h1>
+          <h1 className="text-4xl font-serif font-bold text-foreground">
+            {rsvpClosed ? 'Order Asoebi' : (copy?.pageTitle ?? 'RSVP')}
+          </h1>
           {event && <p className="text-muted-foreground">{event.coupleNames} • {new Date(event.weddingDate).toLocaleDateString()}</p>}
+          {rsvpClosed && (
+            <Alert className="text-left bg-primary/5 border-primary/20">
+              <Info className="h-4 w-4 text-primary" />
+              <AlertDescription className="text-foreground/80">
+                RSVP has closed, but asoebi orders are still open{' '}
+                until {new Date(event!.asoebiClosesAt).toLocaleDateString()}. You can still order below,
+                or <button type="button" className="underline font-medium" onClick={() => setLocation('/gift')}>send a gift</button> instead.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
 
         <Card className="border-none shadow-xl bg-card">
@@ -412,100 +471,103 @@ export default function RsvpPage() {
                 </div>
 
                 {/* Attendance */}
-                <div className="space-y-6 pt-2">
-                  <h3 className="text-lg font-serif font-semibold text-primary border-b border-border pb-2">{copy?.attendanceHeading ?? 'Attendance'}</h3>
+                {!rsvpClosed && (
+                  <div className="space-y-6 pt-2">
+                    <h3 className="text-lg font-serif font-semibold text-primary border-b border-border pb-2">{copy?.attendanceHeading ?? 'Attendance'}</h3>
 
-                  <FormField
-                    control={form.control}
-                    name="attending"
-                    render={({ field }) => (
-                      <FormItem className="space-y-3">
-                        <FormLabel>{copy?.attendingQuestion ?? 'Will you be attending?'}</FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            onValueChange={(val) => field.onChange(val === 'yes')}
-                            defaultValue={field.value === true ? 'yes' : field.value === false ? 'no' : undefined}
-                            className="flex flex-col space-y-2"
-                          >
-                            <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
-                              <FormControl>
-                                <RadioGroupItem value="yes" />
-                              </FormControl>
-                              <FormLabel className="font-normal cursor-pointer flex-1">{copy?.attendingYesLabel ?? 'Joyfully Accepts'}</FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
-                              <FormControl>
-                                <RadioGroupItem value="no" />
-                              </FormControl>
-                              <FormLabel className="font-normal cursor-pointer flex-1">{copy?.attendingNoLabel ?? 'Regretfully Declines'}</FormLabel>
-                            </FormItem>
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {watchAttending !== undefined && (
-                    <div className="animate-in slide-in-from-top-4 fade-in duration-300 space-y-6">
-                       {watchAttending === true && (
-                        <>
-                          <FormField
-                            control={form.control}
-                            name="guestCount"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{copy?.guestCountLabel ?? 'Number of Guests (including yourself, max 3)'}</FormLabel>
+                    <FormField
+                      control={form.control}
+                      name="attending"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormLabel>{copy?.attendingQuestion ?? 'Will you be attending?'}</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={(val) => field.onChange(val === 'yes')}
+                              defaultValue={field.value === true ? 'yes' : field.value === false ? 'no' : undefined}
+                              className="flex flex-col space-y-2"
+                            >
+                              <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
                                 <FormControl>
-                                  <Input type="number" min="1" max="3" {...field} />
+                                  <RadioGroupItem value="yes" />
                                 </FormControl>
-                                <FormMessage />
+                                <FormLabel className="font-normal cursor-pointer flex-1">{copy?.attendingYesLabel ?? 'Joyfully Accepts'}</FormLabel>
                               </FormItem>
-                            )}
-                          />
-                          {(copy?.adultsOnlyNotice ?? 'Please note: this is an adults-only celebration. No children allowed, kindly plan accordingly.') && (
-                            <Alert className="bg-primary/5 border-primary/20">
-                              <Info className="h-4 w-4 text-primary" />
-                              <AlertDescription className="text-foreground/80">
-                                {copy?.adultsOnlyNotice ?? 'Please note: this is an adults-only celebration. No children allowed, kindly plan accordingly.'}
-                              </AlertDescription>
-                            </Alert>
-                          )}
-                        </>
-                       )}
+                              <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
+                                <FormControl>
+                                  <RadioGroupItem value="no" />
+                                </FormControl>
+                                <FormLabel className="font-normal cursor-pointer flex-1">{copy?.attendingNoLabel ?? 'Regretfully Declines'}</FormLabel>
+                              </FormItem>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                      <FormField
-                        control={form.control}
-                        name="asoebiInterest"
-                        render={({ field }) => (
-                          <FormItem className="space-y-3">
-                            <FormLabel>{copy?.asoebiQuestion ?? 'Would you like to purchase Asoebi?'}</FormLabel>
-                            <FormControl>
-                              <RadioGroup
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                                className="flex flex-col space-y-2"
-                              >
-                                <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
+                    {watchAttending !== undefined && (
+                      <div className="animate-in slide-in-from-top-4 fade-in duration-300 space-y-6">
+                         {watchAttending === true && (
+                          <>
+                            <FormField
+                              control={form.control}
+                              name="guestCount"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{copy?.guestCountLabel ?? 'Number of Guests (including yourself, max 3)'}</FormLabel>
                                   <FormControl>
-                                    <RadioGroupItem value="yes" />
+                                    <Input type="number" min="1" max="3" {...field} />
                                   </FormControl>
-                                  <FormLabel className="font-normal cursor-pointer flex-1">{copy?.asoebiYesLabel ?? 'Yes, show me the options'}</FormLabel>
+                                  <FormMessage />
                                 </FormItem>
-                                <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
-                                  <FormControl>
-                                    <RadioGroupItem value="no" />
-                                  </FormControl>
-                                  <FormLabel className="font-normal cursor-pointer flex-1">{copy?.asoebiNoLabel ?? "No, I'll wear my own outfit"}</FormLabel>
-                                </FormItem>
-                              </RadioGroup>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  )}
+                              )}
+                            />
+                            {(copy?.adultsOnlyNotice ?? 'Please note: this is an adults-only celebration. No children allowed, kindly plan accordingly.') && (
+                              <Alert className="bg-primary/5 border-primary/20">
+                                <Info className="h-4 w-4 text-primary" />
+                                <AlertDescription className="text-foreground/80">
+                                  {copy?.adultsOnlyNotice ?? 'Please note: this is an adults-only celebration. No children allowed, kindly plan accordingly.'}
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                          </>
+                         )}
+
+                        <FormField
+                          control={form.control}
+                          name="asoebiInterest"
+                          render={({ field }) => (
+                            <FormItem className="space-y-3">
+                              <FormLabel>{copy?.asoebiQuestion ?? 'Would you like to purchase Asoebi?'}</FormLabel>
+                              <FormControl>
+                                <RadioGroup
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                  className="flex flex-col space-y-2"
+                                >
+                                  <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
+                                    <FormControl>
+                                      <RadioGroupItem value="yes" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal cursor-pointer flex-1">{copy?.asoebiYesLabel ?? 'Yes, show me the options'}</FormLabel>
+                                  </FormItem>
+                                  <FormItem className="flex items-center space-x-3 space-y-0 p-3 rounded-lg border border-border bg-background hover-elevate cursor-pointer">
+                                    <FormControl>
+                                      <RadioGroupItem value="no" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal cursor-pointer flex-1">{copy?.asoebiNoLabel ?? "No, I'll wear my own outfit"}</FormLabel>
+                                  </FormItem>
+                                </RadioGroup>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
 
                   {watchAsoebiInterest === 'yes' && (
                     <div className="animate-in slide-in-from-top-4 fade-in duration-300 space-y-4 pt-4 bg-muted/30 p-6 rounded-xl border border-border">
@@ -671,7 +733,6 @@ export default function RsvpPage() {
                       )}
                     </div>
                   )}
-                </div>
 
                 {watchAttending !== undefined && (
                   <div className="space-y-4 pt-2">

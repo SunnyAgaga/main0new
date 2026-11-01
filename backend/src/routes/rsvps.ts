@@ -1,6 +1,12 @@
 import { Router, type IRouter } from "express";
 import { CreateRsvpBody, CreateRsvpResponse } from "@wedplan/shared";
-import { asoebiItemsCollection, insertRsvp, type AsoebiItem } from "@/db";
+import {
+  asoebiItemsCollection,
+  eventDetailsCollection,
+  insertRsvp,
+  DEFAULT_EVENT_DETAILS,
+  type AsoebiItem,
+} from "@/db";
 import { sendRegistrationReceivedEmail } from "@/lib/rsvp-emails";
 
 const router: IRouter = Router();
@@ -40,6 +46,24 @@ router.post("/rsvps", async (req, res): Promise<void> => {
 
   const input = parsed.data;
   const wantsAsoebi = input.asoebiInterest === "yes";
+
+  const eventDetails = await eventDetailsCollection().findOne({ id: 1 });
+  const rsvpClosesAt = new Date(eventDetails?.rsvpClosesAt ?? DEFAULT_EVENT_DETAILS.rsvpClosesAt);
+  const asoebiClosesAt = new Date(eventDetails?.asoebiClosesAt ?? DEFAULT_EVENT_DETAILS.asoebiClosesAt);
+  const now = new Date();
+
+  if (now >= asoebiClosesAt) {
+    res.status(403).json({
+      error: "RSVP and asoebi ordering have closed. Please use the gift option instead.",
+    });
+    return;
+  }
+  if (now >= rsvpClosesAt && !wantsAsoebi) {
+    res.status(403).json({
+      error: "RSVP has closed. Asoebi can still be ordered, or send a gift instead.",
+    });
+    return;
+  }
 
   let primarySelections: ResolvedSelection[] = [];
   if (wantsAsoebi) {

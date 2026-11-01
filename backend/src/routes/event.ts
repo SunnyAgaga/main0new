@@ -11,7 +11,10 @@ import { requirePermission } from "../middlewares/requireAuth";
 const router: IRouter = Router();
 
 function toEvent(details: EventDetails | null | undefined) {
-  const source = details ?? { id: "wedplan-demo-wedding" as const, ...DEFAULT_EVENT_DETAILS };
+  // Older saved documents predate rsvpClosesAt/asoebiClosesAt - fall back to
+  // the defaults for those two fields specifically rather than requiring a
+  // fresh admin save before GET /event works again.
+  const source = { ...DEFAULT_EVENT_DETAILS, ...details };
   return {
     id: "wedplan-demo-wedding",
     coupleNames: source.coupleNames,
@@ -20,6 +23,8 @@ function toEvent(details: EventDetails | null | undefined) {
     weddingDate: source.weddingDate,
     weddingVenue: source.weddingVenue,
     rsvpDeadline: source.rsvpDeadline,
+    rsvpClosesAt: source.rsvpClosesAt,
+    asoebiClosesAt: source.asoebiClosesAt,
     welcomeMessage: source.welcomeMessage,
   };
 }

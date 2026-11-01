@@ -30,7 +30,12 @@ const eventSchema = z.object({
   weddingDate: z.string().min(1, 'Required'),
   weddingVenue: z.string().min(1, 'Required'),
   rsvpDeadline: z.string().min(1, 'Required'),
+  rsvpClosesAt: z.string().min(1, 'Required'),
+  asoebiClosesAt: z.string().min(1, 'Required'),
   welcomeMessage: z.string().min(1, 'Required'),
+}).refine((data) => new Date(data.asoebiClosesAt) >= new Date(data.rsvpClosesAt), {
+  message: 'Asoebi must close on or after RSVP closes',
+  path: ['asoebiClosesAt'],
 });
 type EventValues = z.infer<typeof eventSchema>;
 
@@ -74,6 +79,8 @@ function EventDetailsCard() {
       weddingDate: '',
       weddingVenue: '',
       rsvpDeadline: '',
+      rsvpClosesAt: '',
+      asoebiClosesAt: '',
       welcomeMessage: '',
     },
   });
@@ -88,6 +95,8 @@ function EventDetailsCard() {
         weddingDate: toDateTimeLocal(event.weddingDate),
         weddingVenue: event.weddingVenue,
         rsvpDeadline: toDateInput(event.rsvpDeadline),
+        rsvpClosesAt: toDateTimeLocal(event.rsvpClosesAt),
+        asoebiClosesAt: toDateTimeLocal(event.asoebiClosesAt),
         welcomeMessage: event.welcomeMessage,
       });
     }
@@ -99,6 +108,8 @@ function EventDetailsCard() {
         ...values,
         traditionalDate: new Date(values.traditionalDate).toISOString(),
         weddingDate: new Date(values.weddingDate).toISOString(),
+        rsvpClosesAt: new Date(values.rsvpClosesAt).toISOString(),
+        asoebiClosesAt: new Date(values.asoebiClosesAt).toISOString(),
       },
     }, {
       onSuccess: (updated) => {
@@ -207,10 +218,42 @@ function EventDetailsCard() {
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
+                  <FormDescription>Cosmetic only — shown as "Kindly respond by..." on the home page.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="rsvpClosesAt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>RSVP Closes At</FormLabel>
+                    <FormControl>
+                      <Input type="datetime-local" {...field} />
+                    </FormControl>
+                    <FormDescription>After this, guests can no longer submit a new RSVP.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="asoebiClosesAt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Asoebi Closes At</FormLabel>
+                    <FormControl>
+                      <Input type="datetime-local" {...field} />
+                    </FormControl>
+                    <FormDescription>After this, only sending a gift is possible.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}

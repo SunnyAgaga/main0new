@@ -168,6 +168,10 @@ export interface EventDetails {
   weddingDate: string;
   weddingVenue: string;
   rsvpDeadline: string;
+  /** ISO datetime after which new RSVPs (attendance) are no longer accepted. */
+  rsvpClosesAt: string;
+  /** ISO datetime after which asoebi purchasing is no longer accepted. */
+  asoebiClosesAt: string;
   welcomeMessage: string;
   updatedAt: Date;
 }
@@ -179,6 +183,8 @@ export const DEFAULT_EVENT_DETAILS: Omit<EventDetails, "id" | "updatedAt"> = {
   weddingDate: "2026-12-12T12:00:00+01:00",
   weddingVenue: "The Monarch Event Centre, Lagos",
   rsvpDeadline: "2026-11-15",
+  rsvpClosesAt: "2026-11-02T00:00:00+01:00",
+  asoebiClosesAt: "2026-11-07T00:00:00+01:00",
   welcomeMessage:
     "With joyful hearts, we invite you to celebrate the beginning of our forever.",
 };

@@ -20,5 +20,9 @@ export interface EventInput {
   /** @minLength 1 */
   rsvpDeadline: string;
   /** @minLength 1 */
+  rsvpClosesAt: string;
+  /** @minLength 1 */
+  asoebiClosesAt: string;
+  /** @minLength 1 */
   welcomeMessage: string;
 }
