@@ -65,6 +65,8 @@ export const GetEventResponse = zod.object({
   "weddingDate": zod.string(),
   "weddingVenue": zod.string(),
   "rsvpDeadline": zod.string(),
+  "rsvpClosesAt": zod.string().describe('ISO datetime after which new RSVPs (attendance) are no longer accepted.'),
+  "asoebiClosesAt": zod.string().describe('ISO datetime after which asoebi purchasing is no longer accepted. Must be on or after rsvpClosesAt.'),
   "welcomeMessage": zod.string()
 })
 
@@ -81,6 +83,8 @@ export const GetEventResponse = zod.object({
 
 
 
+
+
 export const UpdateEventBody = zod.object({
   "coupleNames": zod.string().min(1),
   "traditionalDate": zod.string().min(1),
@@ -88,6 +92,8 @@ export const UpdateEventBody = zod.object({
   "weddingDate": zod.string().min(1),
   "weddingVenue": zod.string().min(1),
   "rsvpDeadline": zod.string().min(1),
+  "rsvpClosesAt": zod.string().min(1),
+  "asoebiClosesAt": zod.string().min(1),
   "welcomeMessage": zod.string().min(1)
 })
 
@@ -99,6 +105,8 @@ export const UpdateEventResponse = zod.object({
   "weddingDate": zod.string(),
   "weddingVenue": zod.string(),
   "rsvpDeadline": zod.string(),
+  "rsvpClosesAt": zod.string().describe('ISO datetime after which new RSVPs (attendance) are no longer accepted.'),
+  "asoebiClosesAt": zod.string().describe('ISO datetime after which asoebi purchasing is no longer accepted. Must be on or after rsvpClosesAt.'),
   "welcomeMessage": zod.string()
 })
 

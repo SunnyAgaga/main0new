@@ -1646,7 +1646,7 @@ components:
         - status
     Event:
       type: object
-      required: [id, coupleNames, traditionalDate, traditionalVenue, weddingDate, weddingVenue, rsvpDeadline, welcomeMessage]
+      required: [id, coupleNames, traditionalDate, traditionalVenue, weddingDate, weddingVenue, rsvpDeadline, rsvpClosesAt, asoebiClosesAt, welcomeMessage]
       properties:
         id: { type: string }
         coupleNames: { type: string }
@@ -1655,10 +1655,12 @@ components:
         weddingDate: { type: string }
         weddingVenue: { type: string }
         rsvpDeadline: { type: string }
+        rsvpClosesAt: { type: string, description: "ISO datetime after which new RSVPs (attendance) are no longer accepted." }
+        asoebiClosesAt: { type: string, description: "ISO datetime after which asoebi purchasing is no longer accepted. Must be on or after rsvpClosesAt." }
         welcomeMessage: { type: string }
     EventInput:
       type: object
-      required: [coupleNames, traditionalDate, traditionalVenue, weddingDate, weddingVenue, rsvpDeadline, welcomeMessage]
+      required: [coupleNames, traditionalDate, traditionalVenue, weddingDate, weddingVenue, rsvpDeadline, rsvpClosesAt, asoebiClosesAt, welcomeMessage]
       properties:
         coupleNames: { type: string, minLength: 1 }
         traditionalDate: { type: string, minLength: 1 }
@@ -1666,6 +1668,8 @@ components:
         weddingDate: { type: string, minLength: 1 }
         weddingVenue: { type: string, minLength: 1 }
         rsvpDeadline: { type: string, minLength: 1 }
+        rsvpClosesAt: { type: string, minLength: 1 }
+        asoebiClosesAt: { type: string, minLength: 1 }
         welcomeMessage: { type: string, minLength: 1 }
     AsoebiItem:
       type: object

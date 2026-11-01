@@ -98,17 +98,31 @@ export default function Home() {
               )}
 
               <div className="pt-4">
-                <div className="flex flex-wrap items-center justify-center gap-4">
-                  <Link href="/rsvp" className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-8 h-14 text-lg font-medium shadow-lg hover-elevate bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                    RSVP Now
-                  </Link>
-                  <Link href="/gift" className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-8 h-14 text-lg font-medium border border-primary/30 text-primary hover-elevate hover:bg-primary/5 transition-colors">
-                    Send a Gift
-                  </Link>
-                </div>
-                <p className="text-sm text-muted-foreground mt-4">
-                  Kindly respond by {format(new Date(event.rsvpDeadline), 'MMMM do, yyyy')}
-                </p>
+                {(() => {
+                  const asoebiClosed = new Date() >= new Date(event.asoebiClosesAt);
+                  const rsvpClosed = new Date() >= new Date(event.rsvpClosesAt);
+                  return (
+                    <>
+                      <div className="flex flex-wrap items-center justify-center gap-4">
+                        {!asoebiClosed && (
+                          <Link href="/rsvp" className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-8 h-14 text-lg font-medium shadow-lg hover-elevate bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+                            {rsvpClosed ? 'Order Asoebi' : 'RSVP Now'}
+                          </Link>
+                        )}
+                        <Link href="/gift" className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-8 h-14 text-lg font-medium border border-primary/30 text-primary hover-elevate hover:bg-primary/5 transition-colors">
+                          Send a Gift
+                        </Link>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-4">
+                        {asoebiClosed
+                          ? 'RSVP and asoebi ordering have closed — a gift is always welcome.'
+                          : rsvpClosed
+                            ? `Asoebi orders are open until ${format(new Date(event.asoebiClosesAt), 'MMMM do, yyyy')}`
+                            : `Kindly respond by ${format(new Date(event.rsvpDeadline), 'MMMM do, yyyy')}`}
+                      </p>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           ) : null}

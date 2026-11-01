@@ -17,6 +17,10 @@ export interface Event {
   weddingDate: string;
   weddingVenue: string;
   rsvpDeadline: string;
+  /** ISO datetime after which new RSVPs (attendance) are no longer accepted. */
+  rsvpClosesAt: string;
+  /** ISO datetime after which asoebi purchasing is no longer accepted. Must be on or after rsvpClosesAt. */
+  asoebiClosesAt: string;
   welcomeMessage: string;
 }
 
@@ -33,6 +37,10 @@ export interface EventInput {
   weddingVenue: string;
   /** @minLength 1 */
   rsvpDeadline: string;
+  /** @minLength 1 */
+  rsvpClosesAt: string;
+  /** @minLength 1 */
+  asoebiClosesAt: string;
   /** @minLength 1 */
   welcomeMessage: string;
 }
