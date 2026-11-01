@@ -173,3 +173,18 @@ single-port serving.
 - Validate request bodies with the Zod schemas from `@wedplan/shared` — every existing
   route does, keep it that way.
 - Log via the `pino` logger (`req.log` inside handlers), not `console.log`.
+
+---
+
+## Workflow
+
+- **Pull latest from production first.** Before starting a task, pull the latest
+  changes from production so work starts from current state, not a stale branch.
+- **Never push straight to production.** After finishing a feature/task, ask whether to
+  raise a PR to production — don't push to it directly.
+- **Ask before merging.** After raising that PR, ask whether to merge it into
+  production — don't merge it unprompted.
+- **Browser-test before calling it done.** After finishing a task/feature, run a
+  headless-browser test of it — but confirm with the user before running it.
+- **Security pass every time.** Check for ID enumeration, IDOR, and authorization-bypass
+  issues before considering a task done.
