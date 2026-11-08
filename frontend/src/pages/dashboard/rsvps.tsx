@@ -10,6 +10,7 @@ import {
   useUpdateRsvpConfirmation,
   useDeleteAdminRsvp,
   useSendPaymentReminder,
+  useSendInvitations,
   getListAdminRsvpsQueryKey,
   useListAsoebi,
   type AdminRsvp,
@@ -23,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -32,7 +34,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, FileSpreadsheet, FileText, Check, X, Trash2, ShoppingBag, Mail, XCircle } from 'lucide-react';
+import { Pencil, FileSpreadsheet, FileText, Check, X, Trash2, ShoppingBag, Mail, Send, XCircle } from 'lucide-react';
 
 function ConfirmationCell({ rsvp }: { rsvp: AdminRsvp }) {
   const { toast } = useToast();
@@ -581,7 +583,9 @@ export default function DashboardRsvps() {
   const isLoading = isLoadingRsvps || isLoadingAsoebi;
   const [editing, setEditing] = useState<AdminRsvp | null>(null);
   const [viewingOrder, setViewingOrder] = useState<AdminRsvp | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const deleteRsvp = useDeleteAdminRsvp();
+  const sendInvitations = useSendInvitations();
 
   const itemsById = new Map((asoebiItems ?? []).map((item) => [item.id, item]));
 
@@ -622,6 +626,49 @@ export default function DashboardRsvps() {
         ? allRows.filter((r) => r.asoebiInterest === 'yes')
         : allRows;
 
+  // Only approved RSVPs have gate-pass tokens to send - invitations need
+  // those links, so unapproved guests aren't selectable for the bulk send.
+  const selectableRows = rows.filter((r) => r.confirmationStatus === 'approved');
+  const selectableIds = new Set(selectableRows.map((r) => r.id));
+  const selectedSelectableIds = selectedIds.filter((id) => selectableIds.has(id));
+  const allSelected = selectableRows.length > 0 && selectedSelectableIds.length === selectableRows.length;
+
+  const toggleRow = (id: number, checked: boolean) => {
+    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
+  };
+
+  const toggleAll = (checked: boolean) => {
+    setSelectedIds(checked ? selectableRows.map((r) => r.id) : []);
+  };
+
+  const onSendInvitations = () => {
+    const ids = selectedSelectableIds;
+    if (ids.length === 0) return;
+    if (!window.confirm(`Send the wedding invitation email to ${ids.length} guest${ids.length === 1 ? '' : 's'}?`)) return;
+
+    sendInvitations.mutate({ data: { ids } }, {
+      onSuccess: (res) => {
+        const sent = res.results.filter((r) => r.status === 'sent').length;
+        const skippedOrFailed = res.results.filter((r) => r.status !== 'sent');
+        toast({
+          title: `Sent to ${sent} of ${res.results.length}`,
+          description: skippedOrFailed.length > 0
+            ? skippedOrFailed.map((r) => `${r.guestName}: ${r.reason ?? r.status}`).join('; ')
+            : 'All invitations sent successfully.',
+          variant: skippedOrFailed.length > 0 && sent === 0 ? 'destructive' : undefined,
+        });
+        setSelectedIds([]);
+      },
+      onError: (err) => {
+        toast({
+          variant: 'destructive',
+          title: 'Could not send invitations',
+          description: err.data?.error || 'An error occurred.',
+        });
+      },
+    });
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -640,6 +687,16 @@ export default function DashboardRsvps() {
           )}
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="default"
+            disabled={selectedSelectableIds.length === 0 || sendInvitations.isPending}
+            onClick={onSendInvitations}
+          >
+            <Send className="w-4 h-4 mr-2" />
+            {sendInvitations.isPending
+              ? 'Sending…'
+              : `Send Invitation${selectedSelectableIds.length > 0 ? ` (${selectedSelectableIds.length})` : ''}`}
+          </Button>
           <Button variant="outline" disabled={rows.length === 0} onClick={() => exportRsvpsCsv(rows)}>
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             Export Excel (CSV)
@@ -655,6 +712,14 @@ export default function DashboardRsvps() {
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={allSelected}
+                  disabled={selectableRows.length === 0}
+                  onCheckedChange={(checked) => toggleAll(checked === true)}
+                  aria-label="Select all approved RSVPs"
+                />
+              </TableHead>
               <TableHead>Guest</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Status</TableHead>
@@ -668,13 +733,21 @@ export default function DashboardRsvps() {
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   {filter ? 'No RSVPs match this filter.' : 'No RSVPs yet.'}
                 </TableCell>
               </TableRow>
             ) : (
               rows.map((rsvp) => (
                 <TableRow key={rsvp.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedIds.includes(rsvp.id)}
+                      disabled={rsvp.confirmationStatus !== 'approved'}
+                      onCheckedChange={(checked) => toggleRow(rsvp.id, checked === true)}
+                      aria-label={`Select ${rsvp.guestName}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{rsvp.guestName}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     <div>{rsvp.email}</div>

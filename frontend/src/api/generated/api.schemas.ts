@@ -349,6 +349,30 @@ export interface PaymentReminderResult {
   sent: boolean;
 }
 
+export interface SendInvitationsInput {
+  ids: number[];
+}
+
+export type SendInvitationResultStatus = typeof SendInvitationResultStatus[keyof typeof SendInvitationResultStatus];
+
+
+export const SendInvitationResultStatus = {
+  sent: 'sent',
+  failed: 'failed',
+  skipped: 'skipped',
+} as const;
+
+export interface SendInvitationResult {
+  id: number;
+  guestName: string;
+  status: SendInvitationResultStatus;
+  reason?: string;
+}
+
+export interface SendInvitationsResult {
+  results: SendInvitationResult[];
+}
+
 export interface RsvpFormCopy {
   pageTitle: string;
   guestInfoHeading: string;

@@ -1,7 +1,25 @@
 import type { Request } from "express";
-import { eventDetailsCollection, notificationConfigsCollection, paymentConfigsCollection, type NotificationConfig, type Rsvp } from "@/db";
+import {
+  eventDetailsCollection,
+  notificationConfigsCollection,
+  paymentConfigsCollection,
+  siteSettingsCollection,
+  DEFAULT_EVENT_DETAILS,
+  DEFAULT_SITE_SETTINGS,
+  type NotificationConfig,
+  type Rsvp,
+} from "@/db";
 import { sendSmtpEmail } from "./email";
 import type { ResumeLineItem } from "./rsvp-resume";
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function formatEventDateTime(iso: string): string {
   const date = new Date(iso);
@@ -117,6 +135,203 @@ export async function sendGatePassEmail(req: Request, rsvp: Rsvp): Promise<void>
     });
   } catch (err) {
     req.log.warn({ err, rsvpId: rsvp.id }, "Failed to send gate pass email");
+  }
+}
+
+function invitationVenueCardHtml(params: {
+  accentColor: string;
+  primaryColor: string;
+  label: string;
+  dateTime: string;
+  venue: string;
+  passUrl: string;
+}): string {
+  return `
+    <td width="50%" valign="top" style="padding: 8px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border: 1px solid ${params.accentColor}33; border-radius: 12px;">
+        <tr>
+          <td style="padding: 20px; text-align: center;">
+            <p style="margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: ${params.primaryColor}; font-family: Georgia, 'Times New Roman', serif;">
+              ${escapeHtml(params.label)}
+            </p>
+            <p style="margin: 0 0 4px; font-size: 14px; color: #44403c; font-family: Arial, Helvetica, sans-serif;">
+              ${escapeHtml(params.dateTime)}
+            </p>
+            <p style="margin: 0 0 16px; font-size: 14px; color: #78716c; font-family: Arial, Helvetica, sans-serif;">
+              ${escapeHtml(params.venue)}
+            </p>
+            <a href="${params.passUrl}" style="display: inline-block; padding: 10px 20px; background: ${params.primaryColor}; color: #ffffff; text-decoration: none; border-radius: 999px; font-size: 13px; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">
+              View My Pass
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>`;
+}
+
+/**
+ * The styled invitation email - mirrors the public landing page's look
+ * (logo, colors from site settings, serif headings) rather than the plain
+ * text of sendGatePassEmail. Carries both venues/dates and the guest's gate
+ * pass links, so it doubles as the printable/forwardable "you're in" email
+ * sent on demand to a chosen set of already-approved guests.
+ */
+function buildInvitationHtml(params: {
+  rsvp: Rsvp;
+  coupleNames: string;
+  welcomeMessage: string;
+  logoUrl: string;
+  logoHeight: number;
+  backgroundColor: string;
+  primaryColor: string;
+  accentColor: string;
+  traditional: { dateTime: string; venue: string; passUrl: string };
+  wedding: { dateTime: string; venue: string; passUrl: string };
+}): string {
+  const { rsvp, coupleNames, welcomeMessage, logoUrl, logoHeight, backgroundColor, primaryColor, accentColor, traditional, wedding } = params;
+
+  const headerHtml = logoUrl
+    ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(coupleNames)}" height="${logoHeight}" style="height: ${logoHeight}px; max-width: 240px; object-fit: contain;" />`
+    : `<p style="margin: 0; font-size: 20px; letter-spacing: 3px; text-transform: uppercase; color: ${primaryColor}; font-family: Georgia, 'Times New Roman', serif;">${escapeHtml(coupleNames)}</p>`;
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(coupleNames)}</title>
+  </head>
+  <body style="margin: 0; padding: 0; background: ${backgroundColor};">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: ${backgroundColor}; padding: 32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" style="max-width: 600px;" cellpadding="0" cellspacing="0">
+            <tr>
+              <td align="center" style="padding-bottom: 24px;">${headerHtml}</td>
+            </tr>
+            <tr>
+              <td style="background: #ffffff; border-radius: 16px; padding: 40px 32px; text-align: center;">
+                <p style="margin: 0 0 12px; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: ${accentColor}; font-family: Arial, Helvetica, sans-serif;">
+                  You're Invited
+                </p>
+                <h1 style="margin: 0 0 24px; font-size: 32px; color: #1c1917; font-family: Georgia, 'Times New Roman', serif;">
+                  ${escapeHtml(coupleNames)}
+                </h1>
+
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    ${invitationVenueCardHtml({ accentColor, primaryColor, label: "Traditional Wedding", ...traditional })}
+                    ${invitationVenueCardHtml({ accentColor, primaryColor, label: "White Wedding", ...wedding })}
+                  </tr>
+                </table>
+
+                ${welcomeMessage ? `
+                <p style="margin: 28px 0 0; font-size: 15px; font-style: italic; color: #57534e; font-family: Georgia, 'Times New Roman', serif; line-height: 1.6;">
+                  "${escapeHtml(welcomeMessage)}"
+                </p>` : ""}
+
+                <p style="margin: 28px 0 0; font-size: 14px; color: #78716c; font-family: Arial, Helvetica, sans-serif;">
+                  Show the QR code on your pass page at the entrance to be checked in. See you there, ${escapeHtml(rsvp.guestName)}!
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+
+/**
+ * Sent on demand from the RSVPs page, to a chosen set of guests - unlike
+ * sendGatePassEmail (fired automatically once per approval), this re-sends
+ * the same pass links in the styled template above. Requires the RSVP to
+ * already be approved (it reuses the existing pass tokens rather than
+ * minting new ones), so it reports why it couldn't send rather than
+ * silently no-op'ing, which the bulk-send endpoint surfaces per guest.
+ */
+export async function sendInvitationEmail(
+  req: Request,
+  rsvp: Rsvp,
+): Promise<{ ok: boolean; reason?: string }> {
+  if (!rsvp.attending) return { ok: false, reason: "Guest is not attending" };
+  if (!rsvp.traditionalPassToken || !rsvp.weddingPassToken) {
+    return { ok: false, reason: "RSVP has not been approved yet" };
+  }
+
+  const config = await getEmailConfig();
+  if (!config) return { ok: false, reason: "Email sending is not configured" };
+
+  const basePath = (process.env.WEDPLAN_BASE_PATH ?? "").replace(/\/$/, "");
+  const origin = guestOrigin(req);
+  const traditionalUrl = `${origin}${basePath}/pass/${rsvp.traditionalPassToken}`;
+  const weddingUrl = `${origin}${basePath}/pass/${rsvp.weddingPassToken}`;
+
+  const [details, settings] = await Promise.all([
+    eventDetailsCollection().findOne({ id: 1 }),
+    siteSettingsCollection().findOne({ id: 1 }),
+  ]);
+  const event = { ...DEFAULT_EVENT_DETAILS, ...details };
+  const site = { ...DEFAULT_SITE_SETTINGS, ...settings };
+
+  const html = buildInvitationHtml({
+    rsvp,
+    coupleNames: event.coupleNames,
+    welcomeMessage: event.welcomeMessage,
+    logoUrl: site.logoUrl,
+    logoHeight: site.logoHeight,
+    backgroundColor: site.backgroundColor,
+    primaryColor: site.primaryColor,
+    accentColor: site.accentColor,
+    traditional: {
+      dateTime: formatEventDateTime(event.traditionalDate),
+      venue: event.traditionalVenue,
+      passUrl: traditionalUrl,
+    },
+    wedding: {
+      dateTime: formatEventDateTime(event.weddingDate),
+      venue: event.weddingVenue,
+      passUrl: weddingUrl,
+    },
+  });
+
+  const text = [
+    `Hi ${rsvp.guestName},`,
+    ``,
+    `You're invited! Here are the full details for ${event.coupleNames}'s wedding:`,
+    ``,
+    `Traditional Wedding`,
+    `${formatEventDateTime(event.traditionalDate)}`,
+    `${event.traditionalVenue}`,
+    ``,
+    `White Wedding`,
+    `${formatEventDateTime(event.weddingDate)}`,
+    `${event.weddingVenue}`,
+    ``,
+    `Show the QR code on either page below at the entrance to be checked in:`,
+    `Traditional Wedding pass: ${traditionalUrl}`,
+    `White Wedding pass: ${weddingUrl}`,
+    ``,
+    `See you there!`,
+  ].join("\n");
+
+  try {
+    const sent = await sendSmtpEmail({
+      host: config.smtpHost,
+      port: config.smtpPort,
+      username: config.smtpUsername,
+      password: config.smtpPassword,
+      from: config.smtpFromEmail,
+      to: rsvp.email,
+      subject: `You're invited to ${event.coupleNames}'s wedding`,
+      text,
+      html,
+    });
+    return sent ? { ok: true } : { ok: false, reason: "Email failed to send" };
+  } catch (err) {
+    req.log.warn({ err, rsvpId: rsvp.id }, "Failed to send invitation email");
+    return { ok: false, reason: "Email failed to send" };
   }
 }
 

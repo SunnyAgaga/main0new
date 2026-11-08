@@ -1034,6 +1034,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /admin/rsvps/send-invitations:
+    post:
+      operationId: sendInvitations
+      tags: [admin]
+      summary: Email the styled wedding invitation (with gate passes) to selected, already-approved RSVPs (admin role only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendInvitationsInput"
+      responses:
+        "200":
+          description: Per-guest send results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendInvitationsResult"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /admin/rsvps/{id}/payment-reminder:
     post:
       operationId: sendPaymentReminder
@@ -1890,6 +1926,31 @@ components:
       required: [sent]
       properties:
         sent: { type: boolean }
+    SendInvitationsInput:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          items: { type: number }
+    SendInvitationResult:
+      type: object
+      required: [id, guestName, status]
+      properties:
+        id: { type: number }
+        guestName: { type: string }
+        status:
+          type: string
+          enum: [sent, failed, skipped]
+        reason: { type: string }
+    SendInvitationsResult:
+      type: object
+      required: [results]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/SendInvitationResult"
     RsvpFormCopy:
       type: object
       required: [pageTitle, guestInfoHeading, fullNameLabel, emailLabel, phoneLabel, attendanceHeading, attendingQuestion, attendingYesLabel, attendingNoLabel, guestCountLabel, adultsOnlyNotice, asoebiQuestion, asoebiYesLabel, asoebiNoLabel, asoebiPickerHint, additionalGuestsHeading, deliveryHeading, deliveryQuestion, pickupLabel, deliveryLabel, deliveryProviderQuestion, deliveryAddressLabel, giftHeading, giftQuestion, giftYesLabel, giftNoLabel, giftAmountLabel, noteLabel, submitLabel, submitWithPaymentLabel, completeAttendingTitle, completeAttendingMessage, completeDecliningTitle, completeDecliningMessage]
