@@ -883,6 +883,23 @@ export const UpdateRsvpConfirmationResponse = zod.object({
 
 
 /**
+ * @summary Email the styled wedding invitation (with gate passes) to selected, already-approved RSVPs (admin role only)
+ */
+export const SendInvitationsBody = zod.object({
+  "ids": zod.array(zod.number())
+})
+
+export const SendInvitationsResponse = zod.object({
+  "results": zod.array(zod.object({
+  "id": zod.number(),
+  "guestName": zod.string(),
+  "status": zod.enum(['sent', 'failed', 'skipped']),
+  "reason": zod.string().optional()
+}))
+})
+
+
+/**
  * @summary Email a guest a link to resume and pay for their Aso Ebi order (admin role only)
  */
 export const SendPaymentReminderParams = zod.object({

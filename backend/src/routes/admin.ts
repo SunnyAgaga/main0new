@@ -10,6 +10,8 @@ import {
   ListAdminUsersResponse,
   ListAdminRsvpsResponse,
   ListAdminOrdersResponse,
+  SendInvitationsBody,
+  SendInvitationsResponse,
   UpdateAdminRsvpBody,
   UpdateAdminRsvpParams,
   UpdateAdminRsvpResponse,
@@ -48,6 +50,7 @@ import {
 } from "@/db";
 import { requireAdmin, requireAuth, requirePermission } from "../middlewares/requireAuth";
 import { toAuthUser } from "./auth";
+import { sendInvitationEmail } from "@/lib/rsvp-emails";
 
 function sanitizePermissions(permissions: string[]): string[] {
   return permissions.filter(isPermissionKey);
@@ -471,6 +474,39 @@ router.delete("/admin/rsvps/:id", requirePermission("rsvps"), async (req, res): 
 
   req.log.info({ rsvpId: params.data.id }, "RSVP removed by admin");
   res.status(204).end();
+});
+
+router.post("/admin/rsvps/send-invitations", requirePermission("rsvps"), async (req, res): Promise<void> => {
+  const parsed = SendInvitationsBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const ids = [...new Set(parsed.data.ids)];
+  const results: { id: number; guestName: string; status: "sent" | "failed" | "skipped"; reason?: string }[] = [];
+
+  for (const id of ids) {
+    const rsvp = await rsvpsCollection().findOne({ id });
+    if (!rsvp) {
+      results.push({ id, guestName: `#${id}`, status: "skipped", reason: "RSVP not found" });
+      continue;
+    }
+
+    const outcome = await sendInvitationEmail(req, rsvp);
+    results.push({
+      id,
+      guestName: rsvp.guestName,
+      status: outcome.ok ? "sent" : outcome.reason === "Email failed to send" ? "failed" : "skipped",
+      ...(outcome.reason ? { reason: outcome.reason } : {}),
+    });
+  }
+
+  req.log.info(
+    { ids, sent: results.filter((r) => r.status === "sent").length },
+    "Invitation emails sent by admin",
+  );
+  res.json(SendInvitationsResponse.parse({ results }));
 });
 
 export default router;

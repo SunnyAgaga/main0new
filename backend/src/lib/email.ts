@@ -10,6 +10,7 @@ export async function sendSmtpEmail(params: {
   to: string;
   subject: string;
   text: string;
+  html?: string;
 }): Promise<boolean> {
   const transporter = nodemailer.createTransport({
     host: params.host,
@@ -31,6 +32,7 @@ export async function sendSmtpEmail(params: {
       to: params.to,
       subject: params.subject,
       text: params.text,
+      ...(params.html ? { html: params.html } : {}),
     });
     return true;
   } catch (err) {
