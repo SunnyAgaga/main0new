@@ -108,10 +108,12 @@ export async function sendGatePassEmail(req: Request, rsvp: Rsvp): Promise<void>
           `Traditional Wedding`,
           `${formatEventDateTime(details.traditionalDate)}`,
           `${details.traditionalVenue}`,
+          `Directions: ${googleMapsUrl(details.traditionalVenue)}`,
           ``,
           `White Wedding`,
           `${formatEventDateTime(details.weddingDate)}`,
           `${details.weddingVenue}`,
+          `Directions: ${googleMapsUrl(details.weddingVenue)}`,
           ``,
         ]
       : []),
@@ -136,6 +138,10 @@ export async function sendGatePassEmail(req: Request, rsvp: Rsvp): Promise<void>
   } catch (err) {
     req.log.warn({ err, rsvpId: rsvp.id }, "Failed to send gate pass email");
   }
+}
+
+function googleMapsUrl(venue: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue)}`;
 }
 
 function invitationVenueCardHtml(params: {
@@ -163,6 +169,10 @@ function invitationVenueCardHtml(params: {
             <a href="${params.passUrl}" style="display: inline-block; padding: 10px 20px; background: ${params.primaryColor}; color: #ffffff; text-decoration: none; border-radius: 999px; font-size: 13px; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">
               View My Pass
             </a>
+            <br />
+            <a href="${googleMapsUrl(params.venue)}" style="display: inline-block; margin-top: 10px; font-size: 12px; color: ${params.primaryColor}; text-decoration: underline; font-family: Arial, Helvetica, sans-serif;">
+              Get Directions
+            </a>
           </td>
         </tr>
       </table>
@@ -182,17 +192,27 @@ function buildInvitationHtml(params: {
   welcomeMessage: string;
   logoUrl: string;
   logoHeight: number;
+  heroImageUrl: string;
   backgroundColor: string;
   primaryColor: string;
   accentColor: string;
   traditional: { dateTime: string; venue: string; passUrl: string };
   wedding: { dateTime: string; venue: string; passUrl: string };
 }): string {
-  const { rsvp, coupleNames, welcomeMessage, logoUrl, logoHeight, backgroundColor, primaryColor, accentColor, traditional, wedding } = params;
+  const { rsvp, coupleNames, welcomeMessage, logoUrl, logoHeight, heroImageUrl, backgroundColor, primaryColor, accentColor, traditional, wedding } = params;
 
   const headerHtml = logoUrl
     ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(coupleNames)}" height="${logoHeight}" style="height: ${logoHeight}px; max-width: 240px; object-fit: contain;" />`
     : `<p style="margin: 0; font-size: 20px; letter-spacing: 3px; text-transform: uppercase; color: ${primaryColor}; font-family: Georgia, 'Times New Roman', serif;">${escapeHtml(coupleNames)}</p>`;
+
+  const heroHtml = heroImageUrl
+    ? `
+            <tr>
+              <td style="padding: 0;">
+                <img src="${escapeHtml(heroImageUrl)}" alt="" width="600" style="width: 100%; max-width: 600px; height: 220px; object-fit: cover; display: block; border-radius: 16px 16px 0 0;" />
+              </td>
+            </tr>`
+    : "";
 
   return `<!doctype html>
 <html>
@@ -210,29 +230,36 @@ function buildInvitationHtml(params: {
               <td align="center" style="padding-bottom: 24px;">${headerHtml}</td>
             </tr>
             <tr>
-              <td style="background: #ffffff; border-radius: 16px; padding: 40px 32px; text-align: center;">
-                <p style="margin: 0 0 12px; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: ${accentColor}; font-family: Arial, Helvetica, sans-serif;">
-                  You're Invited
-                </p>
-                <h1 style="margin: 0 0 24px; font-size: 32px; color: #1c1917; font-family: Georgia, 'Times New Roman', serif;">
-                  ${escapeHtml(coupleNames)}
-                </h1>
-
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <td>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border-radius: 16px;">
+                  ${heroHtml}
                   <tr>
-                    ${invitationVenueCardHtml({ accentColor, primaryColor, label: "Traditional Wedding", ...traditional })}
-                    ${invitationVenueCardHtml({ accentColor, primaryColor, label: "White Wedding", ...wedding })}
+                    <td style="padding: 40px 32px; text-align: center;">
+                      <p style="margin: 0 0 12px; font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: ${accentColor}; font-family: Arial, Helvetica, sans-serif;">
+                        You're Invited
+                      </p>
+                      <h1 style="margin: 0 0 24px; font-size: 32px; color: #1c1917; font-family: Georgia, 'Times New Roman', serif;">
+                        ${escapeHtml(coupleNames)}
+                      </h1>
+
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          ${invitationVenueCardHtml({ accentColor, primaryColor, label: "Traditional Wedding", ...traditional })}
+                          ${invitationVenueCardHtml({ accentColor, primaryColor, label: "White Wedding", ...wedding })}
+                        </tr>
+                      </table>
+
+                      ${welcomeMessage ? `
+                      <p style="margin: 28px 0 0; font-size: 15px; font-style: italic; color: #57534e; font-family: Georgia, 'Times New Roman', serif; line-height: 1.6;">
+                        "${escapeHtml(welcomeMessage)}"
+                      </p>` : ""}
+
+                      <p style="margin: 28px 0 0; font-size: 14px; color: #78716c; font-family: Arial, Helvetica, sans-serif;">
+                        Show the QR code on your pass page at the entrance to be checked in. See you there, ${escapeHtml(rsvp.guestName)}!
+                      </p>
+                    </td>
                   </tr>
                 </table>
-
-                ${welcomeMessage ? `
-                <p style="margin: 28px 0 0; font-size: 15px; font-style: italic; color: #57534e; font-family: Georgia, 'Times New Roman', serif; line-height: 1.6;">
-                  "${escapeHtml(welcomeMessage)}"
-                </p>` : ""}
-
-                <p style="margin: 28px 0 0; font-size: 14px; color: #78716c; font-family: Arial, Helvetica, sans-serif;">
-                  Show the QR code on your pass page at the entrance to be checked in. See you there, ${escapeHtml(rsvp.guestName)}!
-                </p>
               </td>
             </tr>
           </table>
@@ -281,6 +308,7 @@ export async function sendInvitationEmail(
     welcomeMessage: event.welcomeMessage,
     logoUrl: site.logoUrl,
     logoHeight: site.logoHeight,
+    heroImageUrl: site.heroImageUrl,
     backgroundColor: site.backgroundColor,
     primaryColor: site.primaryColor,
     accentColor: site.accentColor,
@@ -304,10 +332,12 @@ export async function sendInvitationEmail(
     `Traditional Wedding`,
     `${formatEventDateTime(event.traditionalDate)}`,
     `${event.traditionalVenue}`,
+    `Directions: ${googleMapsUrl(event.traditionalVenue)}`,
     ``,
     `White Wedding`,
     `${formatEventDateTime(event.weddingDate)}`,
     `${event.weddingVenue}`,
+    `Directions: ${googleMapsUrl(event.weddingVenue)}`,
     ``,
     `Show the QR code on either page below at the entrance to be checked in:`,
     `Traditional Wedding pass: ${traditionalUrl}`,
