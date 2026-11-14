@@ -25,4 +25,6 @@ export interface EventInput {
   asoebiClosesAt: string;
   /** @minLength 1 */
   welcomeMessage: string;
+  showVenueOnWebsite: boolean;
+  showVenueInEmail: boolean;
 }

@@ -18,6 +18,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +34,8 @@ const eventSchema = z.object({
   rsvpClosesAt: z.string().min(1, 'Required'),
   asoebiClosesAt: z.string().min(1, 'Required'),
   welcomeMessage: z.string().min(1, 'Required'),
+  showVenueOnWebsite: z.boolean(),
+  showVenueInEmail: z.boolean(),
 }).refine((data) => new Date(data.asoebiClosesAt) >= new Date(data.rsvpClosesAt), {
   message: 'Asoebi must close on or after RSVP closes',
   path: ['asoebiClosesAt'],
@@ -82,6 +85,8 @@ function EventDetailsCard() {
       rsvpClosesAt: '',
       asoebiClosesAt: '',
       welcomeMessage: '',
+      showVenueOnWebsite: true,
+      showVenueInEmail: true,
     },
   });
 
@@ -98,6 +103,8 @@ function EventDetailsCard() {
         rsvpClosesAt: toDateTimeLocal(event.rsvpClosesAt),
         asoebiClosesAt: toDateTimeLocal(event.asoebiClosesAt),
         welcomeMessage: event.welcomeMessage,
+        showVenueOnWebsite: event.showVenueOnWebsite,
+        showVenueInEmail: event.showVenueInEmail,
       });
     }
   }, [event, form]);
@@ -250,6 +257,39 @@ function EventDetailsCard() {
                     </FormControl>
                     <FormDescription>After this, only sending a gift is possible.</FormDescription>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="showVenueOnWebsite"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between gap-4 rounded-lg border border-input p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Show Venue on Website</FormLabel>
+                      <FormDescription>When off, the home page hides the address and shows a placeholder instead.</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="showVenueInEmail"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between gap-4 rounded-lg border border-input p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Show Venue in Invitation Emails</FormLabel>
+                      <FormDescription>When off, invitation emails hide the address and directions link.</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
                   </FormItem>
                 )}
               />

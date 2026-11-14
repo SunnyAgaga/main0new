@@ -26,6 +26,8 @@ function toEvent(details: EventDetails | null | undefined) {
     rsvpClosesAt: source.rsvpClosesAt,
     asoebiClosesAt: source.asoebiClosesAt,
     welcomeMessage: source.welcomeMessage,
+    showVenueOnWebsite: source.showVenueOnWebsite,
+    showVenueInEmail: source.showVenueInEmail,
   };
 }
 

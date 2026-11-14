@@ -173,6 +173,10 @@ export interface EventDetails {
   /** ISO datetime after which asoebi purchasing is no longer accepted. */
   asoebiClosesAt: string;
   welcomeMessage: string;
+  /** When false, the public home page hides the venue address and shows a placeholder instead. */
+  showVenueOnWebsite: boolean;
+  /** When false, invitation/gate-pass emails hide the venue address and directions link. */
+  showVenueInEmail: boolean;
   updatedAt: Date;
 }
 
@@ -187,6 +191,8 @@ export const DEFAULT_EVENT_DETAILS: Omit<EventDetails, "id" | "updatedAt"> = {
   asoebiClosesAt: "2026-11-07T00:00:00+01:00",
   welcomeMessage:
     "With joyful hearts, we invite you to celebrate the beginning of our forever.",
+  showVenueOnWebsite: true,
+  showVenueInEmail: true,
 };
 
 export const eventDetailsCollection = () =>

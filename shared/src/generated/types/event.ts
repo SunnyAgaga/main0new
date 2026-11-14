@@ -19,4 +19,8 @@ export interface Event {
   /** ISO datetime after which asoebi purchasing is no longer accepted. Must be on or after rsvpClosesAt. */
   asoebiClosesAt: string;
   welcomeMessage: string;
+  /** When false, the public home page hides the venue address and shows a placeholder instead. */
+  showVenueOnWebsite: boolean;
+  /** When false, invitation/gate-pass emails hide the venue address and directions link, showing a placeholder instead. */
+  showVenueInEmail: boolean;
 }
