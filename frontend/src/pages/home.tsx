@@ -76,7 +76,11 @@ export default function Home() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">Traditional Wedding</p>
                   <div className="space-y-1 text-muted-foreground font-medium">
                     <p>{format(new Date(event.traditionalDate), 'EEEE, MMMM do, yyyy')}</p>
-                    <p className="text-sm">{event.traditionalVenue}</p>
+                    {event.showVenueOnWebsite ? (
+                      <p className="text-sm">{event.traditionalVenue}</p>
+                    ) : (
+                      <p className="text-sm italic opacity-70">Venue to be shared with confirmed guests</p>
+                    )}
                   </div>
                   <Countdown targetDate={event.traditionalDate} />
                 </div>
@@ -85,7 +89,11 @@ export default function Home() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">White Wedding</p>
                   <div className="space-y-1 text-muted-foreground font-medium">
                     <p>{format(new Date(event.weddingDate), 'EEEE, MMMM do, yyyy')}</p>
-                    <p className="text-sm">{event.weddingVenue}</p>
+                    {event.showVenueOnWebsite ? (
+                      <p className="text-sm">{event.weddingVenue}</p>
+                    ) : (
+                      <p className="text-sm italic opacity-70">Venue to be shared with confirmed guests</p>
+                    )}
                   </div>
                   <Countdown targetDate={event.weddingDate} />
                 </div>
