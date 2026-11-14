@@ -493,7 +493,7 @@ router.post("/admin/rsvps/send-invitations", requirePermission("rsvps"), async (
       continue;
     }
 
-    const outcome = await sendInvitationEmail(req, rsvp);
+    const outcome = await sendInvitationEmail(req, rsvp, parsed.data.eventType);
     results.push({
       id,
       guestName: rsvp.guestName,

@@ -28,6 +28,7 @@ function toEvent(details: EventDetails | null | undefined) {
     welcomeMessage: source.welcomeMessage,
     showVenueOnWebsite: source.showVenueOnWebsite,
     showVenueInEmail: source.showVenueInEmail,
+    dayOfContacts: source.dayOfContacts,
   };
 }
 

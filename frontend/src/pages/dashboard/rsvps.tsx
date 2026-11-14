@@ -15,9 +15,11 @@ import {
   useListAsoebi,
   type AdminRsvp,
   type AsoebiItem,
+  type SendInvitationsInputEventType,
 } from '@/api';
 
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -573,6 +575,12 @@ const FILTER_LABELS: Record<string, string> = {
   asoebi: 'Asoebi Interest',
 };
 
+const INVITATION_EVENT_LABELS: Record<SendInvitationsInputEventType, string> = {
+  both: 'Traditional + White Wedding',
+  traditional: 'Traditional Wedding',
+  wedding: 'White Wedding',
+};
+
 export default function DashboardRsvps() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -584,6 +592,7 @@ export default function DashboardRsvps() {
   const [editing, setEditing] = useState<AdminRsvp | null>(null);
   const [viewingOrder, setViewingOrder] = useState<AdminRsvp | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [invitationEventType, setInvitationEventType] = useState<SendInvitationsInputEventType>('both');
   const deleteRsvp = useDeleteAdminRsvp();
   const sendInvitations = useSendInvitations();
 
@@ -644,9 +653,10 @@ export default function DashboardRsvps() {
   const onSendInvitations = () => {
     const ids = selectedSelectableIds;
     if (ids.length === 0) return;
-    if (!window.confirm(`Send the wedding invitation email to ${ids.length} guest${ids.length === 1 ? '' : 's'}?`)) return;
+    const eventLabel = INVITATION_EVENT_LABELS[invitationEventType];
+    if (!window.confirm(`Send the ${eventLabel} invitation email to ${ids.length} guest${ids.length === 1 ? '' : 's'}?`)) return;
 
-    sendInvitations.mutate({ data: { ids } }, {
+    sendInvitations.mutate({ data: { ids, eventType: invitationEventType } }, {
       onSuccess: (res) => {
         const sent = res.results.filter((r) => r.status === 'sent').length;
         const skippedOrFailed = res.results.filter((r) => r.status !== 'sent');
@@ -686,7 +696,20 @@ export default function DashboardRsvps() {
             </div>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Select
+            value={invitationEventType}
+            onValueChange={(value) => setInvitationEventType(value as SendInvitationsInputEventType)}
+          >
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Invitation" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="both">Traditional + White Wedding</SelectItem>
+              <SelectItem value="traditional">Traditional Wedding Only</SelectItem>
+              <SelectItem value="wedding">White Wedding Only</SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             variant="default"
             disabled={selectedSelectableIds.length === 0 || sendInvitations.isPending}

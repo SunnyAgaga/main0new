@@ -105,6 +105,19 @@ export default function Home() {
                 </p>
               )}
 
+              {event.showVenueOnWebsite && event.dayOfContacts.length > 0 && (
+                <div className="max-w-md mx-auto pt-2 space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">Questions on the Day?</p>
+                  <div className="text-sm text-muted-foreground space-y-0.5">
+                    {event.dayOfContacts.map((contact, index) => (
+                      <p key={index}>
+                        <span className="font-medium text-foreground/80">{contact.name}</span> — {contact.phone}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="pt-4">
                 {(() => {
                   const asoebiClosed = new Date() >= new Date(event.asoebiClosesAt);

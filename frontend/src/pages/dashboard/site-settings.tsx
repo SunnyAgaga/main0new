@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useForm, type Control } from 'react-hook-form';
+import { useForm, useFieldArray, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -19,10 +19,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { ImagePlus, Loader2 } from 'lucide-react';
+import { ImagePlus, Loader2, Plus, Trash2 } from 'lucide-react';
+
+const eventContactSchema = z.object({
+  name: z.string().min(1, 'Required'),
+  phone: z.string().min(1, 'Required'),
+});
 
 const eventSchema = z.object({
   coupleNames: z.string().min(1, 'Required'),
@@ -36,6 +42,7 @@ const eventSchema = z.object({
   welcomeMessage: z.string().min(1, 'Required'),
   showVenueOnWebsite: z.boolean(),
   showVenueInEmail: z.boolean(),
+  dayOfContacts: z.array(eventContactSchema),
 }).refine((data) => new Date(data.asoebiClosesAt) >= new Date(data.rsvpClosesAt), {
   message: 'Asoebi must close on or after RSVP closes',
   path: ['asoebiClosesAt'],
@@ -87,8 +94,11 @@ function EventDetailsCard() {
       welcomeMessage: '',
       showVenueOnWebsite: true,
       showVenueInEmail: true,
+      dayOfContacts: [],
     },
   });
+
+  const contacts = useFieldArray({ control: form.control, name: 'dayOfContacts' });
 
   useEffect(() => {
     if (event && !initialized.current) {
@@ -105,6 +115,7 @@ function EventDetailsCard() {
         welcomeMessage: event.welcomeMessage,
         showVenueOnWebsite: event.showVenueOnWebsite,
         showVenueInEmail: event.showVenueInEmail,
+        dayOfContacts: event.dayOfContacts,
       });
     }
   }, [event, form]);
@@ -293,6 +304,68 @@ function EventDetailsCard() {
                   </FormItem>
                 )}
               />
+            </div>
+
+            <div className="space-y-3 rounded-lg border border-input p-4">
+              <div className="space-y-0.5">
+                <Label>Day-of Contacts</Label>
+                <p className="text-[0.8rem] text-muted-foreground">
+                  Names and phone numbers guests can call on the day if they have issues or need directions.
+                  Shown wherever venue details are shown, on the website and in invitation emails.
+                </p>
+              </div>
+
+              {contacts.fields.length > 0 && (
+                <div className="space-y-3">
+                  {contacts.fields.map((contactField, index) => (
+                    <div key={contactField.id} className="flex items-start gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`dayOfContacts.${index}.name`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input placeholder="e.g. Coordinator (Tunde)" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`dayOfContacts.${index}.phone`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input placeholder="e.g. 0803 123 4567" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => contacts.remove(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => contacts.append({ name: '', phone: '' })}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add Contact
+              </Button>
             </div>
 
             <FormField

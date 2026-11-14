@@ -177,7 +177,14 @@ export interface EventDetails {
   showVenueOnWebsite: boolean;
   /** When false, invitation/gate-pass emails hide the venue address and directions link. */
   showVenueInEmail: boolean;
+  /** Names/phone numbers guests can call on the day with issues; shown alongside venue details. */
+  dayOfContacts: EventContact[];
   updatedAt: Date;
+}
+
+export interface EventContact {
+  name: string;
+  phone: string;
 }
 
 export const DEFAULT_EVENT_DETAILS: Omit<EventDetails, "id" | "updatedAt"> = {
@@ -193,6 +200,7 @@ export const DEFAULT_EVENT_DETAILS: Omit<EventDetails, "id" | "updatedAt"> = {
     "With joyful hearts, we invite you to celebrate the beginning of our forever.",
   showVenueOnWebsite: true,
   showVenueInEmail: true,
+  dayOfContacts: [],
 };
 
 export const eventDetailsCollection = () =>
