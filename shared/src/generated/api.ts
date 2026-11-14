@@ -67,7 +67,9 @@ export const GetEventResponse = zod.object({
   "rsvpDeadline": zod.string(),
   "rsvpClosesAt": zod.string().describe('ISO datetime after which new RSVPs (attendance) are no longer accepted.'),
   "asoebiClosesAt": zod.string().describe('ISO datetime after which asoebi purchasing is no longer accepted. Must be on or after rsvpClosesAt.'),
-  "welcomeMessage": zod.string()
+  "welcomeMessage": zod.string(),
+  "showVenueOnWebsite": zod.boolean().describe('When false, the public home page hides the venue address and shows a placeholder instead.'),
+  "showVenueInEmail": zod.boolean().describe('When false, invitation/gate-pass emails hide the venue address and directions link, showing a placeholder instead.')
 })
 
 
@@ -94,7 +96,9 @@ export const UpdateEventBody = zod.object({
   "rsvpDeadline": zod.string().min(1),
   "rsvpClosesAt": zod.string().min(1),
   "asoebiClosesAt": zod.string().min(1),
-  "welcomeMessage": zod.string().min(1)
+  "welcomeMessage": zod.string().min(1),
+  "showVenueOnWebsite": zod.boolean(),
+  "showVenueInEmail": zod.boolean()
 })
 
 export const UpdateEventResponse = zod.object({
@@ -107,7 +111,9 @@ export const UpdateEventResponse = zod.object({
   "rsvpDeadline": zod.string(),
   "rsvpClosesAt": zod.string().describe('ISO datetime after which new RSVPs (attendance) are no longer accepted.'),
   "asoebiClosesAt": zod.string().describe('ISO datetime after which asoebi purchasing is no longer accepted. Must be on or after rsvpClosesAt.'),
-  "welcomeMessage": zod.string()
+  "welcomeMessage": zod.string(),
+  "showVenueOnWebsite": zod.boolean().describe('When false, the public home page hides the venue address and shows a placeholder instead.'),
+  "showVenueInEmail": zod.boolean().describe('When false, invitation/gate-pass emails hide the venue address and directions link, showing a placeholder instead.')
 })
 
 

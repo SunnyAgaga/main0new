@@ -1682,7 +1682,7 @@ components:
         - status
     Event:
       type: object
-      required: [id, coupleNames, traditionalDate, traditionalVenue, weddingDate, weddingVenue, rsvpDeadline, rsvpClosesAt, asoebiClosesAt, welcomeMessage]
+      required: [id, coupleNames, traditionalDate, traditionalVenue, weddingDate, weddingVenue, rsvpDeadline, rsvpClosesAt, asoebiClosesAt, welcomeMessage, showVenueOnWebsite, showVenueInEmail]
       properties:
         id: { type: string }
         coupleNames: { type: string }
@@ -1694,9 +1694,11 @@ components:
         rsvpClosesAt: { type: string, description: "ISO datetime after which new RSVPs (attendance) are no longer accepted." }
         asoebiClosesAt: { type: string, description: "ISO datetime after which asoebi purchasing is no longer accepted. Must be on or after rsvpClosesAt." }
         welcomeMessage: { type: string }
+        showVenueOnWebsite: { type: boolean, description: "When false, the public home page hides the venue address and shows a placeholder instead." }
+        showVenueInEmail: { type: boolean, description: "When false, invitation/gate-pass emails hide the venue address and directions link, showing a placeholder instead." }
     EventInput:
       type: object
-      required: [coupleNames, traditionalDate, traditionalVenue, weddingDate, weddingVenue, rsvpDeadline, rsvpClosesAt, asoebiClosesAt, welcomeMessage]
+      required: [coupleNames, traditionalDate, traditionalVenue, weddingDate, weddingVenue, rsvpDeadline, rsvpClosesAt, asoebiClosesAt, welcomeMessage, showVenueOnWebsite, showVenueInEmail]
       properties:
         coupleNames: { type: string, minLength: 1 }
         traditionalDate: { type: string, minLength: 1 }
@@ -1707,6 +1709,8 @@ components:
         rsvpClosesAt: { type: string, minLength: 1 }
         asoebiClosesAt: { type: string, minLength: 1 }
         welcomeMessage: { type: string, minLength: 1 }
+        showVenueOnWebsite: { type: boolean }
+        showVenueInEmail: { type: boolean }
     AsoebiItem:
       type: object
       required: [id, category, name, description, price, currency, imageUrl, sizes, available]

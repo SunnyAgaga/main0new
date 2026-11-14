@@ -97,23 +97,26 @@ export async function sendGatePassEmail(req: Request, rsvp: Rsvp): Promise<void>
   const weddingUrl = `${origin}${basePath}/pass/${rsvp.weddingPassToken}`;
 
   const details = await eventDetailsCollection().findOne({ id: 1 });
+  const event = details ? { ...DEFAULT_EVENT_DETAILS, ...details } : null;
 
   const text = [
     `Hi ${rsvp.guestName},`,
     ``,
     `Your RSVP has been confirmed! Here are the full details for the day:`,
     ``,
-    ...(details
+    ...(event
       ? [
           `Traditional Wedding`,
-          `${formatEventDateTime(details.traditionalDate)}`,
-          `${details.traditionalVenue}`,
-          `Directions: ${googleMapsUrl(details.traditionalVenue)}`,
+          `${formatEventDateTime(event.traditionalDate)}`,
+          ...(event.showVenueInEmail
+            ? [`${event.traditionalVenue}`, `Directions: ${googleMapsUrl(event.traditionalVenue)}`]
+            : [`Venue details will be shared with confirmed guests closer to the date.`]),
           ``,
           `White Wedding`,
-          `${formatEventDateTime(details.weddingDate)}`,
-          `${details.weddingVenue}`,
-          `Directions: ${googleMapsUrl(details.weddingVenue)}`,
+          `${formatEventDateTime(event.weddingDate)}`,
+          ...(event.showVenueInEmail
+            ? [`${event.weddingVenue}`, `Directions: ${googleMapsUrl(event.weddingVenue)}`]
+            : [`Venue details will be shared with confirmed guests closer to the date.`]),
           ``,
         ]
       : []),
@@ -151,7 +154,26 @@ function invitationVenueCardHtml(params: {
   dateTime: string;
   venue: string;
   passUrl: string;
+  showVenue: boolean;
 }): string {
+  const venueHtml = params.showVenue
+    ? `
+            <p style="margin: 0 0 16px; font-size: 14px; color: #78716c; font-family: Arial, Helvetica, sans-serif;">
+              ${escapeHtml(params.venue)}
+            </p>`
+    : `
+            <p style="margin: 0 0 16px; font-size: 13px; font-style: italic; color: #a8a29e; font-family: Arial, Helvetica, sans-serif;">
+              Venue details will be shared with confirmed guests closer to the date.
+            </p>`;
+
+  const directionsHtml = params.showVenue
+    ? `
+            <br />
+            <a href="${googleMapsUrl(params.venue)}" style="display: inline-block; margin-top: 10px; font-size: 12px; color: ${params.primaryColor}; text-decoration: underline; font-family: Arial, Helvetica, sans-serif;">
+              Get Directions
+            </a>`
+    : "";
+
   return `
     <td width="50%" valign="top" style="padding: 8px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border: 1px solid ${params.accentColor}33; border-radius: 12px;">
@@ -162,17 +184,10 @@ function invitationVenueCardHtml(params: {
             </p>
             <p style="margin: 0 0 4px; font-size: 14px; color: #44403c; font-family: Arial, Helvetica, sans-serif;">
               ${escapeHtml(params.dateTime)}
-            </p>
-            <p style="margin: 0 0 16px; font-size: 14px; color: #78716c; font-family: Arial, Helvetica, sans-serif;">
-              ${escapeHtml(params.venue)}
-            </p>
+            </p>${venueHtml}
             <a href="${params.passUrl}" style="display: inline-block; padding: 10px 20px; background: ${params.primaryColor}; color: #ffffff; text-decoration: none; border-radius: 999px; font-size: 13px; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">
               View My Pass
-            </a>
-            <br />
-            <a href="${googleMapsUrl(params.venue)}" style="display: inline-block; margin-top: 10px; font-size: 12px; color: ${params.primaryColor}; text-decoration: underline; font-family: Arial, Helvetica, sans-serif;">
-              Get Directions
-            </a>
+            </a>${directionsHtml}
           </td>
         </tr>
       </table>
@@ -196,10 +211,11 @@ function buildInvitationHtml(params: {
   backgroundColor: string;
   primaryColor: string;
   accentColor: string;
+  showVenue: boolean;
   traditional: { dateTime: string; venue: string; passUrl: string };
   wedding: { dateTime: string; venue: string; passUrl: string };
 }): string {
-  const { rsvp, coupleNames, welcomeMessage, logoUrl, logoHeight, heroImageUrl, backgroundColor, primaryColor, accentColor, traditional, wedding } = params;
+  const { rsvp, coupleNames, welcomeMessage, logoUrl, logoHeight, heroImageUrl, backgroundColor, primaryColor, accentColor, showVenue, traditional, wedding } = params;
 
   const headerHtml = logoUrl
     ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(coupleNames)}" height="${logoHeight}" style="height: ${logoHeight}px; max-width: 240px; object-fit: contain;" />`
@@ -244,8 +260,8 @@ function buildInvitationHtml(params: {
 
                       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                         <tr>
-                          ${invitationVenueCardHtml({ accentColor, primaryColor, label: "Traditional Wedding", ...traditional })}
-                          ${invitationVenueCardHtml({ accentColor, primaryColor, label: "White Wedding", ...wedding })}
+                          ${invitationVenueCardHtml({ accentColor, primaryColor, label: "Traditional Wedding", showVenue, ...traditional })}
+                          ${invitationVenueCardHtml({ accentColor, primaryColor, label: "White Wedding", showVenue, ...wedding })}
                         </tr>
                       </table>
 
@@ -312,6 +328,7 @@ export async function sendInvitationEmail(
     backgroundColor: site.backgroundColor,
     primaryColor: site.primaryColor,
     accentColor: site.accentColor,
+    showVenue: event.showVenueInEmail,
     traditional: {
       dateTime: formatEventDateTime(event.traditionalDate),
       venue: event.traditionalVenue,
@@ -331,13 +348,15 @@ export async function sendInvitationEmail(
     ``,
     `Traditional Wedding`,
     `${formatEventDateTime(event.traditionalDate)}`,
-    `${event.traditionalVenue}`,
-    `Directions: ${googleMapsUrl(event.traditionalVenue)}`,
+    ...(event.showVenueInEmail
+      ? [`${event.traditionalVenue}`, `Directions: ${googleMapsUrl(event.traditionalVenue)}`]
+      : [`Venue details will be shared with confirmed guests closer to the date.`]),
     ``,
     `White Wedding`,
     `${formatEventDateTime(event.weddingDate)}`,
-    `${event.weddingVenue}`,
-    `Directions: ${googleMapsUrl(event.weddingVenue)}`,
+    ...(event.showVenueInEmail
+      ? [`${event.weddingVenue}`, `Directions: ${googleMapsUrl(event.weddingVenue)}`]
+      : [`Venue details will be shared with confirmed guests closer to the date.`]),
     ``,
     `Show the QR code on either page below at the entrance to be checked in:`,
     `Traditional Wedding pass: ${traditionalUrl}`,
