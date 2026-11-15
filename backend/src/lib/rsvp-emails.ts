@@ -6,6 +6,7 @@ import {
   siteSettingsCollection,
   DEFAULT_EVENT_DETAILS,
   DEFAULT_SITE_SETTINGS,
+  type EventContact,
   type NotificationConfig,
   type Rsvp,
 } from "@/db";
@@ -42,6 +43,17 @@ export function guestOrigin(req: Request): string {
     return `${req.protocol}://${req.hostname}:${process.env.FRONTEND_PORT}`;
   }
   return `${req.protocol}://${req.get("host")}`;
+}
+
+/**
+ * Uploaded logo/hero images are stored as relative paths (/api/uploads/<id>) so
+ * the browser resolves them against the site's own origin. An email has no such
+ * origin, so an <img src="/api/uploads/..."> silently fails to load in every mail
+ * client - this makes the URL absolute the same way pass links already are.
+ */
+function toAbsoluteImageUrl(req: Request, url: string): string {
+  if (!url || /^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
+  return `${guestOrigin(req)}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
 async function getEmailConfig(): Promise<NotificationConfig | null> {
@@ -123,6 +135,7 @@ export async function sendGatePassEmail(req: Request, rsvp: Rsvp): Promise<void>
     `Show the QR code on either page below at the entrance to be checked in:`,
     `Traditional Wedding pass: ${traditionalUrl}`,
     `White Wedding pass: ${weddingUrl}`,
+    ...(event?.showVenueInEmail ? contactsTextLines(event.dayOfContacts) : []),
     ``,
     `See you there!`,
   ].join("\n");
@@ -147,6 +160,36 @@ function googleMapsUrl(venue: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue)}`;
 }
 
+/** Which wedding(s) an invitation covers - drives both the venue cards shown and which pass link is included. */
+export type InvitationEventType = "traditional" | "wedding" | "both";
+
+function contactsTextLines(contacts: EventContact[]): string[] {
+  if (contacts.length === 0) return [];
+  return [``, `Questions on the day? Contact:`, ...contacts.map((c) => `${c.name} — ${c.phone}`)];
+}
+
+function contactsHtml(contacts: EventContact[], primaryColor: string): string {
+  if (contacts.length === 0) return "";
+  const rows = contacts
+    .map(
+      (c) => `
+                      <p style="margin: 4px 0; font-size: 14px; color: #44403c; font-family: Arial, Helvetica, sans-serif;">
+                        <span style="font-weight: 600; color: ${primaryColor};">${escapeHtml(c.name)}</span> — ${escapeHtml(c.phone)}
+                      </p>`,
+    )
+    .join("");
+  return `
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="padding-top: 20px; margin-top: 20px; border-top: 1px solid #e7e5e4; text-align: center;">
+                            <p style="margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #78716c; font-family: Arial, Helvetica, sans-serif;">
+                              Questions on the Day?
+                            </p>${rows}
+                          </td>
+                        </tr>
+                      </table>`;
+}
+
 function invitationVenueCardHtml(params: {
   accentColor: string;
   primaryColor: string;
@@ -155,6 +198,7 @@ function invitationVenueCardHtml(params: {
   venue: string;
   passUrl: string;
   showVenue: boolean;
+  width: string;
 }): string {
   const venueHtml = params.showVenue
     ? `
@@ -175,7 +219,7 @@ function invitationVenueCardHtml(params: {
     : "";
 
   return `
-    <td width="50%" valign="top" style="padding: 8px;">
+    <td width="${params.width}" valign="top" style="padding: 8px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #ffffff; border: 1px solid ${params.accentColor}33; border-radius: 12px;">
         <tr>
           <td style="padding: 20px; text-align: center;">
@@ -212,10 +256,12 @@ function buildInvitationHtml(params: {
   primaryColor: string;
   accentColor: string;
   showVenue: boolean;
+  eventType: InvitationEventType;
+  contacts: EventContact[];
   traditional: { dateTime: string; venue: string; passUrl: string };
   wedding: { dateTime: string; venue: string; passUrl: string };
 }): string {
-  const { rsvp, coupleNames, welcomeMessage, logoUrl, logoHeight, heroImageUrl, backgroundColor, primaryColor, accentColor, showVenue, traditional, wedding } = params;
+  const { rsvp, coupleNames, welcomeMessage, logoUrl, logoHeight, heroImageUrl, backgroundColor, primaryColor, accentColor, showVenue, eventType, contacts, traditional, wedding } = params;
 
   const headerHtml = logoUrl
     ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(coupleNames)}" height="${logoHeight}" style="height: ${logoHeight}px; max-width: 240px; object-fit: contain;" />`
@@ -260,8 +306,8 @@ function buildInvitationHtml(params: {
 
                       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                         <tr>
-                          ${invitationVenueCardHtml({ accentColor, primaryColor, label: "Traditional Wedding", showVenue, ...traditional })}
-                          ${invitationVenueCardHtml({ accentColor, primaryColor, label: "White Wedding", showVenue, ...wedding })}
+                          ${eventType !== "wedding" ? invitationVenueCardHtml({ accentColor, primaryColor, label: "Traditional Wedding", showVenue, width: eventType === "both" ? "50%" : "100%", ...traditional }) : ""}
+                          ${eventType !== "traditional" ? invitationVenueCardHtml({ accentColor, primaryColor, label: "White Wedding", showVenue, width: eventType === "both" ? "50%" : "100%", ...wedding }) : ""}
                         </tr>
                       </table>
 
@@ -273,6 +319,7 @@ function buildInvitationHtml(params: {
                       <p style="margin: 28px 0 0; font-size: 14px; color: #78716c; font-family: Arial, Helvetica, sans-serif;">
                         Show the QR code on your pass page at the entrance to be checked in. See you there, ${escapeHtml(rsvp.guestName)}!
                       </p>
+                      ${contactsHtml(contacts, primaryColor)}
                     </td>
                   </tr>
                 </table>
@@ -297,6 +344,7 @@ function buildInvitationHtml(params: {
 export async function sendInvitationEmail(
   req: Request,
   rsvp: Rsvp,
+  eventType: InvitationEventType = "both",
 ): Promise<{ ok: boolean; reason?: string }> {
   if (!rsvp.attending) return { ok: false, reason: "Guest is not attending" };
   if (!rsvp.traditionalPassToken || !rsvp.weddingPassToken) {
@@ -317,18 +365,21 @@ export async function sendInvitationEmail(
   ]);
   const event = { ...DEFAULT_EVENT_DETAILS, ...details };
   const site = { ...DEFAULT_SITE_SETTINGS, ...settings };
+  const contacts = event.showVenueInEmail ? event.dayOfContacts : [];
 
   const html = buildInvitationHtml({
     rsvp,
     coupleNames: event.coupleNames,
     welcomeMessage: event.welcomeMessage,
-    logoUrl: site.logoUrl,
+    logoUrl: toAbsoluteImageUrl(req, site.logoUrl),
     logoHeight: site.logoHeight,
-    heroImageUrl: site.heroImageUrl,
+    heroImageUrl: toAbsoluteImageUrl(req, site.heroImageUrl),
     backgroundColor: site.backgroundColor,
     primaryColor: site.primaryColor,
     accentColor: site.accentColor,
     showVenue: event.showVenueInEmail,
+    eventType,
+    contacts,
     traditional: {
       dateTime: formatEventDateTime(event.traditionalDate),
       venue: event.traditionalVenue,
@@ -341,26 +392,51 @@ export async function sendInvitationEmail(
     },
   });
 
+  const traditionalBlock =
+    eventType !== "wedding"
+      ? [
+          `Traditional Wedding`,
+          `${formatEventDateTime(event.traditionalDate)}`,
+          ...(event.showVenueInEmail
+            ? [`${event.traditionalVenue}`, `Directions: ${googleMapsUrl(event.traditionalVenue)}`]
+            : [`Venue details will be shared with confirmed guests closer to the date.`]),
+          ``,
+        ]
+      : [];
+  const weddingBlock =
+    eventType !== "traditional"
+      ? [
+          `White Wedding`,
+          `${formatEventDateTime(event.weddingDate)}`,
+          ...(event.showVenueInEmail
+            ? [`${event.weddingVenue}`, `Directions: ${googleMapsUrl(event.weddingVenue)}`]
+            : [`Venue details will be shared with confirmed guests closer to the date.`]),
+          ``,
+        ]
+      : [];
+  const passLines =
+    eventType === "both"
+      ? [
+          `Show the QR code on either page below at the entrance to be checked in:`,
+          `Traditional Wedding pass: ${traditionalUrl}`,
+          `White Wedding pass: ${weddingUrl}`,
+        ]
+      : eventType === "traditional"
+        ? [`Show the QR code on the page below at the entrance to be checked in:`, `Traditional Wedding pass: ${traditionalUrl}`]
+        : [`Show the QR code on the page below at the entrance to be checked in:`, `White Wedding pass: ${weddingUrl}`];
+
+  const subjectEventLabel =
+    eventType === "traditional" ? "Traditional Wedding" : eventType === "wedding" ? "White Wedding" : null;
+
   const text = [
     `Hi ${rsvp.guestName},`,
     ``,
     `You're invited! Here are the full details for ${event.coupleNames}'s wedding:`,
     ``,
-    `Traditional Wedding`,
-    `${formatEventDateTime(event.traditionalDate)}`,
-    ...(event.showVenueInEmail
-      ? [`${event.traditionalVenue}`, `Directions: ${googleMapsUrl(event.traditionalVenue)}`]
-      : [`Venue details will be shared with confirmed guests closer to the date.`]),
-    ``,
-    `White Wedding`,
-    `${formatEventDateTime(event.weddingDate)}`,
-    ...(event.showVenueInEmail
-      ? [`${event.weddingVenue}`, `Directions: ${googleMapsUrl(event.weddingVenue)}`]
-      : [`Venue details will be shared with confirmed guests closer to the date.`]),
-    ``,
-    `Show the QR code on either page below at the entrance to be checked in:`,
-    `Traditional Wedding pass: ${traditionalUrl}`,
-    `White Wedding pass: ${weddingUrl}`,
+    ...traditionalBlock,
+    ...weddingBlock,
+    ...passLines,
+    ...contactsTextLines(contacts),
     ``,
     `See you there!`,
   ].join("\n");
@@ -373,7 +449,9 @@ export async function sendInvitationEmail(
       password: config.smtpPassword,
       from: config.smtpFromEmail,
       to: rsvp.email,
-      subject: `You're invited to ${event.coupleNames}'s wedding`,
+      subject: subjectEventLabel
+        ? `You're invited to the ${subjectEventLabel} of ${event.coupleNames}`
+        : `You're invited to ${event.coupleNames}'s wedding`,
       text,
       html,
     });

@@ -69,7 +69,11 @@ export const GetEventResponse = zod.object({
   "asoebiClosesAt": zod.string().describe('ISO datetime after which asoebi purchasing is no longer accepted. Must be on or after rsvpClosesAt.'),
   "welcomeMessage": zod.string(),
   "showVenueOnWebsite": zod.boolean().describe('When false, the public home page hides the venue address and shows a placeholder instead.'),
-  "showVenueInEmail": zod.boolean().describe('When false, invitation/gate-pass emails hide the venue address and directions link, showing a placeholder instead.')
+  "showVenueInEmail": zod.boolean().describe('When false, invitation/gate-pass emails hide the venue address and directions link, showing a placeholder instead.'),
+  "dayOfContacts": zod.array(zod.object({
+  "name": zod.string(),
+  "phone": zod.string()
+})).describe('Names/phone numbers guests can call on the day with issues. Shown alongside venue details, so it follows the same showVenueOnWebsite/showVenueInEmail toggles.')
 })
 
 
@@ -97,6 +101,10 @@ export const UpdateEventBody = zod.object({
   "rsvpClosesAt": zod.string().min(1),
   "asoebiClosesAt": zod.string().min(1),
   "welcomeMessage": zod.string().min(1),
+  "dayOfContacts": zod.array(zod.object({
+  "name": zod.string(),
+  "phone": zod.string()
+})),
   "showVenueOnWebsite": zod.boolean(),
   "showVenueInEmail": zod.boolean()
 })
@@ -113,7 +121,11 @@ export const UpdateEventResponse = zod.object({
   "asoebiClosesAt": zod.string().describe('ISO datetime after which asoebi purchasing is no longer accepted. Must be on or after rsvpClosesAt.'),
   "welcomeMessage": zod.string(),
   "showVenueOnWebsite": zod.boolean().describe('When false, the public home page hides the venue address and shows a placeholder instead.'),
-  "showVenueInEmail": zod.boolean().describe('When false, invitation/gate-pass emails hide the venue address and directions link, showing a placeholder instead.')
+  "showVenueInEmail": zod.boolean().describe('When false, invitation/gate-pass emails hide the venue address and directions link, showing a placeholder instead.'),
+  "dayOfContacts": zod.array(zod.object({
+  "name": zod.string(),
+  "phone": zod.string()
+})).describe('Names/phone numbers guests can call on the day with issues. Shown alongside venue details, so it follows the same showVenueOnWebsite/showVenueInEmail toggles.')
 })
 
 
@@ -892,7 +904,8 @@ export const UpdateRsvpConfirmationResponse = zod.object({
  * @summary Email the styled wedding invitation (with gate passes) to selected, already-approved RSVPs (admin role only)
  */
 export const SendInvitationsBody = zod.object({
-  "ids": zod.array(zod.number())
+  "ids": zod.array(zod.number()),
+  "eventType": zod.enum(['traditional', 'wedding', 'both']).optional().describe('Which wedding\'s details to include in the invitation. Defaults to both when omitted.')
 })
 
 export const SendInvitationsResponse = zod.object({

@@ -5,6 +5,7 @@
  * WedPlan wedding RSVP and asoebi commerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { EventContact } from './eventContact';
 
 export interface Event {
   id: string;
@@ -23,4 +24,6 @@ export interface Event {
   showVenueOnWebsite: boolean;
   /** When false, invitation/gate-pass emails hide the venue address and directions link, showing a placeholder instead. */
   showVenueInEmail: boolean;
+  /** Names/phone numbers guests can call on the day with issues. Shown alongside venue details, so it follows the same showVenueOnWebsite/showVenueInEmail toggles. */
+  dayOfContacts: EventContact[];
 }

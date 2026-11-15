@@ -5,6 +5,7 @@
  * WedPlan wedding RSVP and asoebi commerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { EventContact } from './eventContact';
 
 export interface EventInput {
   /** @minLength 1 */
@@ -25,6 +26,7 @@ export interface EventInput {
   asoebiClosesAt: string;
   /** @minLength 1 */
   welcomeMessage: string;
+  dayOfContacts: EventContact[];
   showVenueOnWebsite: boolean;
   showVenueInEmail: boolean;
 }

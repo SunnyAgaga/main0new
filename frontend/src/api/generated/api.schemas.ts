@@ -9,6 +9,11 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface EventContact {
+  name: string;
+  phone: string;
+}
+
 export interface Event {
   id: string;
   coupleNames: string;
@@ -26,6 +31,8 @@ export interface Event {
   showVenueOnWebsite: boolean;
   /** When false, invitation/gate-pass emails hide the venue address and directions link, showing a placeholder instead. */
   showVenueInEmail: boolean;
+  /** Names/phone numbers guests can call on the day with issues. Shown alongside venue details, so it follows the same showVenueOnWebsite/showVenueInEmail toggles. */
+  dayOfContacts: EventContact[];
 }
 
 export interface EventInput {
@@ -47,6 +54,7 @@ export interface EventInput {
   asoebiClosesAt: string;
   /** @minLength 1 */
   welcomeMessage: string;
+  dayOfContacts: EventContact[];
   showVenueOnWebsite: boolean;
   showVenueInEmail: boolean;
 }
@@ -355,8 +363,22 @@ export interface PaymentReminderResult {
   sent: boolean;
 }
 
+/**
+ * Which wedding's details to include in the invitation. Defaults to both when omitted.
+ */
+export type SendInvitationsInputEventType = typeof SendInvitationsInputEventType[keyof typeof SendInvitationsInputEventType];
+
+
+export const SendInvitationsInputEventType = {
+  traditional: 'traditional',
+  wedding: 'wedding',
+  both: 'both',
+} as const;
+
 export interface SendInvitationsInput {
   ids: number[];
+  /** Which wedding's details to include in the invitation. Defaults to both when omitted. */
+  eventType?: SendInvitationsInputEventType;
 }
 
 export type SendInvitationResultStatus = typeof SendInvitationResultStatus[keyof typeof SendInvitationResultStatus];

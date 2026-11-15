@@ -5,7 +5,10 @@
  * WedPlan wedding RSVP and asoebi commerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { SendInvitationsInputEventType } from './sendInvitationsInputEventType';
 
 export interface SendInvitationsInput {
   ids: number[];
+  /** Which wedding's details to include in the invitation. Defaults to both when omitted. */
+  eventType?: SendInvitationsInputEventType;
 }
