@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Link, useSearch } from 'wouter';
 import {
   useListAdminRsvps,
+  useCreateAdminRsvp,
   useUpdateAdminRsvp,
   useUpdateRsvpConfirmation,
   useDeleteAdminRsvp,
@@ -36,7 +37,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, FileSpreadsheet, FileText, Check, X, Trash2, ShoppingBag, Mail, Send, XCircle } from 'lucide-react';
+import { Pencil, FileSpreadsheet, FileText, Check, X, Trash2, ShoppingBag, Mail, Send, XCircle, UserPlus } from 'lucide-react';
 
 function ConfirmationCell({ rsvp }: { rsvp: AdminRsvp }) {
   const { toast } = useToast();
@@ -178,6 +179,17 @@ const editRsvpSchema = z.object({
 
 type EditRsvpValues = z.infer<typeof editRsvpSchema>;
 
+const addRsvpSchema = z.object({
+  guestName: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().optional(),
+  attending: z.enum(['yes', 'no']),
+  guestCount: z.coerce.number().min(1).max(3),
+  note: z.string().optional(),
+});
+
+type AddRsvpValues = z.infer<typeof addRsvpSchema>;
+
 function describeSelections(
   selections: { asoebiItemId: number; asoebiSize: string; quantity: number }[],
   itemsById: Map<number, AsoebiItem>,
@@ -257,6 +269,177 @@ function ViewOrderDetailsDialog({
           <DialogTitle>Asoebi Order — {rsvp.guestName}</DialogTitle>
         </DialogHeader>
         <OrderDetails rsvp={rsvp} itemsById={itemsById} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddRsvpDialog({ onClose }: { onClose: () => void }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const createRsvp = useCreateAdminRsvp();
+
+  const form = useForm<AddRsvpValues>({
+    resolver: zodResolver(addRsvpSchema),
+    defaultValues: {
+      guestName: '',
+      email: '',
+      phone: '',
+      attending: 'yes',
+      guestCount: 1,
+      note: '',
+    },
+  });
+
+  const onSubmit = (values: AddRsvpValues) => {
+    createRsvp.mutate({
+      data: {
+        guestName: values.guestName,
+        email: values.email,
+        phone: values.phone || '',
+        attending: values.attending === 'yes',
+        guestCount: values.guestCount,
+        asoebiInterest: 'no',
+        note: values.note || '',
+      },
+    }, {
+      onSuccess: (created) => {
+        toast({ title: 'Guest added', description: `${created.guestName} has been added to the RSVP list.` });
+        queryClient.setQueryData(getListAdminRsvpsQueryKey(), (old: AdminRsvp[] | undefined) =>
+          old ? [created, ...old] : [created],
+        );
+        onClose();
+      },
+      onError: (err) => {
+        toast({
+          variant: 'destructive',
+          title: 'Could not add guest',
+          description: err.data?.error || 'An error occurred.',
+        });
+      },
+    });
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Add Guest</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="guestName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Guest Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="attending"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Attending</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="flex flex-col space-y-1 pt-1"
+                      >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="yes" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Yes</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="no" />
+                          </FormControl>
+                          <FormLabel className="font-normal">No</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="guestCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Guest Count</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="1" max="3" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="note"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Note</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createRsvp.isPending}>
+                {createRsvp.isPending ? 'Adding...' : 'Add Guest'}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
@@ -590,6 +773,7 @@ export default function DashboardRsvps() {
   const { data: asoebiItems, isLoading: isLoadingAsoebi } = useListAsoebi();
   const isLoading = isLoadingRsvps || isLoadingAsoebi;
   const [editing, setEditing] = useState<AdminRsvp | null>(null);
+  const [adding, setAdding] = useState(false);
   const [viewingOrder, setViewingOrder] = useState<AdminRsvp | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [invitationEventType, setInvitationEventType] = useState<SendInvitationsInputEventType>('both');
@@ -697,6 +881,14 @@ export default function DashboardRsvps() {
           )}
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="default"
+            className="bg-blue-600 hover:bg-blue-700 text-white border-blue-700"
+            onClick={() => setAdding(true)}
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Add Guest
+          </Button>
           <Select
             value={invitationEventType}
             onValueChange={(value) => setInvitationEventType(value as SendInvitationsInputEventType)}
@@ -833,6 +1025,7 @@ export default function DashboardRsvps() {
         </Table>
       </Card>
 
+      {adding && <AddRsvpDialog onClose={() => setAdding(false)} />}
       {editing && <EditRsvpDialog rsvp={editing} itemsById={itemsById} onClose={() => setEditing(null)} />}
       {viewingOrder && <ViewOrderDetailsDialog rsvp={viewingOrder} itemsById={itemsById} onClose={() => setViewingOrder(null)} />}
     </div>

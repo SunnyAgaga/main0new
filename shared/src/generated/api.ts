@@ -729,6 +729,77 @@ export const ListAdminRsvpsResponse = zod.array(ListAdminRsvpsResponseItem)
 
 
 /**
+ * @summary Manually add a guest to the RSVP list (admin role only)
+ */
+export const createAdminRsvpBodyGuestNameMin = 2;
+
+export const createAdminRsvpBodyGuestCountMax = 3;
+
+export const createAdminRsvpBodyAdditionalGuestsItemNameMin = 2;
+
+
+
+
+
+export const CreateAdminRsvpBody = zod.object({
+  "guestName": zod.string().min(createAdminRsvpBodyGuestNameMin),
+  "email": zod.string(),
+  "phone": zod.string().optional(),
+  "attending": zod.boolean(),
+  "guestCount": zod.number().min(1).max(createAdminRsvpBodyGuestCountMax).optional(),
+  "additionalGuests": zod.array(zod.object({
+  "name": zod.string().min(createAdminRsvpBodyAdditionalGuestsItemNameMin),
+  "asoebiSelections": zod.array(zod.object({
+  "itemId": zod.number(),
+  "size": zod.string(),
+  "quantity": zod.number().min(1)
+})).optional()
+})).optional(),
+  "asoebiInterest": zod.enum(['yes', 'no']),
+  "asoebiSelections": zod.array(zod.object({
+  "itemId": zod.number(),
+  "size": zod.string(),
+  "quantity": zod.number().min(1)
+})).optional(),
+  "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullish(),
+  "deliveryAddress": zod.string().nullish(),
+  "deliveryProvider": zod.string().nullish(),
+  "note": zod.string().optional()
+})
+
+export const CreateAdminRsvpResponse = zod.object({
+  "id": zod.number(),
+  "guestName": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string().nullable(),
+  "attending": zod.boolean(),
+  "guestCount": zod.number(),
+  "additionalGuests": zod.array(zod.object({
+  "name": zod.string(),
+  "asoebiSelections": zod.array(zod.object({
+  "asoebiItemId": zod.number(),
+  "asoebiSize": zod.string(),
+  "quantity": zod.number()
+}))
+})),
+  "asoebiInterest": zod.enum(['yes', 'no']),
+  "asoebiSelections": zod.array(zod.object({
+  "asoebiItemId": zod.number(),
+  "asoebiSize": zod.string(),
+  "quantity": zod.number()
+})),
+  "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullable(),
+  "deliveryAddress": zod.string().nullable(),
+  "deliveryProvider": zod.string().nullable(),
+  "note": zod.string().nullable(),
+  "createdAt": zod.string(),
+  "traditionalCheckedInAt": zod.string().nullable(),
+  "weddingCheckedInAt": zod.string().nullable(),
+  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected'])
+})
+
+
+/**
  * @summary Update a guest's RSVP (admin role only)
  */
 export const UpdateAdminRsvpParams = zod.object({
