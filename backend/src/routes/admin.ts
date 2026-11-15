@@ -1,5 +1,7 @@
 import { Router, type IRouter } from "express";
 import {
+  CreateAdminRsvpBody,
+  CreateAdminRsvpResponse,
   CreateAdminUserBody,
   CreateAdminUserResponse,
   DeleteAdminOrderParams,
@@ -33,6 +35,7 @@ import {
   deleteOrder,
   deleteRsvp,
   deleteUser,
+  insertRsvp,
   insertUser,
   listUsers,
   ordersCollection,
@@ -407,6 +410,44 @@ router.put(
 router.get("/admin/rsvps", requirePermission("rsvps"), async (_req, res): Promise<void> => {
   const rsvps = await rsvpsCollection().find({}).sort({ createdAt: -1 }).toArray();
   res.json(ListAdminRsvpsResponse.parse(rsvps.map(toAdminRsvp)));
+});
+
+router.post("/admin/rsvps", requirePermission("rsvps"), async (req, res): Promise<void> => {
+  const parsed = CreateAdminRsvpBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const input = parsed.data;
+  const rsvp = await insertRsvp({
+    guestName: input.guestName,
+    email: input.email,
+    phone: input.phone || null,
+    attending: input.attending,
+    guestCount: Math.max(1, Math.trunc(input.guestCount ?? 1)),
+    additionalGuests: (input.additionalGuests ?? []).map((guest) => ({
+      name: guest.name,
+      asoebiSelections: (guest.asoebiSelections ?? []).map((selection) => ({
+        asoebiItemId: selection.itemId,
+        asoebiSize: selection.size,
+        quantity: selection.quantity,
+      })),
+    })),
+    asoebiInterest: input.asoebiInterest,
+    asoebiSelections: (input.asoebiSelections ?? []).map((selection) => ({
+      asoebiItemId: selection.itemId,
+      asoebiSize: selection.size,
+      quantity: selection.quantity,
+    })),
+    deliveryMethod: input.deliveryMethod ?? null,
+    deliveryAddress: input.deliveryAddress ?? null,
+    deliveryProvider: input.deliveryProvider ?? null,
+    note: input.note || null,
+  });
+
+  req.log.info({ rsvpId: rsvp.id }, "RSVP added manually by admin");
+  res.status(201).json(CreateAdminRsvpResponse.parse(toAdminRsvp(rsvp)));
 });
 
 router.put("/admin/rsvps/:id", requirePermission("rsvps"), async (req, res): Promise<void> => {

@@ -2497,6 +2497,94 @@ export function useListAdminRsvps<TData = Awaited<ReturnType<typeof listAdminRsv
 
 
 
+export const getCreateAdminRsvpUrl = () => {
+
+
+
+
+  return `/api/admin/rsvps`
+}
+
+/**
+ * @summary Manually add a guest to the RSVP list (admin role only)
+ */
+export const createAdminRsvp = async (rsvpInput: RsvpInput, options?: Parameters<typeof customFetch>[1]): Promise<AdminRsvp> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<AdminRsvp>(getCreateAdminRsvpUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(rsvpInput)
+  }
+);}
+
+
+
+
+
+export const getCreateAdminRsvpMutationKey = () => ['createAdminRsvp'] as const;
+
+export const getCreateAdminRsvpMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminRsvp>>, TError,CreateAdminRsvpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAdminRsvp>>, TError,CreateAdminRsvpMutationVariables, TContext> => {
+
+const mutationKey = getCreateAdminRsvpMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAdminRsvp>>, CreateAdminRsvpMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAdminRsvp(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAdminRsvpMutationResult = NonNullable<Awaited<ReturnType<typeof createAdminRsvp>>>
+    export type CreateAdminRsvpMutationBody = BodyType<RsvpInput>
+    export type CreateAdminRsvpMutationError = ErrorType<ErrorResponse>
+    export type CreateAdminRsvpMutationVariables = {data: BodyType<RsvpInput>}
+
+    /**
+ * @summary Manually add a guest to the RSVP list (admin role only)
+ */
+export const useCreateAdminRsvp = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAdminRsvp>>, TError,CreateAdminRsvpMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAdminRsvp>>,
+        TError,
+        CreateAdminRsvpMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateAdminRsvpMutationOptions(options));
+    }
+
 export const getUpdateAdminRsvpUrl = (id: number,) => {
 
 
