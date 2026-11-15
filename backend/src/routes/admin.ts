@@ -74,6 +74,7 @@ export function toAdminRsvp(rsvp: Rsvp) {
     deliveryAddress: rsvp.deliveryAddress ?? null,
     deliveryProvider: rsvp.deliveryProvider ?? null,
     note: rsvp.note ?? null,
+    category: rsvp.category ?? null,
     createdAt: rsvp.createdAt.toISOString(),
     traditionalCheckedInAt: rsvp.traditionalCheckedInAt?.toISOString() ?? null,
     weddingCheckedInAt: rsvp.weddingCheckedInAt?.toISOString() ?? null,
@@ -444,6 +445,7 @@ router.post("/admin/rsvps", requirePermission("rsvps"), async (req, res): Promis
     deliveryAddress: input.deliveryAddress ?? null,
     deliveryProvider: input.deliveryProvider ?? null,
     note: input.note || null,
+    category: input.category || null,
   });
 
   req.log.info({ rsvpId: rsvp.id }, "RSVP added manually by admin");
@@ -494,6 +496,7 @@ router.put("/admin/rsvps/:id", requirePermission("rsvps"), async (req, res): Pro
     deliveryAddress: input.deliveryAddress ?? null,
     deliveryProvider: input.deliveryProvider ?? null,
     note: input.note || null,
+    category: input.category || null,
   });
 
   req.log.info({ rsvpId: paramsResult.data.id }, "RSVP updated by admin");

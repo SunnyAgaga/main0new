@@ -30,6 +30,8 @@ export interface AdminRsvp {
   deliveryProvider: string | null;
   /** @nullable */
   note: string | null;
+  /** @nullable */
+  category: string | null;
   createdAt: string;
   /** @nullable */
   traditionalCheckedInAt: string | null;

@@ -1828,6 +1828,7 @@ components:
         deliveryAddress: { type: ["string", "null"] }
         deliveryProvider: { type: ["string", "null"] }
         note: { type: string }
+        category: { type: ["string", "null"] }
     AdminOrder:
       type: object
       required: [id, reference, type, guestName, email, totalAmount, giftAmount, currency, paymentMethod, status, proofOfPaymentUrl, itemCount, items, createdAt, deliveryMethod, fulfillmentStatus, fulfilledAt]
@@ -1891,7 +1892,7 @@ components:
             $ref: "#/components/schemas/AdminAsoebiSelection"
     AdminRsvp:
       type: object
-      required: [id, guestName, email, phone, attending, guestCount, additionalGuests, asoebiInterest, asoebiSelections, deliveryMethod, deliveryAddress, deliveryProvider, note, createdAt, traditionalCheckedInAt, weddingCheckedInAt, confirmationStatus]
+      required: [id, guestName, email, phone, attending, guestCount, additionalGuests, asoebiInterest, asoebiSelections, deliveryMethod, deliveryAddress, deliveryProvider, note, category, createdAt, traditionalCheckedInAt, weddingCheckedInAt, confirmationStatus]
       properties:
         id: { type: number }
         guestName: { type: string }
@@ -1916,6 +1917,7 @@ components:
         deliveryAddress: { type: ["string", "null"] }
         deliveryProvider: { type: ["string", "null"] }
         note: { type: ["string", "null"] }
+        category: { type: ["string", "null"] }
         createdAt: { type: string }
         traditionalCheckedInAt: { type: ["string", "null"] }
         weddingCheckedInAt: { type: ["string", "null"] }

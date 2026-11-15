@@ -256,7 +256,8 @@ export const CreateRsvpBody = zod.object({
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullish(),
   "deliveryAddress": zod.string().nullish(),
   "deliveryProvider": zod.string().nullish(),
-  "note": zod.string().optional()
+  "note": zod.string().optional(),
+  "category": zod.string().nullish()
 })
 
 export const CreateRsvpResponse = zod.object({
@@ -720,6 +721,7 @@ export const ListAdminRsvpsResponseItem = zod.object({
   "deliveryAddress": zod.string().nullable(),
   "deliveryProvider": zod.string().nullable(),
   "note": zod.string().nullable(),
+  "category": zod.string().nullable(),
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
   "weddingCheckedInAt": zod.string().nullable(),
@@ -764,7 +766,8 @@ export const CreateAdminRsvpBody = zod.object({
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullish(),
   "deliveryAddress": zod.string().nullish(),
   "deliveryProvider": zod.string().nullish(),
-  "note": zod.string().optional()
+  "note": zod.string().optional(),
+  "category": zod.string().nullish()
 })
 
 export const CreateAdminRsvpResponse = zod.object({
@@ -792,6 +795,7 @@ export const CreateAdminRsvpResponse = zod.object({
   "deliveryAddress": zod.string().nullable(),
   "deliveryProvider": zod.string().nullable(),
   "note": zod.string().nullable(),
+  "category": zod.string().nullable(),
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
   "weddingCheckedInAt": zod.string().nullable(),
@@ -839,7 +843,8 @@ export const UpdateAdminRsvpBody = zod.object({
   "deliveryMethod": zod.union([zod.literal('pickup'),zod.literal('delivery'),zod.literal(null)]).nullish(),
   "deliveryAddress": zod.string().nullish(),
   "deliveryProvider": zod.string().nullish(),
-  "note": zod.string().optional()
+  "note": zod.string().optional(),
+  "category": zod.string().nullish()
 })
 
 export const UpdateAdminRsvpResponse = zod.object({
@@ -867,6 +872,7 @@ export const UpdateAdminRsvpResponse = zod.object({
   "deliveryAddress": zod.string().nullable(),
   "deliveryProvider": zod.string().nullable(),
   "note": zod.string().nullable(),
+  "category": zod.string().nullable(),
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
   "weddingCheckedInAt": zod.string().nullable(),
@@ -921,6 +927,7 @@ export const UpdateRsvpCheckInResponse = zod.object({
   "deliveryAddress": zod.string().nullable(),
   "deliveryProvider": zod.string().nullable(),
   "note": zod.string().nullable(),
+  "category": zod.string().nullable(),
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
   "weddingCheckedInAt": zod.string().nullable(),
@@ -964,6 +971,7 @@ export const UpdateRsvpConfirmationResponse = zod.object({
   "deliveryAddress": zod.string().nullable(),
   "deliveryProvider": zod.string().nullable(),
   "note": zod.string().nullable(),
+  "category": zod.string().nullable(),
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
   "weddingCheckedInAt": zod.string().nullable(),

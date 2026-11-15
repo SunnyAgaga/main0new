@@ -41,6 +41,8 @@ export interface Rsvp {
   deliveryAddress: string | null;
   deliveryProvider: string | null;
   note: string | null;
+  /** Free-form guest grouping (e.g. "Family", "Groomsmen") admins define and filter by. */
+  category: string | null;
   confirmationStatus: "pending" | "approved" | "rejected";
   traditionalPassToken: string | null;
   traditionalCheckedInAt: Date | null;
@@ -268,6 +270,7 @@ export const insertRsvpSchema = z.object({
   deliveryAddress: z.string().nullable().default(null),
   deliveryProvider: z.string().nullable().default(null),
   note: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
 });
 export type InsertRsvp = z.infer<typeof insertRsvpSchema>;
 
@@ -346,6 +349,7 @@ export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
     ...input,
     phone: input.phone ?? null,
     note: input.note ?? null,
+    category: input.category ?? null,
     additionalGuests: input.additionalGuests.map((guest) => ({
       name: guest.name,
       asoebiSelections: guest.asoebiSelections,
@@ -482,6 +486,7 @@ export async function updateRsvp(id: number, input: InsertRsvp): Promise<Rsvp | 
         ...input,
         phone: input.phone ?? null,
         note: input.note ?? null,
+        category: input.category ?? null,
         additionalGuests: input.additionalGuests.map((guest) => ({
           name: guest.name,
           asoebiSelections: guest.asoebiSelections,
