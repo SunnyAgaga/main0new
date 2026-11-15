@@ -49,6 +49,8 @@ export interface Rsvp {
   weddingPassToken: string | null;
   weddingCheckedInAt: Date | null;
   paymentReminderToken: string | null;
+  /** Set when the admin's bulk "Send Invitation" email last succeeded for this guest. */
+  invitationSentAt: Date | null;
   createdAt: Date;
 }
 
@@ -363,10 +365,19 @@ export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
     weddingPassToken: null,
     weddingCheckedInAt: null,
     paymentReminderToken: null,
+    invitationSentAt: null,
     createdAt: new Date(),
   };
   await rsvpsCollection().insertOne(doc);
   return doc;
+}
+
+export async function markInvitationSent(id: number): Promise<Rsvp | null> {
+  return rsvpsCollection().findOneAndUpdate(
+    { id },
+    { $set: { invitationSentAt: new Date() } },
+    { returnDocument: "after" },
+  );
 }
 
 /**

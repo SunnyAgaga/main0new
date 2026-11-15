@@ -38,6 +38,7 @@ import {
   insertRsvp,
   insertUser,
   listUsers,
+  markInvitationSent,
   ordersCollection,
   paymentConfigsCollection,
   rsvpsCollection,
@@ -75,6 +76,7 @@ export function toAdminRsvp(rsvp: Rsvp) {
     deliveryProvider: rsvp.deliveryProvider ?? null,
     note: rsvp.note ?? null,
     category: rsvp.category ?? null,
+    invitationSentAt: rsvp.invitationSentAt?.toISOString() ?? null,
     createdAt: rsvp.createdAt.toISOString(),
     traditionalCheckedInAt: rsvp.traditionalCheckedInAt?.toISOString() ?? null,
     weddingCheckedInAt: rsvp.weddingCheckedInAt?.toISOString() ?? null,
@@ -538,6 +540,9 @@ router.post("/admin/rsvps/send-invitations", requirePermission("rsvps"), async (
     }
 
     const outcome = await sendInvitationEmail(req, rsvp, parsed.data.eventType);
+    if (outcome.ok) {
+      await markInvitationSent(id);
+    }
     results.push({
       id,
       guestName: rsvp.guestName,

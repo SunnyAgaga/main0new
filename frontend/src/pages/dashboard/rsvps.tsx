@@ -114,6 +114,7 @@ const EXPORT_COLUMNS: { key: string; label: string; get: (rsvp: AdminRsvp) => st
   { key: 'phone', label: 'Phone', get: (r) => r.phone ?? '' },
   { key: 'attending', label: 'Attending', get: (r) => (r.attending ? 'Yes' : 'No') },
   { key: 'confirmationStatus', label: 'Confirmation', get: (r) => (r.attending ? r.confirmationStatus : '') },
+  { key: 'invitationSentAt', label: 'Invitation Sent', get: (r) => (r.invitationSentAt ? new Date(r.invitationSentAt).toLocaleString() : 'Not Sent') },
   { key: 'guestCount', label: 'Guest Count', get: (r) => r.guestCount },
   { key: 'asoebiInterest', label: 'Asoebi Interest', get: (r) => r.asoebiInterest },
   { key: 'deliveryMethod', label: 'Delivery Method', get: (r) => r.deliveryMethod ?? '' },
@@ -903,6 +904,7 @@ export default function DashboardRsvps() {
           variant: skippedOrFailed.length > 0 && sent === 0 ? 'destructive' : undefined,
         });
         setSelectedIds([]);
+        queryClient.invalidateQueries({ queryKey: getListAdminRsvpsQueryKey() });
       },
       onError: (err) => {
         toast({
@@ -1003,6 +1005,7 @@ export default function DashboardRsvps() {
               <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Confirmation</TableHead>
+              <TableHead>Invitation</TableHead>
               <TableHead>Asoebi</TableHead>
               <TableHead>Delivery</TableHead>
               <TableHead className="text-right">Date</TableHead>
@@ -1012,7 +1015,7 @@ export default function DashboardRsvps() {
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                   {filter || categoryFilter !== 'all' ? 'No RSVPs match this filter.' : 'No RSVPs yet.'}
                 </TableCell>
               </TableRow>
@@ -1050,6 +1053,21 @@ export default function DashboardRsvps() {
                   </TableCell>
                   <TableCell>
                     <ConfirmationCell rsvp={rsvp} />
+                  </TableCell>
+                  <TableCell>
+                    {rsvp.invitationSentAt ? (
+                      <Badge
+                        variant="default"
+                        className="bg-green-100 text-green-800 hover:bg-green-100 border-none"
+                        title={`Sent ${new Date(rsvp.invitationSentAt).toLocaleString()}`}
+                      >
+                        Sent
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-gray-100 text-gray-800 hover:bg-gray-100 border-none">
+                        Not Sent
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     {rsvp.asoebiInterest === 'yes' ? (

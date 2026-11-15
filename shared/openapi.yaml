@@ -1892,7 +1892,7 @@ components:
             $ref: "#/components/schemas/AdminAsoebiSelection"
     AdminRsvp:
       type: object
-      required: [id, guestName, email, phone, attending, guestCount, additionalGuests, asoebiInterest, asoebiSelections, deliveryMethod, deliveryAddress, deliveryProvider, note, category, createdAt, traditionalCheckedInAt, weddingCheckedInAt, confirmationStatus]
+      required: [id, guestName, email, phone, attending, guestCount, additionalGuests, asoebiInterest, asoebiSelections, deliveryMethod, deliveryAddress, deliveryProvider, note, category, createdAt, traditionalCheckedInAt, weddingCheckedInAt, confirmationStatus, invitationSentAt]
       properties:
         id: { type: number }
         guestName: { type: string }
@@ -1924,6 +1924,7 @@ components:
         confirmationStatus:
           type: string
           enum: [pending, approved, rejected]
+        invitationSentAt: { type: ["string", "null"] }
     UpdateRsvpConfirmationInput:
       type: object
       required: [status]

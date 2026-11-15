@@ -725,7 +725,8 @@ export const ListAdminRsvpsResponseItem = zod.object({
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
   "weddingCheckedInAt": zod.string().nullable(),
-  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected'])
+  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected']),
+  "invitationSentAt": zod.string().nullable()
 })
 export const ListAdminRsvpsResponse = zod.array(ListAdminRsvpsResponseItem)
 
@@ -799,7 +800,8 @@ export const CreateAdminRsvpResponse = zod.object({
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
   "weddingCheckedInAt": zod.string().nullable(),
-  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected'])
+  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected']),
+  "invitationSentAt": zod.string().nullable()
 })
 
 
@@ -876,7 +878,8 @@ export const UpdateAdminRsvpResponse = zod.object({
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
   "weddingCheckedInAt": zod.string().nullable(),
-  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected'])
+  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected']),
+  "invitationSentAt": zod.string().nullable()
 })
 
 
@@ -931,7 +934,8 @@ export const UpdateRsvpCheckInResponse = zod.object({
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
   "weddingCheckedInAt": zod.string().nullable(),
-  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected'])
+  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected']),
+  "invitationSentAt": zod.string().nullable()
 })
 
 
@@ -975,7 +979,8 @@ export const UpdateRsvpConfirmationResponse = zod.object({
   "createdAt": zod.string(),
   "traditionalCheckedInAt": zod.string().nullable(),
   "weddingCheckedInAt": zod.string().nullable(),
-  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected'])
+  "confirmationStatus": zod.enum(['pending', 'approved', 'rejected']),
+  "invitationSentAt": zod.string().nullable()
 })
 
 

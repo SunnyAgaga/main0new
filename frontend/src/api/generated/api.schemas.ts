@@ -295,6 +295,8 @@ export interface AdminRsvp {
   /** @nullable */
   weddingCheckedInAt: string | null;
   confirmationStatus: AdminRsvpConfirmationStatus;
+  /** @nullable */
+  invitationSentAt: string | null;
 }
 
 export type UpdateRsvpConfirmationInputStatus = typeof UpdateRsvpConfirmationInputStatus[keyof typeof UpdateRsvpConfirmationInputStatus];

@@ -38,4 +38,6 @@ export interface AdminRsvp {
   /** @nullable */
   weddingCheckedInAt: string | null;
   confirmationStatus: AdminRsvpConfirmationStatus;
+  /** @nullable */
+  invitationSentAt: string | null;
 }
