@@ -41,12 +41,16 @@ export interface Rsvp {
   deliveryAddress: string | null;
   deliveryProvider: string | null;
   note: string | null;
+  /** Free-form guest grouping (e.g. "Family", "Groomsmen") admins define and filter by. */
+  category: string | null;
   confirmationStatus: "pending" | "approved" | "rejected";
   traditionalPassToken: string | null;
   traditionalCheckedInAt: Date | null;
   weddingPassToken: string | null;
   weddingCheckedInAt: Date | null;
   paymentReminderToken: string | null;
+  /** Set when the admin's bulk "Send Invitation" email last succeeded for this guest. */
+  invitationSentAt: Date | null;
   createdAt: Date;
 }
 
@@ -268,6 +272,7 @@ export const insertRsvpSchema = z.object({
   deliveryAddress: z.string().nullable().default(null),
   deliveryProvider: z.string().nullable().default(null),
   note: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
 });
 export type InsertRsvp = z.infer<typeof insertRsvpSchema>;
 
@@ -346,6 +351,7 @@ export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
     ...input,
     phone: input.phone ?? null,
     note: input.note ?? null,
+    category: input.category ?? null,
     additionalGuests: input.additionalGuests.map((guest) => ({
       name: guest.name,
       asoebiSelections: guest.asoebiSelections,
@@ -359,10 +365,19 @@ export async function insertRsvp(input: InsertRsvp): Promise<Rsvp> {
     weddingPassToken: null,
     weddingCheckedInAt: null,
     paymentReminderToken: null,
+    invitationSentAt: null,
     createdAt: new Date(),
   };
   await rsvpsCollection().insertOne(doc);
   return doc;
+}
+
+export async function markInvitationSent(id: number): Promise<Rsvp | null> {
+  return rsvpsCollection().findOneAndUpdate(
+    { id },
+    { $set: { invitationSentAt: new Date() } },
+    { returnDocument: "after" },
+  );
 }
 
 /**
@@ -482,6 +497,7 @@ export async function updateRsvp(id: number, input: InsertRsvp): Promise<Rsvp | 
         ...input,
         phone: input.phone ?? null,
         note: input.note ?? null,
+        category: input.category ?? null,
         additionalGuests: input.additionalGuests.map((guest) => ({
           name: guest.name,
           asoebiSelections: guest.asoebiSelections,

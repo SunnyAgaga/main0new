@@ -114,12 +114,14 @@ const EXPORT_COLUMNS: { key: string; label: string; get: (rsvp: AdminRsvp) => st
   { key: 'phone', label: 'Phone', get: (r) => r.phone ?? '' },
   { key: 'attending', label: 'Attending', get: (r) => (r.attending ? 'Yes' : 'No') },
   { key: 'confirmationStatus', label: 'Confirmation', get: (r) => (r.attending ? r.confirmationStatus : '') },
+  { key: 'invitationSentAt', label: 'Invitation Sent', get: (r) => (r.invitationSentAt ? new Date(r.invitationSentAt).toLocaleString() : 'Not Sent') },
   { key: 'guestCount', label: 'Guest Count', get: (r) => r.guestCount },
   { key: 'asoebiInterest', label: 'Asoebi Interest', get: (r) => r.asoebiInterest },
   { key: 'deliveryMethod', label: 'Delivery Method', get: (r) => r.deliveryMethod ?? '' },
   { key: 'deliveryProvider', label: 'Delivery Provider', get: (r) => r.deliveryProvider ?? '' },
   { key: 'deliveryAddress', label: 'Delivery Address', get: (r) => r.deliveryAddress ?? '' },
   { key: 'note', label: 'Note', get: (r) => r.note ?? '' },
+  { key: 'category', label: 'Category', get: (r) => r.category ?? '' },
   { key: 'createdAt', label: 'Date', get: (r) => r.createdAt },
 ];
 
@@ -175,6 +177,7 @@ const editRsvpSchema = z.object({
   deliveryAddress: z.string().optional(),
   deliveryProvider: z.string().optional(),
   note: z.string().optional(),
+  category: z.string().optional(),
 });
 
 type EditRsvpValues = z.infer<typeof editRsvpSchema>;
@@ -186,6 +189,7 @@ const addRsvpSchema = z.object({
   attending: z.enum(['yes', 'no']),
   guestCount: z.coerce.number().min(1).max(3),
   note: z.string().optional(),
+  category: z.string().optional(),
 });
 
 type AddRsvpValues = z.infer<typeof addRsvpSchema>;
@@ -274,7 +278,7 @@ function ViewOrderDetailsDialog({
   );
 }
 
-function AddRsvpDialog({ onClose }: { onClose: () => void }) {
+function AddRsvpDialog({ onClose, existingCategories }: { onClose: () => void; existingCategories: string[] }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createRsvp = useCreateAdminRsvp();
@@ -288,6 +292,7 @@ function AddRsvpDialog({ onClose }: { onClose: () => void }) {
       attending: 'yes',
       guestCount: 1,
       note: '',
+      category: '',
     },
   });
 
@@ -301,6 +306,7 @@ function AddRsvpDialog({ onClose }: { onClose: () => void }) {
         guestCount: values.guestCount,
         asoebiInterest: 'no',
         note: values.note || '',
+        category: values.category || '',
       },
     }, {
       onSuccess: (created) => {
@@ -418,6 +424,20 @@ function AddRsvpDialog({ onClose }: { onClose: () => void }) {
 
             <FormField
               control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Family, Friends, VIP" list="rsvp-categories-add" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="note"
               render={({ field }) => (
                 <FormItem>
@@ -440,6 +460,11 @@ function AddRsvpDialog({ onClose }: { onClose: () => void }) {
             </div>
           </form>
         </Form>
+        <datalist id="rsvp-categories-add">
+          {existingCategories.map((category) => (
+            <option key={category} value={category} />
+          ))}
+        </datalist>
       </DialogContent>
     </Dialog>
   );
@@ -448,10 +473,12 @@ function AddRsvpDialog({ onClose }: { onClose: () => void }) {
 function EditRsvpDialog({
   rsvp,
   itemsById,
+  existingCategories,
   onClose,
 }: {
   rsvp: AdminRsvp;
   itemsById: Map<number, AsoebiItem>;
+  existingCategories: string[];
   onClose: () => void;
 }) {
   const { toast } = useToast();
@@ -470,6 +497,7 @@ function EditRsvpDialog({
       deliveryAddress: rsvp.deliveryAddress ?? '',
       deliveryProvider: rsvp.deliveryProvider ?? '',
       note: rsvp.note ?? '',
+      category: rsvp.category ?? '',
     },
   });
 
@@ -502,6 +530,7 @@ function EditRsvpDialog({
         deliveryAddress: values.deliveryMethod === 'delivery' ? values.deliveryAddress || '' : null,
         deliveryProvider: values.deliveryMethod === 'delivery' ? values.deliveryProvider || '' : null,
         note: values.note || '',
+        category: values.category || '',
       },
     }, {
       onSuccess: (updated) => {
@@ -686,6 +715,20 @@ function EditRsvpDialog({
 
             <FormField
               control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Family, Friends, VIP" list="rsvp-categories-edit" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="note"
               render={({ field }) => (
                 <FormItem>
@@ -708,6 +751,11 @@ function EditRsvpDialog({
             </div>
           </form>
         </Form>
+        <datalist id="rsvp-categories-edit">
+          {existingCategories.map((category) => (
+            <option key={category} value={category} />
+          ))}
+        </datalist>
       </DialogContent>
     </Dialog>
   );
@@ -777,6 +825,7 @@ export default function DashboardRsvps() {
   const [viewingOrder, setViewingOrder] = useState<AdminRsvp | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [invitationEventType, setInvitationEventType] = useState<SendInvitationsInputEventType>('both');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const deleteRsvp = useDeleteAdminRsvp();
   const sendInvitations = useSendInvitations();
 
@@ -812,12 +861,15 @@ export default function DashboardRsvps() {
   }
 
   const allRows = rsvps ?? [];
-  const rows =
+  const existingCategories = [...new Set(allRows.map((r) => r.category).filter((c): c is string => !!c))].sort();
+
+  const rows = (
     filter === 'attending'
       ? allRows.filter((r) => r.attending)
       : filter === 'asoebi'
         ? allRows.filter((r) => r.asoebiInterest === 'yes')
-        : allRows;
+        : allRows
+  ).filter((r) => categoryFilter === 'all' || (categoryFilter === 'none' ? !r.category : r.category === categoryFilter));
 
   // Only approved RSVPs have gate-pass tokens to send - invitations need
   // those links, so unapproved guests aren't selectable for the bulk send.
@@ -852,6 +904,7 @@ export default function DashboardRsvps() {
           variant: skippedOrFailed.length > 0 && sent === 0 ? 'destructive' : undefined,
         });
         setSelectedIds([]);
+        queryClient.invalidateQueries({ queryKey: getListAdminRsvpsQueryKey() });
       },
       onError: (err) => {
         toast({
@@ -889,6 +942,18 @@ export default function DashboardRsvps() {
             <UserPlus className="w-4 h-4 mr-2" />
             Add Guest
           </Button>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="none">No Category</SelectItem>
+              {existingCategories.map((category) => (
+                <SelectItem key={category} value={category}>{category}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select
             value={invitationEventType}
             onValueChange={(value) => setInvitationEventType(value as SendInvitationsInputEventType)}
@@ -937,8 +1002,10 @@ export default function DashboardRsvps() {
               </TableHead>
               <TableHead>Guest</TableHead>
               <TableHead>Contact</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Confirmation</TableHead>
+              <TableHead>Invitation</TableHead>
               <TableHead>Asoebi</TableHead>
               <TableHead>Delivery</TableHead>
               <TableHead className="text-right">Date</TableHead>
@@ -948,8 +1015,8 @@ export default function DashboardRsvps() {
           <TableBody>
             {rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                  {filter ? 'No RSVPs match this filter.' : 'No RSVPs yet.'}
+                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                  {filter || categoryFilter !== 'all' ? 'No RSVPs match this filter.' : 'No RSVPs yet.'}
                 </TableCell>
               </TableRow>
             ) : (
@@ -969,6 +1036,15 @@ export default function DashboardRsvps() {
                     {rsvp.phone && <div>{rsvp.phone}</div>}
                   </TableCell>
                   <TableCell>
+                    {rsvp.category ? (
+                      <Badge variant="outline" className="text-secondary-foreground border-secondary bg-secondary/10">
+                        {rsvp.category}
+                      </Badge>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     {rsvp.attending ? (
                       <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100 border-none">Attending</Badge>
                     ) : (
@@ -977,6 +1053,21 @@ export default function DashboardRsvps() {
                   </TableCell>
                   <TableCell>
                     <ConfirmationCell rsvp={rsvp} />
+                  </TableCell>
+                  <TableCell>
+                    {rsvp.invitationSentAt ? (
+                      <Badge
+                        variant="default"
+                        className="bg-green-100 text-green-800 hover:bg-green-100 border-none"
+                        title={`Sent ${new Date(rsvp.invitationSentAt).toLocaleString()}`}
+                      >
+                        Sent
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="bg-gray-100 text-gray-800 hover:bg-gray-100 border-none">
+                        Not Sent
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     {rsvp.asoebiInterest === 'yes' ? (
@@ -1025,8 +1116,15 @@ export default function DashboardRsvps() {
         </Table>
       </Card>
 
-      {adding && <AddRsvpDialog onClose={() => setAdding(false)} />}
-      {editing && <EditRsvpDialog rsvp={editing} itemsById={itemsById} onClose={() => setEditing(null)} />}
+      {adding && <AddRsvpDialog onClose={() => setAdding(false)} existingCategories={existingCategories} />}
+      {editing && (
+        <EditRsvpDialog
+          rsvp={editing}
+          itemsById={itemsById}
+          existingCategories={existingCategories}
+          onClose={() => setEditing(null)}
+        />
+      )}
       {viewingOrder && <ViewOrderDetailsDialog rsvp={viewingOrder} itemsById={itemsById} onClose={() => setViewingOrder(null)} />}
     </div>
   );

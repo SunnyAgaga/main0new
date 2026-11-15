@@ -31,4 +31,6 @@ export interface RsvpInput {
   /** @nullable */
   deliveryProvider?: string | null;
   note?: string;
+  /** @nullable */
+  category?: string | null;
 }

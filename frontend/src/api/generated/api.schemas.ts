@@ -151,6 +151,8 @@ export interface RsvpInput {
   /** @nullable */
   deliveryProvider?: string | null;
   note?: string;
+  /** @nullable */
+  category?: string | null;
 }
 
 export type AdminOrderType = typeof AdminOrderType[keyof typeof AdminOrderType];
@@ -285,12 +287,16 @@ export interface AdminRsvp {
   deliveryProvider: string | null;
   /** @nullable */
   note: string | null;
+  /** @nullable */
+  category: string | null;
   createdAt: string;
   /** @nullable */
   traditionalCheckedInAt: string | null;
   /** @nullable */
   weddingCheckedInAt: string | null;
   confirmationStatus: AdminRsvpConfirmationStatus;
+  /** @nullable */
+  invitationSentAt: string | null;
 }
 
 export type UpdateRsvpConfirmationInputStatus = typeof UpdateRsvpConfirmationInputStatus[keyof typeof UpdateRsvpConfirmationInputStatus];

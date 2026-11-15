@@ -30,10 +30,14 @@ export interface AdminRsvp {
   deliveryProvider: string | null;
   /** @nullable */
   note: string | null;
+  /** @nullable */
+  category: string | null;
   createdAt: string;
   /** @nullable */
   traditionalCheckedInAt: string | null;
   /** @nullable */
   weddingCheckedInAt: string | null;
   confirmationStatus: AdminRsvpConfirmationStatus;
+  /** @nullable */
+  invitationSentAt: string | null;
 }
