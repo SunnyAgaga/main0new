@@ -45,6 +45,17 @@ export function guestOrigin(req: Request): string {
   return `${req.protocol}://${req.get("host")}`;
 }
 
+/**
+ * Uploaded logo/hero images are stored as relative paths (/api/uploads/<id>) so
+ * the browser resolves them against the site's own origin. An email has no such
+ * origin, so an <img src="/api/uploads/..."> silently fails to load in every mail
+ * client - this makes the URL absolute the same way pass links already are.
+ */
+function toAbsoluteImageUrl(req: Request, url: string): string {
+  if (!url || /^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
+  return `${guestOrigin(req)}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
 async function getEmailConfig(): Promise<NotificationConfig | null> {
   const config = await notificationConfigsCollection().findOne({ id: 1 });
   if (!config?.emailEnabled || !config.smtpHost || !config.smtpUsername || !config.smtpPassword || !config.smtpFromEmail) {
@@ -360,9 +371,9 @@ export async function sendInvitationEmail(
     rsvp,
     coupleNames: event.coupleNames,
     welcomeMessage: event.welcomeMessage,
-    logoUrl: site.logoUrl,
+    logoUrl: toAbsoluteImageUrl(req, site.logoUrl),
     logoHeight: site.logoHeight,
-    heroImageUrl: site.heroImageUrl,
+    heroImageUrl: toAbsoluteImageUrl(req, site.heroImageUrl),
     backgroundColor: site.backgroundColor,
     primaryColor: site.primaryColor,
     accentColor: site.accentColor,
