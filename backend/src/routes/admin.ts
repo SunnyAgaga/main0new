@@ -117,12 +117,18 @@ function webhookUrlFor(req: { protocol: string; get(name: string): string | unde
 }
 
 router.get("/admin/overview", requireAuth, async (_req, res): Promise<void> => {
-  const [totalRsvps, attendingCount, asoebiInterestCount, paidOrders, recentRsvps] =
+  const [totalRsvps, attendingCount, asoebiInterestCount, paidOrders, guestCountAgg, recentRsvps] =
     await Promise.all([
       rsvpsCollection().countDocuments(),
       rsvpsCollection().countDocuments({ attending: true }),
       rsvpsCollection().countDocuments({ asoebiInterest: "yes" }),
       ordersCollection().countDocuments({ status: "paid" }),
+      rsvpsCollection()
+        .aggregate<{ total: number }>([
+          { $match: { attending: true } },
+          { $group: { _id: null, total: { $sum: "$guestCount" } } },
+        ])
+        .toArray(),
       rsvpsCollection()
         .find({}, { projection: { _id: 0 } })
         .sort({ createdAt: -1 })
@@ -136,6 +142,7 @@ router.get("/admin/overview", requireAuth, async (_req, res): Promise<void> => {
       attendingCount,
       asoebiInterestCount,
       paidOrders,
+      totalGuestCount: guestCountAgg[0]?.total ?? 0,
       recentRsvps: recentRsvps.map((rsvp) => ({
         guestName: rsvp.guestName,
         attending: rsvp.attending,

@@ -451,6 +451,7 @@ export const GetAdminOverviewResponse = zod.object({
   "attendingCount": zod.number(),
   "asoebiInterestCount": zod.number(),
   "paidOrders": zod.number(),
+  "totalGuestCount": zod.number(),
   "recentRsvps": zod.array(zod.object({
   "guestName": zod.string(),
   "attending": zod.boolean(),

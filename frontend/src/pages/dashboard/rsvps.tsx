@@ -37,7 +37,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Pencil, FileSpreadsheet, FileText, Check, X, Trash2, ShoppingBag, Mail, Send, XCircle, UserPlus } from 'lucide-react';
+import { Pencil, FileSpreadsheet, FileText, Check, X, Trash2, ShoppingBag, Mail, Send, XCircle, UserPlus, UsersRound } from 'lucide-react';
 
 function ConfirmationCell({ rsvp }: { rsvp: AdminRsvp }) {
   const { toast } = useToast();
@@ -871,6 +871,9 @@ export default function DashboardRsvps() {
         : allRows
   ).filter((r) => categoryFilter === 'all' || (categoryFilter === 'none' ? !r.category : r.category === categoryFilter));
 
+  const attendingRows = rows.filter((r) => r.attending);
+  const totalGuestCount = attendingRows.reduce((sum, r) => sum + r.guestCount, 0);
+
   // Only approved RSVPs have gate-pass tokens to send - invitations need
   // those links, so unapproved guests aren't selectable for the bulk send.
   const selectableRows = rows.filter((r) => r.confirmationStatus === 'approved');
@@ -986,6 +989,19 @@ export default function DashboardRsvps() {
             Export PDF
           </Button>
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <Badge variant="outline" className="text-foreground border-border bg-card">
+          {rows.length} RSVP{rows.length === 1 ? '' : 's'} shown
+        </Badge>
+        <Badge variant="outline" className="text-foreground border-border bg-card">
+          {attendingRows.length} attending
+        </Badge>
+        <Badge variant="outline" className="text-secondary-foreground border-secondary bg-secondary/10">
+          <UsersRound className="w-3.5 h-3.5 mr-1" />
+          {totalGuestCount} total guests (est.)
+        </Badge>
       </div>
 
       <Card className="border-none shadow-sm overflow-hidden overflow-x-auto">

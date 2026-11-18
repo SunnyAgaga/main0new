@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Users, CheckCircle, ShoppingBag, CreditCard } from 'lucide-react';
+import { Users, UsersRound, CheckCircle, ShoppingBag, CreditCard } from 'lucide-react';
 
 export default function DashboardIndex() {
   const { data: overview, isLoading, error } = useGetAdminOverview();
@@ -39,7 +39,7 @@ export default function DashboardIndex() {
         <p className="text-muted-foreground mt-1">Monitor your event's RSVPs and Asoebi sales.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <Link href="/dashboard/rsvps">
           <Card className="border-none shadow-sm bg-card cursor-pointer transition-shadow hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -60,6 +60,18 @@ export default function DashboardIndex() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-foreground">{overview.attendingCount}</div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/rsvps?filter=attending">
+          <Card className="border-none shadow-sm bg-card cursor-pointer transition-shadow hover:shadow-md">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Guests (Est.)</CardTitle>
+              <UsersRound className="w-4 h-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-foreground">{overview.totalGuestCount}</div>
             </CardContent>
           </Card>
         </Link>
