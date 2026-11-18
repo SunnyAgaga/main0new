@@ -12,5 +12,6 @@ export interface AdminOverview {
   attendingCount: number;
   asoebiInterestCount: number;
   paidOrders: number;
+  totalGuestCount: number;
   recentRsvps: RecentRsvp[];
 }

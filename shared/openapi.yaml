@@ -2398,12 +2398,15 @@ components:
         trackCount: { type: number }
     AdminOverview:
       type: object
-      required: [totalRsvps, attendingCount, asoebiInterestCount, paidOrders, recentRsvps]
+      required: [totalRsvps, attendingCount, asoebiInterestCount, paidOrders, totalGuestCount, recentRsvps]
       properties:
         totalRsvps: { type: number }
         attendingCount: { type: number }
         asoebiInterestCount: { type: number }
         paidOrders: { type: number }
+        # Sum of guestCount across attending RSVPs - the estimated headcount
+        # (primary guest + their +1s), not just the number of RSVP entries.
+        totalGuestCount: { type: number }
         recentRsvps:
           type: array
           items:
