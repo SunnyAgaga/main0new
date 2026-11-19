@@ -35,6 +35,19 @@ function formatEventDateTime(iso: string): string {
   }).format(date);
 }
 
+/** Same date, split so the invitation email can call out the weekday in bold - guests tend to assume "Saturday" otherwise. */
+function formatEventDateParts(iso: string): { weekday: string; dateLabel: string; timeLabel: string } {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return { weekday: "", dateLabel: iso, timeLabel: "" };
+  }
+  return {
+    weekday: new Intl.DateTimeFormat("en-US", { weekday: "long" }).format(date).toUpperCase(),
+    dateLabel: new Intl.DateTimeFormat("en-US", { year: "numeric", month: "long", day: "numeric" }).format(date),
+    timeLabel: new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" }).format(date),
+  };
+}
+
 // Mirrors the dev/prod origin split used for Spotify's OAuth redirect: in dev,
 // Vite serves the SPA on its own port and proxies /api here, so a link meant
 // for the guest's browser has to point at that port, not this API's own.
@@ -194,7 +207,9 @@ function invitationVenueCardHtml(params: {
   accentColor: string;
   primaryColor: string;
   label: string;
-  dateTime: string;
+  weekday: string;
+  dateLabel: string;
+  timeLabel: string;
   venue: string;
   passUrl: string;
   showVenue: boolean;
@@ -226,8 +241,11 @@ function invitationVenueCardHtml(params: {
             <p style="margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: ${params.primaryColor}; font-family: Georgia, 'Times New Roman', serif;">
               ${escapeHtml(params.label)}
             </p>
+            <p style="margin: 0 0 2px; font-size: 22px; font-weight: 800; letter-spacing: 1px; color: ${params.accentColor}; font-family: Arial, Helvetica, sans-serif;">
+              ${escapeHtml(params.weekday)}
+            </p>
             <p style="margin: 0 0 4px; font-size: 14px; color: #44403c; font-family: Arial, Helvetica, sans-serif;">
-              ${escapeHtml(params.dateTime)}
+              ${escapeHtml(params.dateLabel)} · ${escapeHtml(params.timeLabel)}
             </p>${venueHtml}
             <a href="${params.passUrl}" style="display: inline-block; padding: 10px 20px; background: ${params.primaryColor}; color: #ffffff; text-decoration: none; border-radius: 999px; font-size: 13px; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">
               View My Pass
@@ -258,8 +276,8 @@ function buildInvitationHtml(params: {
   showVenue: boolean;
   eventType: InvitationEventType;
   contacts: EventContact[];
-  traditional: { dateTime: string; venue: string; passUrl: string };
-  wedding: { dateTime: string; venue: string; passUrl: string };
+  traditional: { weekday: string; dateLabel: string; timeLabel: string; venue: string; passUrl: string };
+  wedding: { weekday: string; dateLabel: string; timeLabel: string; venue: string; passUrl: string };
 }): string {
   const { rsvp, coupleNames, welcomeMessage, logoUrl, logoHeight, heroImageUrl, backgroundColor, primaryColor, accentColor, showVenue, eventType, contacts, traditional, wedding } = params;
 
@@ -381,12 +399,12 @@ export async function sendInvitationEmail(
     eventType,
     contacts,
     traditional: {
-      dateTime: formatEventDateTime(event.traditionalDate),
+      ...formatEventDateParts(event.traditionalDate),
       venue: event.traditionalVenue,
       passUrl: traditionalUrl,
     },
     wedding: {
-      dateTime: formatEventDateTime(event.weddingDate),
+      ...formatEventDateParts(event.weddingDate),
       venue: event.weddingVenue,
       passUrl: weddingUrl,
     },

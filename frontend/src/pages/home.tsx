@@ -71,6 +71,18 @@ export default function Home() {
                 </h1>
               </div>
 
+              <div className="mx-auto max-w-sm rounded-2xl bg-primary text-primary-foreground px-6 py-5 shadow-lg">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] opacity-80">
+                  Save the Date — It's a
+                </p>
+                <p className="text-4xl md:text-5xl font-extrabold uppercase tracking-wide leading-none mt-2">
+                  {format(new Date(event.weddingDate), 'EEEE')}
+                </p>
+                <p className="text-sm font-semibold uppercase tracking-wide mt-2 opacity-90">
+                  {format(new Date(event.weddingDate), 'MMMM do')} · {format(new Date(event.weddingDate), 'h a')}
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-xl mx-auto">
                 <div className="space-y-4 p-6 rounded-2xl border border-primary/15 bg-card/50">
                   <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">Traditional Wedding</p>
